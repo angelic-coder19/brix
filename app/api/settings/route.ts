@@ -1,10 +1,11 @@
 import { hashPin } from "@/lib/identity";
 import { requireUser, errorResponse, HttpError, isDemo } from "@/lib/auth";
+import { readJsonObject } from "@/lib/http";
 import { getState, updateState, setSecret, registerPhone } from "@/lib/store";
 export async function PATCH(request: Request) {
   try {
     const identity = await requireUser(request);
-    const body = await request.json();
+    const body = await readJsonObject(request, { optional: true });
     for (const key of ["whatsappOptIn", "callOptIn"])
       if (body[key] !== undefined && typeof body[key] !== "boolean")
         throw new HttpError(400, "Channel preferences must be true or false.");
@@ -15,6 +16,11 @@ export async function PATCH(request: Request) {
       throw new HttpError(400, "PIN must have exactly four digits.");
     const current = await getState(identity.uid);
     const phone = identity.phone_number;
+    if (
+      body.displayName !== undefined &&
+      typeof body.displayName !== "string"
+    )
+      throw new HttpError(400, "Display name must be text.");
     if (body.phoneE164 && body.phoneE164 !== phone)
       throw new HttpError(
         400,
@@ -32,7 +38,7 @@ export async function PATCH(request: Request) {
     if (phone) await registerPhone(identity.uid, phone);
     if (body.pin) {
       await setSecret(identity.uid, {
-        pinHash: hashPin(body.pin),
+        pinHash: hashPin(String(body.pin)),
         pinAttempts: 0,
         pinBlockedUntil: 0,
       });
@@ -44,7 +50,7 @@ export async function PATCH(request: Request) {
         state.user.displayName =
           body.displayName.trim().slice(0, 100) || state.user.displayName;
       for (const key of ["whatsappOptIn", "callOptIn"] as const)
-        if (body[key] !== undefined) state.user[key] = body[key];
+        if (typeof body[key] === "boolean") state.user[key] = body[key];
     });
     return Response.json({ user: state.user, demo: isDemo() });
   } catch (e) {
