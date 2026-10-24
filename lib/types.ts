@@ -41,6 +41,8 @@ export interface ActivityEvent {
   createdAt: string;
   amountSaved?: number;
   role?: "user" | "assistant";
+  /** Emoji reaction left on this chat message by the other party. */
+  reaction?: string;
   requestId?: string;
 }
 export interface PendingAction {

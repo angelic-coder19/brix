@@ -1,18 +1,24 @@
 import { randomUUID } from "node:crypto";
 import { requireUser, errorResponse, HttpError } from "@/lib/auth";
 import { updateState } from "@/lib/store";
+import { readJsonObject } from "@/lib/http";
 export async function POST(request: Request) {
   try {
     const { uid } = await requireUser(request);
-    const body = await request.json();
+    const body = await readJsonObject(request);
     const merchant =
       typeof body.merchant === "string" ? body.merchant.trim() : "";
-    const nextDate = body.endDate ?? body.nextDate;
-    const amount = Number(body.amount);
+    const rawDate = body.endDate ?? body.nextDate;
+    const nextDate = typeof rawDate === "string" ? rawDate : "";
+    const amount =
+      typeof body.amount === "number" ||
+      (typeof body.amount === "string" && body.amount.trim())
+        ? Number(body.amount)
+        : NaN;
     if (
       !merchant ||
       merchant.length > 100 ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(nextDate ?? "") ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(nextDate) ||
       !Number.isFinite(Date.parse(nextDate)) ||
       new Date(nextDate).toISOString().slice(0, 10) !== nextDate ||
       nextDate < new Date().toISOString().slice(0, 10) ||
@@ -37,7 +43,7 @@ export async function POST(request: Request) {
     };
     await updateState(uid, (state) => {
       state.charges.push(charge);
-      state.events.push({
+      state.events.unshift({
         id: randomUUID(),
         type: "trial_added",
         channel: "web",

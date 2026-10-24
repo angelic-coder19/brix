@@ -1,10 +1,11 @@
 import { requireUser, errorResponse, HttpError } from "@/lib/auth";
 import { plaidRequest } from "@/lib/plaid";
 import { getSecret, setSecret } from "@/lib/store";
+import { readJsonObject } from "@/lib/http";
 export async function POST(request: Request) {
   try {
     const { uid } = await requireUser(request);
-    const { public_token } = await request.json();
+    const { public_token } = await readJsonObject(request);
     if (typeof public_token !== "string" || public_token.length > 1000)
       throw new HttpError(400, "A valid Plaid public token is required.");
     const item = await plaidRequest<{ access_token: string; item_id: string }>(

@@ -138,6 +138,9 @@ export async function updateState(
 }
 export async function saveState(uid: string, state: AppState) {
   await updateState(uid, (current) => {
+    // Replace every key so stale fields (e.g. pendingActions) do not survive.
+    for (const key of Object.keys(current) as (keyof AppState)[])
+      if (!(key in state)) delete current[key];
     Object.assign(current, state);
   });
 }

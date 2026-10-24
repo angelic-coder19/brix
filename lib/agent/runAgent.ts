@@ -5,9 +5,12 @@ import { HttpError, isDemo } from "../auth";
 import { confirmAction, executeTool, proposeAction } from "../tools";
 import { systemPrompt } from "./systemPrompt";
 import { toolSchemas } from "./toolSchemas";
+import { buildMeta, type AgentMeta, type AgentOutcome } from "./persona";
 import type { Channel, Charge } from "../types";
 
 let client: Anthropic | undefined;
+/** Override with ANTHROPIC_MODEL; see https://platform.claude.com/docs/en/models/overview */
+export const DEFAULT_MODEL = "claude-opus-5-5";
 
 async function demoReply(uid: string, message: string, channel: Channel) {
   const state = await getState(uid);
@@ -65,9 +68,22 @@ async function demoReply(uid: string, message: string, channel: Channel) {
   return charges.length
     ? `Coming up: ${charges
         .slice(0, 3)
-        .map((c) => `${c.merchant}, $${c.amount.toFixed(2)} on ${c.nextDate}`)
+        .map((c) => `${c.merchant}, $${c.amount.toFixed(2)} on ${friendlyDate(c.nextDate)}`)
         .join("; ")}. Ask me to set a reminder or mark a charge to cancel.`
     : "No upcoming charges in the next 14 days. Add a trial or connect your bank to get started.";
+}
+
+function friendlyDate(iso: string): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+export interface AgentTurn {
+  reply: string;
+  meta: AgentMeta;
+  userEventId: string;
+  assistantEventId: string;
 }
 
 export async function runAgent(
@@ -75,13 +91,34 @@ export async function runAgent(
   message: string,
   channel: Channel = "web",
 ) {
+  return (await runAgentTurn(uid, message, channel)).reply;
+}
+
+export async function runAgentTurn(
+  uid: string,
+  message: unknown,
+  channel: Channel = "web",
+): Promise<AgentTurn> {
   if (typeof message !== "string" || !message.trim() || message.length > 2000)
     throw new HttpError(400, "Send a message of 1–2,000 characters.");
   const input = message.trim();
+  const before = (await getState(uid)).pendingActions?.[channel];
+  let outcome: AgentOutcome = "answered";
+  let action: string | undefined;
   let reply: string;
-  if (/^(yes|yes please|confirm|go ahead)[.!]?$/i.test(input))
-    reply = await confirmAction(uid, channel);
-  else if (/^(no|never mind|nevermind|stop)[.!]?$/i.test(input)) {
+  if (/^(yes|yes please|confirm|go ahead)[.!]?$/i.test(input)) {
+    try {
+      reply = await confirmAction(uid, channel);
+      outcome = "confirmed";
+      action = before?.name;
+    } catch (error) {
+      // "yes" with nothing pending is a conversational slip, not a failure.
+      if (!(error instanceof HttpError) || !/No pending/.test(error.message))
+        throw error;
+      reply = error.message;
+    }
+  } else if (/^(no|never mind|nevermind|stop)[.!]?$/i.test(input)) {
+    outcome = "cleared";
     await updateState(uid, (s) => {
       if (s.pendingActions?.[channel]?.status)
         throw new HttpError(
@@ -123,7 +160,7 @@ export async function runAgent(
       try {
         response = await (client ??= new Anthropic()).beta.messages.create(
           {
-            model: process.env.ANTHROPIC_MODEL || "claude-opus-5-5",
+            model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
             max_tokens: 16000,
             system: `${systemPrompt}\nToday: ${new Date().toISOString().slice(0, 10)}. Channel: ${channel}.`,
             messages,
@@ -202,11 +239,26 @@ export async function runAgent(
       messages.push({ role: "user", content: results });
     }
   }
+  const userEventId = randomUUID(),
+    assistantEventId = randomUUID();
+  let meta: AgentMeta | undefined;
   await updateState(uid, (s) => {
+    const pending = s.pendingActions?.[channel];
+    if (outcome === "answered" && pending && pending.id !== before?.id) {
+      outcome = "proposed";
+      action = pending.name;
+    }
+    meta = buildMeta({
+      message: input,
+      outcome,
+      action,
+      charges: s.charges,
+      hasPending: !!s.pendingActions?.[channel],
+    });
     const createdAt = new Date().toISOString();
     s.events.unshift(
       {
-        id: randomUUID(),
+        id: assistantEventId,
         type: "agent_message",
         role: "assistant",
         channel,
@@ -214,14 +266,15 @@ export async function runAgent(
         createdAt,
       },
       {
-        id: randomUUID(),
+        id: userEventId,
         type: "agent_message",
         role: "user",
         channel,
         text: input,
         createdAt,
+        ...(meta.reaction ? { reaction: meta.reaction } : {}),
       },
     );
   });
-  return reply;
+  return { reply, meta: meta!, userEventId, assistantEventId };
 }
