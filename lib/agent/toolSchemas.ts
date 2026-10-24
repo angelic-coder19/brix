@@ -1,22 +1,20 @@
+import type Anthropic from "@anthropic-ai/sdk";
 const tool = (
   name: string,
   description: string,
   properties: Record<string, unknown> = {},
   required: string[] = [],
-) => ({
-  type: "function",
-  function: {
-    name,
-    description,
-    parameters: {
-      type: "object",
-      properties,
-      required,
-      additionalProperties: false,
-    },
+): Anthropic.Beta.BetaTool => ({
+  name,
+  description,
+  input_schema: {
+    type: "object",
+    properties,
+    required,
+    additionalProperties: false,
   },
 });
-export const toolSchemas = [
+export const toolSchemas: Anthropic.Beta.BetaTool[] = [
   tool("get_upcoming_charges", "Read upcoming charges", {
     days: { type: "number" },
   }),

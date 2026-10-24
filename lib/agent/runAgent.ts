@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
+import Anthropic from "@anthropic-ai/sdk";
 import { getState, updateState } from "../store";
 import { HttpError, isDemo } from "../auth";
 import { confirmAction, executeTool, proposeAction } from "../tools";
 import { systemPrompt } from "./systemPrompt";
 import { toolSchemas } from "./toolSchemas";
 import type { Channel, Charge } from "../types";
+
+let client: Anthropic | undefined;
 
 async function demoReply(uid: string, message: string, channel: Channel) {
   const state = await getState(uid);
@@ -90,34 +93,25 @@ export async function runAgent(
     reply = "Okay, I cleared the pending action.";
   } else if (isDemo()) reply = await demoReply(uid, input, channel);
   else {
-    if (!process.env.OPENAI_API_KEY || !process.env.OPENAI_MODEL)
+    if (!process.env.ANTHROPIC_API_KEY)
       throw new HttpError(
         503,
-        "The assistant needs OPENAI_API_KEY and OPENAI_MODEL configured.",
+        "The assistant needs ANTHROPIC_API_KEY configured.",
       );
     const state = await getState(uid);
-    type Message = {
-      role: string;
-      content: string | null;
-      tool_call_id?: string;
-      tool_calls?: Array<{
-        id: string;
-        type: string;
-        function: { name: string; arguments: string };
-      }>;
-    };
-    const history: Message[] = state.events
+    const history: Anthropic.Beta.BetaMessageParam[] = state.events
       .filter(
-        (e) => e.type === "agent_message" && e.channel === channel && e.role,
+        (e) =>
+          e.type === "agent_message" &&
+          e.channel === channel &&
+          (e.role === "user" || e.role === "assistant"),
       )
       .slice(0, 10)
       .reverse()
-      .map((e) => ({ role: e.role!, content: e.text }));
-    const messages: Message[] = [
-      {
-        role: "system",
-        content: `${systemPrompt}\nToday: ${new Date().toISOString().slice(0, 10)}. Channel: ${channel}.`,
-      },
+      .map((e) => ({ role: e.role as "user" | "assistant", content: e.text }));
+    // The Messages API requires the conversation to open with a user turn.
+    while (history[0]?.role === "assistant") history.shift();
+    const messages: Anthropic.Beta.BetaMessageParam[] = [
       ...history,
       { role: "user", content: input },
     ];
@@ -125,47 +119,61 @@ export async function runAgent(
       "I couldn't complete that request. Please try one action at a time.";
     const deadline = Date.now() + 10000;
     for (let turn = 0; turn < 4 && Date.now() < deadline; turn++) {
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: process.env.OPENAI_MODEL,
+      let response: Anthropic.Beta.BetaMessage;
+      try {
+        response = await (client ??= new Anthropic()).beta.messages.create(
+          {
+            model: process.env.ANTHROPIC_MODEL || "claude-opus-5-5",
+            max_tokens: 16000,
+            system: `${systemPrompt}\nToday: ${new Date().toISOString().slice(0, 10)}. Channel: ${channel}.`,
             messages,
             tools: toolSchemas,
-            parallel_tool_calls: false,
-          }),
-          signal: AbortSignal.timeout(Math.max(1, deadline - Date.now())),
-        },
-      );
-      if (!response.ok)
+            tool_choice: { type: "auto", disable_parallel_tool_use: true },
+            output_config: { effort: "low" },
+            betas: ["server-side-fallback-2026-07-01"],
+            fallbacks: "default",
+          },
+          {
+            timeout: Math.max(1, deadline - Date.now()),
+            maxRetries: 0,
+          },
+        );
+      } catch {
         throw new HttpError(
           502,
           "The assistant provider is unavailable. Please try again.",
         );
-      const result = await response.json();
-      const answer = result.choices?.[0]?.message as Message | undefined;
-      if (!answer)
-        throw new HttpError(502, "The assistant returned no answer.");
-      if (!answer.tool_calls?.length) {
-        reply = answer.content || reply;
+      }
+      if (response.stop_reason === "refusal") {
+        reply = "I can't help with that one. Try asking about your charges.";
         break;
       }
-      messages.push(answer);
-      for (const call of answer.tool_calls) {
+      const calls = response.content.filter(
+        (b): b is Anthropic.Beta.BetaToolUseBlock => b.type === "tool_use",
+      );
+      if (response.stop_reason !== "tool_use" || !calls.length) {
+        const text = response.content
+          .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
+          .map((b) => b.text)
+          .join("")
+          .trim();
+        reply = text || reply;
+        break;
+      }
+      messages.push({ role: "assistant", content: response.content });
+      const results: Anthropic.Beta.BetaToolResultBlockParam[] = [];
+      for (const call of calls) {
         let output: unknown;
+        let failed = false;
         try {
           output = await executeTool(
             uid,
             channel,
-            call.function.name,
-            JSON.parse(call.function.arguments),
+            call.name,
+            call.input as Record<string, unknown>,
           );
         } catch (error) {
+          failed = true;
           output = {
             error:
               error instanceof HttpError
@@ -183,12 +191,15 @@ export async function runAgent(
           turn = 4;
           break;
         }
-        messages.push({
-          role: "tool",
-          tool_call_id: call.id,
+        results.push({
+          type: "tool_result",
+          tool_use_id: call.id,
           content: JSON.stringify(output),
+          is_error: failed,
         });
       }
+      if (turn >= 4) break;
+      messages.push({ role: "user", content: results });
     }
   }
   await updateState(uid, (s) => {
