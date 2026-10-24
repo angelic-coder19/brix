@@ -11,6 +11,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <meta
+          name="facebook-domain-verification"
+          content="ahqdg4ikey59filxc4cwlkbey97keg"
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
