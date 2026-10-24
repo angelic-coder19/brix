@@ -1,0 +1,295 @@
+import { randomUUID } from "node:crypto";
+import { getState, updateState, setSecret } from "../store";
+import { HttpError } from "../auth";
+import { issueSandboxCard } from "../lithic";
+import { verifyUserPin } from "../identity";
+import type { AppState, Charge, Channel, PendingAction } from "../types";
+export const mutations = new Set([
+  "mark_to_cancel",
+  "set_reminder",
+  "create_one_time_card",
+]);
+const money = (n: number) => `$${n.toFixed(2)}`;
+const normalized = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+export function matchCharge(charges: Charge[], merchant: string) {
+  const needle = normalized(merchant);
+  if (!needle) throw new HttpError(400, "Name a merchant first.");
+  const active = charges.filter((c) => c.status !== "cancelled");
+  const exact = active.filter((c) => normalized(c.merchant) === needle);
+  const matches = exact.length
+    ? exact
+    : active.filter((c) => normalized(c.merchant).includes(needle));
+  if (matches.length !== 1)
+    throw new HttpError(
+      400,
+      matches.length
+        ? `Which one: ${matches.map((c) => c.merchant).join(", ")}?`
+        : "I couldn't find that merchant.",
+    );
+  return matches[0];
+}
+export function reminderDate(when: string, charge: Charge) {
+  const relative = when.match(/^(\d{1,2}) days? before$/i);
+  const date = relative
+    ? new Date(
+        new Date(`${charge.nextDate}T12:00:00Z`).getTime() -
+          Number(relative[1]) * 86400000,
+      )
+    : new Date(/^\d{4}-\d{2}-\d{2}$/.test(when) ? `${when}T12:00:00Z` : when);
+  if (!Number.isFinite(date.getTime()) || date.getTime() <= Date.now())
+    throw new HttpError(400, "Choose a future reminder date (YYYY-MM-DD).");
+  return date.toISOString();
+}
+export async function proposeAction(
+  uid: string,
+  channel: Channel,
+  name: string,
+  args: Record<string, unknown>,
+) {
+  if (!mutations.has(name)) throw new HttpError(400, "Unknown action.");
+  const state = await getState(uid);
+  if (state.pendingActions?.[channel]?.status)
+    throw new HttpError(
+      409,
+      "A card request needs review before another action. Check the card provider logs.",
+    );
+  let summary: string;
+  let clean: Record<string, unknown>;
+  if (name === "create_one_time_card") {
+    const purpose = String(args.purpose || "")
+        .trim()
+        .slice(0, 120),
+      limit = Number(args.spendLimit);
+    if (
+      !purpose ||
+      !Number.isFinite(limit) ||
+      limit <= 0 ||
+      limit > 500 ||
+      Math.abs(Math.round(limit * 100) - limit * 100) > 1e-8
+    )
+      throw new HttpError(
+        400,
+        "Provide a purpose and a limit from $0.01 to $500, with at most two decimals.",
+      );
+    clean = { purpose, spendLimit: limit };
+    summary = `Create a ${process.env.BRIX_DEMO_MODE === "true" ? "demo" : "sandbox"} single-use card for ${purpose}, limited to ${money(limit)}?`;
+  } else {
+    const charge = matchCharge(state.charges, String(args.merchant || ""));
+    clean = { chargeId: charge.id, merchant: charge.merchant };
+    if (name === "mark_to_cancel")
+      summary = `Mark ${charge.merchant} (${money(charge.amount)}) to cancel? You'll still need to cancel on the merchant's site.`;
+    else {
+      clean.when = reminderDate(String(args.when || ""), charge);
+      summary = `Remind you about ${charge.merchant} on ${String(clean.when).slice(0, 10)}?`;
+    }
+  }
+  const action: PendingAction = {
+    id: randomUUID(),
+    name,
+    args: clean,
+    summary,
+    expiresAt: new Date(Date.now() + 10 * 60000).toISOString(),
+  };
+  await updateState(uid, (s) => {
+    if (s.pendingActions?.[channel]?.status)
+      throw new HttpError(409, "A card request needs provider review.");
+    s.pendingActions = { ...s.pendingActions, [channel]: action };
+  });
+  return {
+    reply: `${summary} Reply yes to confirm.${channel === "voice" && name === "create_one_time_card" ? " Confirm this card in the app with your PIN." : ""}`,
+    confirmationRequired: true,
+  };
+}
+function event(
+  state: AppState,
+  channel: Channel,
+  type: string,
+  text: string,
+  amountSaved?: number,
+) {
+  state.events.unshift({
+    id: randomUUID(),
+    type,
+    text,
+    channel,
+    createdAt: new Date().toISOString(),
+    ...(amountSaved !== undefined ? { amountSaved } : {}),
+  });
+}
+export async function confirmAction(
+  uid: string,
+  channel: Channel,
+  pin?: string,
+) {
+  const current = (await getState(uid)).pendingActions?.[channel];
+  if (
+    channel === "voice" &&
+    current?.name === "create_one_time_card" &&
+    (!pin || !(await verifyUserPin(uid, pin)))
+  )
+    throw new HttpError(
+      403,
+      "Confirm voice card creation in the app with your PIN.",
+    );
+  let claimed: PendingAction | undefined;
+  await updateState(uid, (s) => {
+    claimed = undefined;
+    const pending = s.pendingActions?.[channel];
+    if (!pending || pending.expiresAt <= new Date().toISOString())
+      throw new HttpError(
+        400,
+        "No pending action. Ask me what you'd like to do first.",
+      );
+    if (
+      channel === "voice" &&
+      pending.name === "create_one_time_card" &&
+      pending.id !== current?.id
+    )
+      throw new HttpError(
+        409,
+        "The proposal changed. Please confirm it again.",
+      );
+    if (pending.status)
+      throw new HttpError(
+        409,
+        "This card request is processing or needs provider review. Do not create another card yet.",
+      );
+    claimed = { ...pending };
+    if (pending.name === "create_one_time_card") pending.status = "processing";
+    else delete s.pendingActions![channel];
+  });
+  const pending = claimed!;
+  if (pending.name === "create_one_time_card") {
+    try {
+      const card = await issueSandboxCard(
+        String(pending.args.purpose),
+        Number(pending.args.spendLimit),
+        pending.id,
+      );
+      await setSecret(uid, { [`card_${pending.id}`]: card.lithicToken });
+      await updateState(uid, (s) => {
+        if (s.pendingActions?.[channel]?.id === pending.id)
+          delete s.pendingActions[channel];
+        s.cards.unshift({
+          id: pending.id,
+          purpose: String(pending.args.purpose),
+          spendLimit: Number(pending.args.spendLimit),
+          last4: card.last4,
+          source: card.source,
+          state: "OPEN",
+          createdAt: new Date().toISOString(),
+        });
+        event(
+          s,
+          channel,
+          "card_created",
+          `${card.source === "mock" ? "Demo" : "Sandbox"} card created for ${pending.args.purpose}.`,
+        );
+      });
+      return `${card.source === "mock" ? "Demo" : "Sandbox"} card ending ${card.last4} created. View it in Cards.`;
+    } catch (error) {
+      await updateState(uid, (s) => {
+        if (s.pendingActions?.[channel]?.id === pending.id)
+          s.pendingActions[channel]!.status = "failed";
+      });
+      throw error;
+    }
+  }
+  let reply = "";
+  await updateState(uid, (s) => {
+    const charge = s.charges.find((c) => c.id === pending.args.chargeId);
+    if (!charge) throw new HttpError(404, "That charge no longer exists.");
+    if (pending.name === "mark_to_cancel") {
+      if (charge.status === "to_cancel" || charge.status === "cancelled") {
+        reply = `${charge.merchant} is already marked to cancel.`;
+        return;
+      }
+      charge.status = "to_cancel";
+      const saved =
+        charge.nextDate > new Date().toISOString().slice(0, 10)
+          ? charge.amount
+          : 0;
+      reply = `${charge.merchant} is marked to cancel. Finish cancellation on the merchant's site${charge.cancelUrl ? `: ${charge.cancelUrl}` : "."}`;
+      event(s, channel, "marked_cancel", reply, saved);
+    } else {
+      const when = String(pending.args.when);
+      const id = `manual:${charge.id}:${when}`;
+      if (!s.reminders.some((r) => r.id === id))
+        s.reminders.push({
+          id,
+          chargeId: charge.id,
+          remindAt: when,
+          channel:
+            process.env.BRIX_DEMO_MODE !== "true" && s.user.whatsappOptIn
+              ? "whatsapp"
+              : "push",
+          sent: false,
+          createdBy: channel,
+        });
+      reply = `Reminder set for ${charge.merchant} on ${when.slice(0, 10)}${process.env.BRIX_DEMO_MODE !== "true" && s.user.whatsappOptIn ? " via WhatsApp" : " in the app"}.`;
+      event(s, channel, "reminder_created", reply);
+    }
+  });
+  return reply;
+}
+export async function executeTool(
+  uid: string,
+  channel: Channel,
+  name: string,
+  args: Record<string, unknown> = {},
+): Promise<unknown> {
+  if (mutations.has(name)) return proposeAction(uid, channel, name, args);
+  const state = await getState(uid);
+  const active = state.charges.filter(
+    (c) => c.status === "active" || c.status === "trial",
+  );
+  switch (name) {
+    case "get_upcoming_charges": {
+      const days = Math.min(90, Math.max(1, Number(args.days) || 14));
+      const start = new Date().toISOString().slice(0, 10),
+        end = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+      return active
+        .filter((c) => c.nextDate >= start && c.nextDate <= end)
+        .sort((a, b) => a.nextDate.localeCompare(b.nextDate));
+    }
+    case "get_subscriptions":
+      return {
+        charges: active,
+        monthlyTotal:
+          Math.round(
+            active
+              .filter((c) => c.kind === "subscription")
+              .reduce(
+                (sum, c) =>
+                  sum +
+                  c.amount *
+                    (c.frequency === "annual"
+                      ? 1 / 12
+                      : c.frequency === "weekly"
+                        ? 52 / 12
+                        : c.frequency === "monthly"
+                          ? 1
+                          : 0),
+                0,
+              ) * 100,
+          ) / 100,
+      };
+    case "get_saved_summary":
+      return {
+        estimated: true,
+        amount: state.events
+          .filter(
+            (e) =>
+              e.createdAt.slice(0, 7) === new Date().toISOString().slice(0, 7),
+          )
+          .reduce((sum, e) => sum + (e.amountSaved || 0), 0),
+      };
+    case "get_money_news":
+      return {
+        headlines: [],
+        message: "Live news briefing isn't connected yet.",
+      };
+    default:
+      throw new HttpError(400, "Unknown tool.");
+  }
+}
