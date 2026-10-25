@@ -1046,7 +1046,9 @@ export default function BrixApp({ view }: { view: View }) {
             action(async () => {
               await request("/api/trials", "POST", body);
               setTrialOpen(false);
-              setNotice("Your trial is on the radar.");
+              setNotice(
+                `Added ${String(body.merchant ?? "your trial")}. You’ll get a reminder 2 days before it bills.`,
+              );
               chat.celebrate();
             })
           }
