@@ -2203,6 +2203,20 @@
 .peek--sm:focus-within .peek__brix {
   transform: translateY(-70%) rotate(8deg);
 }
+/* The sticky header clips above and below, so Brix leans out to the left. */
+.lp-nav .peek--sm {
+  margin-left: var(--space-3);
+}
+.lp-nav .peek--sm .peek__brix {
+  top: 50%;
+  left: 0;
+  right: auto;
+  transform: translate(20%, -50%) rotate(-10deg);
+}
+.lp-nav .peek--sm:hover .peek__brix,
+.lp-nav .peek--sm:focus-within .peek__brix {
+  transform: translate(-78%, -50%) rotate(-10deg);
+}
 .peek--block {
   display: flex;
 }

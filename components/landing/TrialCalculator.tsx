@@ -105,9 +105,8 @@ export default function TrialCalculator() {
   const { semester, year, headsUps } = estimate(trials, price, months);
   const shownYear = useTween(year);
   const shownSemester = useTween(semester);
-  // Bars share one scale: the most the sliders can add up to in a year.
-  const maxYear = estimate(10, 40, 12).year;
-  const barPct = Math.max(2, (year / maxYear) * 100);
+  // A fixed $800 scale keeps typical answers readable; bigger ones fill the bar.
+  const barPct = Math.max(2, Math.min(100, (year / 800) * 100));
 
   return (
     <div className="calc" data-buddy-mood="thinking">
