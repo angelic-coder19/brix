@@ -1,6 +1,33 @@
 import Image from "next/image";
 
-/** A phone frame around a real screenshot of the Brix app (390×844 viewport captures). */
+function StatusBar({ tone = "light" }: { tone?: "light" | "dark" }) {
+  return (
+    <div className={`device-phone__status device-phone__status--${tone}`} aria-hidden="true">
+      <time>9:41</time>
+      <span className="device-phone__icons">
+        <svg viewBox="0 0 18 12" width="17" height="11">
+          <rect x="0" y="8" width="3" height="4" rx="1" />
+          <rect x="5" y="5.5" width="3" height="6.5" rx="1" />
+          <rect x="10" y="3" width="3" height="9" rx="1" />
+          <rect x="15" y="0" width="3" height="12" rx="1" />
+        </svg>
+        <svg viewBox="0 0 16 12" width="15" height="11">
+          <path d="M8 2.6c2.3 0 4.4.9 6 2.4l1.3-1.4A10.4 10.4 0 0 0 8 .6C5.2.6 2.6 1.7.7 3.6L2 5c1.6-1.5 3.7-2.4 6-2.4Zm0 4c1.2 0 2.3.5 3.2 1.2l1.3-1.4A6.6 6.6 0 0 0 8 4.6c-1.7 0-3.3.7-4.5 1.8l1.3 1.4C5.7 7.1 6.8 6.6 8 6.6Zm0 4.8 2-2.1a2.9 2.9 0 0 0-4 0l2 2.1Z" />
+        </svg>
+        <svg viewBox="0 0 27 12" width="25" height="11">
+          <rect x="0.5" y="0.5" width="22" height="11" rx="3.2" fill="none" stroke="currentColor" opacity=".4" />
+          <rect x="2" y="2" width="17" height="8" rx="2" />
+          <path d="M24 4v4c.8-.3 1.4-1.1 1.4-2S24.8 4.3 24 4Z" opacity=".45" />
+        </svg>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * A realistic phone: bezel, side buttons, dynamic island and a status bar, with
+ * a full-screen capture of the Brix app (390×797 below the status bar).
+ */
 export function Phone({
   src,
   alt,
@@ -17,16 +44,18 @@ export function Phone({
   return (
     <figure className={`device-phone ${className}`}>
       <div className="device-phone__screen">
+        <StatusBar />
         <Image
           src={src}
           alt={alt}
           width={780}
-          height={1688}
+          height={1594}
           sizes={sizes}
           preload={preload}
           loading={preload ? "eager" : "lazy"}
         />
         <span className="device-phone__island" aria-hidden="true" />
+        <span className="device-phone__home" aria-hidden="true" />
       </div>
     </figure>
   );

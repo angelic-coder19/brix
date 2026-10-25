@@ -10,6 +10,12 @@ export default function Reveal() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const root = document.documentElement;
+    // Children of a stagger group get an index so CSS can delay each one.
+    document.querySelectorAll<HTMLElement>("[data-reveal-stagger]").forEach((group) => {
+      Array.from(group.children).forEach((child, i) =>
+        (child as HTMLElement).style.setProperty("--i", String(Math.min(i, 8))),
+      );
+    });
     const items = Array.from(
       document.querySelectorAll<HTMLElement>("[data-reveal]"),
     );

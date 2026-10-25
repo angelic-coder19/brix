@@ -46,10 +46,29 @@ export default function BrixChat({
   useEffect(() => {
     field.current?.focus();
   }, []);
+  const root = useRef<HTMLElement>(null);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !document.querySelector(".tapback__menu"))
         onClose();
+      // Keep Tab inside the chat while it's open.
+      const node = root.current;
+      if (e.key !== "Tab" || !node) return;
+      const items = Array.from(
+        node.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -79,8 +98,10 @@ export default function BrixChat({
 
   return (
     <section
+      ref={root}
       className={`chat chat--${mood}`}
       role="dialog"
+      aria-modal="true"
       aria-label="Talk with Brix"
     >
       <header className="chat__header">
