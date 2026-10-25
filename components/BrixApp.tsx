@@ -24,6 +24,7 @@ import { getClientAuth } from "@/lib/firebase/client";
 import {
   ArrowRight,
   ArrowUpRight,
+  Menu,
   LayoutDashboard,
   Layers3,
   CreditCard,
@@ -34,7 +35,6 @@ import {
   MessageCircle,
   X,
   ShieldCheck,
-  LogOut,
   Landmark,
   Phone,
   Check,
@@ -58,6 +58,13 @@ import { summarizeCharges } from "@/lib/summary";
 import "./app.css";
 import { BrixMark } from "@/components/brand/BrixMark";
 import { Wordmark } from "@/components/brand/Wordmark";
+import { VirtualCard } from "@/components/brand/VirtualCard";
+import { ConfirmAction } from "@/components/ui/ConfirmAction";
+import {
+  AppSidebar,
+  useSidebarState,
+  type NavGroup,
+} from "@/components/shell/AppSidebar";
 
 export type View =
   "dashboard" | "subscriptions" | "cards" | "connect" | "settings" | "admin";
@@ -231,6 +238,9 @@ function BuddyCard({
 
 export default function BrixApp({ view }: { view: View }) {
   const router = useRouter();
+  const sidebar = useSidebarState();
+  const { setDrawerOpen } = sidebar;
+  const closeDrawer = useCallback(() => setDrawerOpen(false), [setDrawerOpen]);
   const [setupPending, setSetupPending] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setSetupPending(!readOnboarded()), 0);
@@ -377,70 +387,73 @@ export default function BrixApp({ view }: { view: View }) {
       c.merchant.toLowerCase().includes(search.trim().toLowerCase()),
   );
   const name = state?.user.displayName || user?.displayName || "";
+  const openCards = (state?.cards ?? []).filter((c) => c.state === "OPEN").length;
+  const navGroups: NavGroup[] = [
+    {
+      label: "Money",
+      items: [
+        { ...nav[0] },
+        {
+          ...nav[1],
+          badge: {
+            value: trialCount,
+            label: `${trialCount} free ${trialCount === 1 ? "trial" : "trials"}`,
+          },
+        },
+        {
+          ...nav[2],
+          badge: {
+            value: openCards,
+            label: `${openCards} open ${openCards === 1 ? "card" : "cards"}`,
+          },
+        },
+      ],
+    },
+    {
+      label: "Setup",
+      items: [
+        { ...nav[3] },
+        { href: "settings", label: "Settings", icon: Settings },
+      ],
+    },
+  ];
 
   return (
-    <div className="app-shell">
+    <div
+      className="app-shell"
+      data-sidebar={sidebar.collapsed ? "collapsed" : "expanded"}
+    >
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <aside className="sidebar" aria-label="Brix navigation">
-        <Link href="/" className="wordmark">
-          <Wordmark />
-        </Link>
-        <div className="sidebar-caption">Subscriptions &amp; trials</div>
-        <nav>
-          {nav.map((n) => (
-            <Link
-              href={`/${n.href}`}
-              key={n.href}
-              className={view === n.href ? "nav-item is-active" : "nav-item"}
-              aria-current={view === n.href ? "page" : undefined}
-            >
-              <n.icon size={19} />
-              {n.label}
-              {view === n.href && <span className="nav-marker" />}
-            </Link>
-          ))}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-trust">
-            <ShieldCheck size={20} />
-            <strong>Read-only access</strong>
-            <p>Brix can see charges through Plaid. It can’t pay, transfer or cancel without your yes.</p>
-          </div>
-          <Link
-            href="/settings"
-            className={`nav-item ${view === "settings" ? "is-active" : ""}`}
-            aria-current={view === "settings" ? "page" : undefined}
-          >
-            <Settings size={19} />
-            Settings
-          </Link>
-          <div className="profile">
-            <span className="avatar" aria-hidden>
-              {(name || "Y").slice(0, 1).toUpperCase()}
-            </span>
-            <div>
-              <strong>{name || "Your space"}</strong>
-              <small>{demo ? "Demo workspace" : "Personal workspace"}</small>
-            </div>
-            {user && (
-              <button
-                className="icon-btn"
-                aria-label="Sign out"
-                onClick={() => {
-                  const auth = getClientAuth();
-                  if (auth) void signOut(auth);
-                }}
-              >
-                <LogOut size={17} />
-              </button>
-            )}
-          </div>
-        </div>
-      </aside>
+      <AppSidebar
+        view={view}
+        groups={navGroups}
+        collapsed={sidebar.collapsed}
+        onToggle={sidebar.toggle}
+        drawerOpen={sidebar.drawerOpen}
+        onCloseDrawer={closeDrawer}
+        name={name}
+        email={state?.user.email || user?.email || ""}
+        demo={demo}
+        canSignOut={!!user}
+        onSignOut={() => {
+          const auth = getClientAuth();
+          if (auth) void signOut(auth);
+        }}
+      />
       <div className="app-main">
         <header className="topbar">
+          <button
+            type="button"
+            className="icon-btn topbar__menu"
+            aria-label="Open menu"
+            aria-controls="app-sidebar"
+            aria-expanded={sidebar.drawerOpen}
+            onClick={() => sidebar.setDrawerOpen(true)}
+          >
+            <Menu size={20} />
+          </button>
           <Link href="/" className="wordmark wordmark--sm topbar__brand">
           <Wordmark />
           </Link>
@@ -524,6 +537,20 @@ export default function BrixApp({ view }: { view: View }) {
               <Link href="/onboarding" className="sign-in__alt">
                 New here? Set up Brix step by step
               </Link>
+            </section>
+          ) : !state && error ? (
+            <section className="card empty-state load-error" role="alert">
+              <h2>We couldn’t load your charges</h2>
+              <p>{error}</p>
+              <button
+                className="btn btn--primary"
+                onClick={() => {
+                  setError("");
+                  void refresh();
+                }}
+              >
+                <RefreshCw size={17} /> Try again
+              </button>
             </section>
           ) : !state ? (
             <div className="loading-skel" role="status" aria-label="Loading your charges">
@@ -633,7 +660,9 @@ export default function BrixApp({ view }: { view: View }) {
                       </p>
                       <div className="stat-card__footer">
                         <span>
-                          {trialCount} free {trialCount === 1 ? "trial" : "trials"} to keep an eye on
+                          {trialCount
+                            ? `${trialCount} free ${trialCount === 1 ? "trial" : "trials"} to keep an eye on`
+                            : "No free trials to keep an eye on"}
                         </span>
                         <Link
                           href="/subscriptions"
@@ -653,10 +682,19 @@ export default function BrixApp({ view }: { view: View }) {
                         Estimated from your actions. Marking to cancel still
                         needs a visit to the merchant.
                       </p>
-                      <span className="badge badge--green">
-                        {state.charges.filter((c) => c.status === "to_cancel").length}{" "}
-                        marked to cancel
-                      </span>
+                      <div className="stat-card__footer">
+                        <span>
+                          {state.charges.filter((c) => c.status === "to_cancel").length}{" "}
+                          marked to cancel
+                        </span>
+                        <Link
+                          href="/subscriptions"
+                          className="icon-btn"
+                          aria-label="Review charges marked to cancel"
+                        >
+                          <ArrowUpRight size={19} />
+                        </Link>
+                      </div>
                     </div>
                     <BuddyCard chat={chat} onOpen={() => setChatOpen(true)} />
                   </section>
@@ -678,7 +716,7 @@ export default function BrixApp({ view }: { view: View }) {
                       ) : (
                         <div className="empty-state">
                           <Bell size={28} />
-                          <strong>Nothing bills in the next 14 days.</strong>
+                          <h3>Nothing bills in the next 14 days.</h3>
                           <p>
                             Add a free trial you just started, or connect a
                             bank so Brix can find recurring charges.
@@ -709,12 +747,16 @@ export default function BrixApp({ view }: { view: View }) {
                         </button>
                       </div>
                       <section
-                        className="activity"
-                        aria-label="Recent activity"
+                        className="card activity"
+                        aria-labelledby="activity-title"
                       >
-                        <h3>
-                          <Activity size={17} /> Recent activity
-                        </h3>
+                        <div className="card-head">
+                          <div>
+                            <h2 id="activity-title">Recent activity</h2>
+                            <p>Reminders and actions, on any channel.</p>
+                          </div>
+                          <Activity size={18} aria-hidden />
+                        </div>
                         {state.events.some(
                           (e) => e.type !== "agent_message",
                         ) ? (
@@ -854,49 +896,50 @@ export default function BrixApp({ view }: { view: View }) {
                   <div className="card-list">
                     {state.cards.length ? (
                       state.cards.map((c) => (
-                        <article className="virtual-card" key={c.id}>
-                          <div className="virtual-card__top">
-                            <strong>brix.</strong>
-                            <span className="badge">{c.state}</span>
-                          </div>
-                          <span className="chip-icon" aria-hidden />
-                          <p className="card-digits">
-                            <span className="sr-only">Card ending </span>
-                            <span aria-hidden>•••• •••• •••• </span>
-                            {c.last4}
-                          </p>
-                          <div className="virtual-card__bottom">
-                            <span>{c.purpose}</span>
-                            <span>{money(c.spendLimit)} limit</span>
-                          </div>
-                          <small>
-                            {c.source === "mock"
-                              ? "Demo card · Simulated single use"
-                              : "Sandbox single-use card"}
-                          </small>
-                          {c.state !== "CLOSED" && (
-                            <button
-                              type="button"
-                              className="btn btn--sm"
-                              disabled={busy}
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    `Close the card for ${c.purpose}? This can't be undone.`,
-                                  )
-                                )
+                        <article className="card-item" key={c.id}>
+                          <VirtualCard
+                            purpose={c.purpose}
+                            last4={c.last4}
+                            limit={c.spendLimit}
+                            state={c.state}
+                            expiry={null}
+                            created={c.createdAt}
+                          />
+                          <div className="card-item__meta">
+                            <span
+                              className={`badge ${c.state === "OPEN" ? "badge--green" : ""}`}
+                            >
+                              {c.state === "OPEN"
+                                ? "Open"
+                                : c.state === "PAUSED"
+                                  ? "Paused"
+                                  : "Closed"}
+                            </span>
+                            <small>
+                              {c.source === "mock"
+                                ? "Demo card · simulated single use"
+                                : "Sandbox single-use card"}
+                            </small>
+                            {c.state !== "CLOSED" && (
+                              <ConfirmAction
+                                className="btn btn--sm"
+                                label="Close card"
+                                question={`Close the ${c.purpose} card? This can’t be undone.`}
+                                confirmLabel="Close card"
+                                tone="danger"
+                                disabled={busy}
+                                onConfirm={() =>
                                   void action(async () => {
                                     await request("/api/cards", "PATCH", {
                                       id: c.id,
                                       state: "CLOSED",
                                     });
                                     setNotice("Card closed.");
-                                  });
-                              }}
-                            >
-                              Close card
-                            </button>
-                          )}
+                                  })
+                                }
+                              />
+                            )}
+                          </div>
                         </article>
                       ))
                     ) : (
@@ -987,44 +1030,34 @@ export default function BrixApp({ view }: { view: View }) {
                       account removes your Brix profile and stored data.
                     </p>
                     <div className="button-row">
-                      <button
-                        type="button"
-                        className="btn"
+                      <ConfirmAction
+                        label="Disconnect bank"
+                        question="Disconnect all linked banks from Brix?"
+                        confirmLabel="Disconnect"
                         disabled={busy}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              "Disconnect all linked banks from Brix?",
-                            )
-                          )
-                            void action(async () => {
-                              await request("/api/plaid/disconnect", "POST", {});
-                              setNotice("Your banks have been disconnected.");
-                            });
-                        }}
-                      >
-                        Disconnect bank
-                      </button>
-                      <button
-                        type="button"
+                        onConfirm={() =>
+                          void action(async () => {
+                            await request("/api/plaid/disconnect", "POST", {});
+                            setNotice("Your banks have been disconnected.");
+                          })
+                        }
+                      />
+                      <ConfirmAction
                         className="btn btn--danger"
+                        label="Delete my data"
+                        question="Delete your Brix data and disconnect your banks? This can’t be undone."
+                        confirmLabel="Delete my data"
+                        tone="danger"
                         disabled={busy}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              "Permanently delete your Brix data and disconnect your banks? This cannot be undone.",
-                            )
-                          )
-                            void action(async () => {
-                              await request("/api/account", "DELETE");
-                              const auth = getClientAuth();
-                              if (auth) await signOut(auth);
-                              router.push("/");
-                            });
-                        }}
-                      >
-                        Delete my data
-                      </button>
+                        onConfirm={() =>
+                          void action(async () => {
+                            await request("/api/account", "DELETE");
+                            const auth = getClientAuth();
+                            if (auth) await signOut(auth);
+                            router.push("/");
+                          })
+                        }
+                      />
                     </div>
                   </form>
                   <DeveloperKeys request={request} />
@@ -1058,24 +1091,19 @@ export default function BrixApp({ view }: { view: View }) {
                       <Bell size={18} />
                       Run reminders now
                     </button>
-                    <button
-                      className="btn"
+                    <ConfirmAction
+                      icon={<RefreshCw size={18} />}
+                      label="Reset demo"
+                      question="Reset the demo account and its sample data?"
+                      confirmLabel="Reset demo"
                       disabled={busy}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Reset the demo workspace and its sample data?",
-                          )
-                        )
-                          void action(async () => {
-                            await request("/api/admin/reset-demo", "POST", {});
-                            setNotice("Demo workspace reset.");
-                          });
-                      }}
-                    >
-                      <RefreshCw size={18} />
-                      Reset demo
-                    </button>
+                      onConfirm={() =>
+                        void action(async () => {
+                          await request("/api/admin/reset-demo", "POST", {});
+                          setNotice("Demo workspace reset.");
+                        })
+                      }
+                    />
                   </div>
                   <Link href="/dashboard" className="text-link">
                     Return to the dashboard <ArrowRight size={17} />

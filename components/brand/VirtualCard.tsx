@@ -15,6 +15,7 @@ export function VirtualCard({
   last4,
   limit,
   expiry = "12/27",
+  created,
   state = "OPEN",
   note,
   tilt = true,
@@ -23,7 +24,9 @@ export function VirtualCard({
   purpose: string;
   last4: string;
   limit: number;
-  expiry?: string;
+  /** Pass null when the real expiry isn't known; `created` is shown instead. */
+  expiry?: string | null;
+  created?: string;
   state?: string;
   note?: string;
   tilt?: boolean;
@@ -31,6 +34,10 @@ export function VirtualCard({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const closed = state === "CLOSED";
+  const paused = state === "PAUSED";
+  const createdLabel = created
+    ? new Date(created).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : "";
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
     const el = ref.current;
     if (!el || !tilt || e.pointerType !== "mouse") return;
@@ -55,7 +62,7 @@ export function VirtualCard({
       onPointerMove={onMove}
       onPointerLeave={reset}
       role="img"
-      aria-label={`Brix single-use card for ${purpose}, ending ${last4}, limit ${usd(limit)}, expires ${expiry}${closed ? ", closed" : ""}`}
+      aria-label={`Brix single-use card for ${purpose}, ending ${last4}, limit ${usd(limit)}, ${expiry ? `expires ${expiry}` : createdLabel ? `created ${createdLabel}` : ""}${closed ? ", closed" : paused ? ", paused" : ""}`}
     >
       <div className="vcard__face" aria-hidden="true">
         <div className="vcard__top">
@@ -63,7 +70,7 @@ export function VirtualCard({
             <BrixMark className="vcard__mark" />
             brix<span className="brand-period">.</span>
           </span>
-          <span className="vcard__type">{closed ? "Closed" : "Virtual · Single use"}</span>
+          <span className="vcard__type">{closed ? "Closed" : paused ? "Paused" : "Virtual · Single use"}</span>
         </div>
         <span className="vcard__chip" />
         <p className="vcard__number">
@@ -77,10 +84,17 @@ export function VirtualCard({
             <small>For</small>
             <span className="vcard__purpose">{purpose}</span>
           </div>
-          <div>
-            <small>Expires</small>
-            <span>{expiry}</span>
-          </div>
+          {expiry ? (
+            <div>
+              <small>Expires</small>
+              <span>{expiry}</span>
+            </div>
+          ) : createdLabel ? (
+            <div>
+              <small>Created</small>
+              <span>{createdLabel}</span>
+            </div>
+          ) : null}
         </div>
         <span className="vcard__limit">
           Limit {usd(limit)} · single use
