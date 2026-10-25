@@ -31,7 +31,7 @@ Deck: https://claude.ai/artifact/2XDUSkAowBZCmjDaKxhjKy (10 slides). Deck time �
 
 | Time | Where | Do | Say |
 |---|---|---|---|
-| 0:00–0:08 | **Deck · 1 Cover** | Start on the cover. | “Hi, I’m [name], and this is Brix. Students don’t lose money in one big mistake. They lose it at small moments nobody warns them about.” |
+| 0:00–0:08 | **Deck · 1 Cover** | Start on the cover. | “Hi, I’m David, and this is Brix. Students don’t lose money in one big mistake. They lose it at small moments nobody warns them about.” |
 | 0:08–0:33 | **Deck · 2 Problem** | Point to each quadrant in turn. | “Four moments. Almost half of Americans, and 59% of Gen Z, have paid for a trial they forgot. 27 billion dollars sits on unused gift cards. Aid refunds often carry loan money: 28% of first-year students with federal loans said they had none. And Gen Z learns investing from social media far more than from professionals.” |
 | 0:33–0:40 | **Deck · 3 Solution** | Pause on the four cards, then **swipe right** to the app. | “Brix shows up at each of those moments with one next step. Let me show you.” |
 | 0:40–1:00 | **App · Overview** | Point to “Your next decision”, the stat row and the ticker. | “This is my real dashboard. Brix leads with one decision: $1,200 of my refund is borrowed, and I can return it by February with no interest. Everything else is below it.” |
@@ -45,11 +45,11 @@ Deck: https://claude.ai/artifact/2XDUSkAowBZCmjDaKxhjKy (10 slides). Deck time �
 | 3:12–3:22 | **Deck · 5 Market** | | “19.4 million U.S. college students, about a 930 million dollar consumer opportunity. We start at Penn State.” |
 | 3:22–3:37 | **Deck · 6 Model** | | “We earn four ways: a free core with Brix Plus, white-label licensing for banks like FNB, a usage-based developer API, and later, card interchange.” |
 | 3:37–3:47 | **Deck · 7 Plan** | | “25 campuses and two bank partners in two years, about 720 thousand dollars in year two.” |
-| 3:47–3:58 | **Deck · 8 Ask** | | “We’re asking for 250 thousand dollars of pre-seed funding and an FNB pilot, mostly for security, compliance and campus growth.” |
-| 3:58–4:06 | **Deck · 9 Impact** | | “At 50,000 students, that’s millions kept: trials skipped, loan interest avoided, gift cards spent.” |
-| 4:06–4:12 | **Deck · 10 Close** | Hold the slide; the QR code opens usebrix.app. | “Brix: your money, brick by brick. Scan to try it. Thank you.” |
+| 3:47–4:00 | **Deck · 8 Ask** | | “Whatever we win goes straight into Brix, and every dollar has a job: 35 percent product and security, a quarter compliance and a bank pilot like FNB, a quarter a Penn State launch, the rest infrastructure.” |
+| 4:00–4:08 | **Deck · 9 Impact** | | “At 50,000 students, that’s millions kept: trials skipped, loan interest avoided, gift cards spent.” |
+| 4:08–4:14 | **Deck · 10 Close** | Hold the slide; the QR code opens usebrix.app. | “Brix: your money, brick by brick. Scan to try it. I’m David Adedig from Team Brix. Thank you.” |
 
-Total ≈ 4:12, which leaves about 45 seconds of buffer under the 5-minute limit.
+Total ≈ 4:14, which leaves about 45 seconds of buffer under the 5-minute limit.
 
 ## If something goes wrong on camera
 
@@ -59,7 +59,6 @@ Total ≈ 4:12, which leaves about 45 seconds of buffer under the 5-minute limit
 
 ## Placeholders to fill in before recording
 
-- Say your name in the opening line; the deck itself has no placeholders left.
 - If you ran hallway interviews, add your real “X of Y” count when you speak over the problem slide.
 
 ## Sources quoted
