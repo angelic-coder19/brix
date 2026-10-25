@@ -85,8 +85,10 @@ test("OpenAPI spec and docs page are public", async ({ request, page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test("settings creates, shows once, and revokes a key", async ({ page }) => {
-  await page.goto("/settings");
+test("developers page creates, shows once, and revokes a key", async ({
+  page,
+}) => {
+  await page.goto("/developer");
   await page.getByLabel("Key name").fill("Spreadsheet");
   await page.getByRole("button", { name: "Create key" }).click();
   await expect(page.getByText("Copy your key now")).toBeVisible();

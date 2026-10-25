@@ -47,7 +47,7 @@ Deck: https://claude.ai/artifact/2XDUSkAowBZCmjDaKxhjKy (10 slides). Deck time �
 | 3:37–3:47 | **Deck · 7 Plan** | | “25 campuses and two bank partners in two years, about 720 thousand dollars in year two.” |
 | 3:47–4:00 | **Deck · 8 Ask** | | “Whatever we win goes straight into Brix, and every dollar has a job: 35 percent product and security, a quarter compliance and a bank pilot like FNB, a quarter a Penn State launch, the rest infrastructure.” |
 | 4:00–4:08 | **Deck · 9 Impact** | | “At 50,000 students, that’s millions kept: trials skipped, loan interest avoided, gift cards spent.” |
-| 4:08–4:14 | **Deck · 10 Close** | Hold the slide; the QR code opens usebrix.app. | “Brix: your money, brick by brick. Scan to try it. I’m David Adedig from Team Brix. Thank you.” |
+| 4:08–4:14 | **Deck · 10 Close** | Hold the slide; the QR code opens usebrix.app. | “Brix: your money, brick by brick. Scan to try it. I’m David Adedeji from Team Brix. Thank you.” |
 
 Total ≈ 4:14, which leaves about 45 seconds of buffer under the 5-minute limit.
 

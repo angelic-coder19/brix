@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { BrixMark } from "@/components/brand/BrixMark";
+import type { BuddyMood } from "@/lib/agent/persona";
 
 export type NavItem = {
   href: string;
@@ -82,6 +83,38 @@ export function useSidebarState() {
   return { collapsed, toggle, drawerOpen, setDrawerOpen };
 }
 
+/**
+ * The sidebar logo reacts to what you do: it looks over while you browse the
+ * nav, hops when you pick a page, smiles when you arrive, and otherwise idles
+ * with the occasional blink.
+ */
+function useSidebarMood(view: string) {
+  const [hovering, setHovering] = useState(false);
+  const [burst, setBurst] = useState<BuddyMood | null>(null);
+  const timer = useRef(0);
+  const react = (next: BuddyMood, ms = 1100) => {
+    window.clearTimeout(timer.current);
+    setBurst(next);
+    timer.current = window.setTimeout(() => setBurst(null), ms);
+  };
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    const t = window.setTimeout(() => {
+      window.clearTimeout(timer.current);
+      setBurst("happy");
+      timer.current = window.setTimeout(() => setBurst(null), 1400);
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [view]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const value: BuddyMood = burst ?? (hovering ? "listening" : "idle");
+  return { value, react, hover: setHovering };
+}
+
 export function AppSidebar({
   view,
   groups,
@@ -108,6 +141,7 @@ export function AppSidebar({
   onSignOut: () => void;
 }) {
   const ref = useRef<HTMLElement>(null);
+  const mood = useSidebarMood(view);
   const closeDrawerRef = useRef(onCloseDrawer);
   useEffect(() => {
     closeDrawerRef.current = onCloseDrawer;
@@ -181,10 +215,18 @@ export function AppSidebar({
         className={active ? "nav-item is-active" : "nav-item"}
         aria-current={active ? "page" : undefined}
         data-tip={n.label}
+        data-nav={n.href}
         title={collapsed ? n.label : undefined}
-        onClick={onCloseDrawer}
+        onClick={() => {
+          mood.react("celebrate");
+          onCloseDrawer();
+        }}
+        onPointerEnter={() => mood.hover(true)}
+        onPointerLeave={() => mood.hover(false)}
       >
-        <n.icon size={18} aria-hidden />
+        <span className="nav-item__icon">
+          <n.icon size={18} aria-hidden />
+        </span>
         <span className="nav-item__label">{n.label}</span>
         {n.badge && n.badge.value > 0 && (
           <span className="nav-badge">
@@ -216,12 +258,13 @@ export function AppSidebar({
             href="/"
             className="wordmark sidebar-brand"
             aria-label="Brix home"
+            onPointerEnter={() => mood.react("happy")}
           >
             <span className="sidebar-brand__full">
-              <Wordmark />
+              <Wordmark mood={mood.value} />
             </span>
             <span className="sidebar-brand__mark">
-              <BrixMark decorative />
+              <BrixMark decorative mood={mood.value} />
             </span>
           </Link>
           <button

@@ -2,55 +2,6 @@
 .gift-cards {
   width: 100%;
 }
-.gift-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-4);
-  width: 100%;
-  flex-wrap: wrap;
-}
-.gift-head h2 {
-  margin: var(--space-2) 0 var(--space-1);
-}
-.gift-head p {
-  margin: 0;
-  max-width: 520px;
-  color: var(--color-ink-soft);
-}
-.gift-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
-  gap: var(--space-3);
-  align-items: end;
-  width: 100%;
-}
-.gift-list {
-  display: grid;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.gift-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--color-line);
-}
-.gift-list__main {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-.gift-list__balance {
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
 .gift-spend {
   display: flex;
   align-items: center;
@@ -94,16 +45,4 @@
   margin: 4px 0 0;
   max-width: 620px;
   color: var(--color-ink-soft);
-}
-/* `.form-card form` makes forms a stacked grid; spend rows stay on one line. */
-.gift-cards form.gift-spend {
-  display: flex;
-  width: auto;
-  gap: var(--space-2);
-}
-.gift-cards form.gift-spend .btn {
-  width: auto;
-}
-.gift-cards .gift-list li {
-  align-items: center;
 }

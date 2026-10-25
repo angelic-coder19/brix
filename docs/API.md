@@ -10,7 +10,7 @@ Read a Brix user's subscriptions and free trials, mark charges to cancel, and sc
 
 ## Quickstart
 
-1. Sign in at [usebrix.app](https://www.usebrix.app) and open **Settings → Developer API keys**.
+1. Sign in at [usebrix.app](https://www.usebrix.app) and open **Developers** in the sidebar.
 2. Name the key, choose only the scopes you need, and copy the key. It is shown once.
 3. Keep it server-side, for example in an environment variable called `BRIX_API_KEY`. Never ship it in a browser page, a mobile app, or a public repository.
 
@@ -187,7 +187,7 @@ Each response includes `X-RateLimit-Limit` and `X-RateLimit-Remaining`. The wind
 
 ## Data and safety
 
-Bank data is Plaid sandbox data and cards are Lithic sandbox cards that can't spend real money. Treat a key like a password: anyone holding it can read that user's subscriptions. If a key leaks, revoke it in Settings.
+Bank data is Plaid sandbox data and cards are Lithic sandbox cards that can't spend real money. Treat a key like a password: anyone holding it can read that user's subscriptions. If a key leaks, revoke it on the Developers page.
 
 ## For Brix maintainers
 

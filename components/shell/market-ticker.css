@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  flex: 1 1 220px;
+  flex: 1 1 auto;
   min-width: 100px;
   overflow: hidden;
   height: 32px;
@@ -61,30 +61,13 @@
 .market-ticker__down {
   color: var(--color-danger, #b42318);
 }
-.market-ticker__pause {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 24px;
-  height: 28px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--color-muted);
-  cursor: pointer;
-}
-.market-ticker__pause:hover {
-  background: var(--color-surface-2);
-  color: var(--color-ink);
-}
 .market-ticker__message {
   color: var(--color-muted);
   white-space: nowrap;
   font-size: 11px;
 }
 .market-ticker:hover .market-ticker__track,
-.market-ticker:focus-within .market-ticker__track,
-.market-ticker[data-paused="true"] .market-ticker__track {
+.market-ticker:focus-within .market-ticker__track {
   animation-play-state: paused;
 }
 @keyframes brix-market-scroll {
@@ -121,8 +104,81 @@
     scrollbar-width: none;
     mask-image: none;
   }
-  .market-ticker__group[aria-hidden="true"],
-  .market-ticker__pause {
+  .market-ticker__group[aria-hidden="true"] {
+    display: none;
+  }
+}
+
+/* The Brix cart loops along the header's bottom edge, no fill line. */
+.topbar {
+  position: sticky;
+}
+.header-train {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 20px;
+  overflow: hidden;
+  pointer-events: none;
+  container-type: inline-size;
+}
+.header-train__cart {
+  position: absolute;
+  left: 0;
+  bottom: 1px;
+  width: 22px;
+  height: 16px;
+  animation: brix-header-train 26s linear infinite;
+  will-change: transform;
+}
+.header-train__rider {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  width: 14px;
+  height: 12px;
+  animation: brix-header-rider 0.9s ease-in-out infinite;
+}
+.header-train__car {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: 1px;
+  height: 6px;
+  border-radius: 2px 2px 3px 3px;
+  background: var(--color-ink);
+}
+.header-train__car i {
+  position: absolute;
+  bottom: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-ink);
+  box-shadow: 0 0 0 1px var(--color-bg);
+}
+.header-train__car i:first-child {
+  left: 2px;
+}
+.header-train__car i:last-child {
+  right: 2px;
+}
+@keyframes brix-header-train {
+  from {
+    transform: translateX(-24px);
+  }
+  to {
+    transform: translateX(calc(100cqw + 2px));
+  }
+}
+@keyframes brix-header-rider {
+  50% {
+    transform: translateY(-1.5px) rotate(-4deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-train {
     display: none;
   }
 }

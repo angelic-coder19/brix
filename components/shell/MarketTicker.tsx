@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pause, Play } from "lucide-react";
 import type { RequestFn } from "@/components/brix/useBrixChat";
 import type { Quote } from "@/lib/market/quotes";
+import { BrixMark } from "@/components/brand/BrixMark";
 import "./market-ticker.css";
 
 const SYMBOLS = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "AMZN"];
@@ -18,14 +18,23 @@ export function MarketTicker({ request }: { request: RequestFn }) {
   const [status, setStatus] = useState<"loading" | "ready" | "unavailable">(
     "loading",
   );
-  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     let stopped = false;
     let running = false;
+    let failures = 0;
+    let timer = 0;
+    // Healthy quotes refresh every minute. When prices can't be loaded, keep
+    // trying sooner (5s, 10s, 20s, then every 30s) instead of giving up.
+    const schedule = (ms: number) => {
+      window.clearTimeout(timer);
+      if (!stopped) timer = window.setTimeout(() => void refresh(), ms);
+    };
     const refresh = async () => {
-      if (running || document.hidden) return;
+      if (running) return;
+      if (document.hidden) return schedule(60_000);
       running = true;
+      let ok = false;
       try {
         const response = await request<{ quotes: Record<string, Quote> }>(
           `/api/market/quote?symbols=${SYMBOLS.join(",")}`,
@@ -34,29 +43,35 @@ export function MarketTicker({ request }: { request: RequestFn }) {
           (quote): quote is Quote =>
             !!quote && Number.isFinite(quote.price) && quote.price > 0,
         );
-        if (!stopped) {
+        ok = next.length > 0;
+        if (!stopped && ok) {
           setQuotes(next);
-          setStatus(next.length ? "ready" : "unavailable");
+          setStatus("ready");
         }
-      } catch {
-        if (!stopped) {
-          setQuotes([]);
-          setStatus("unavailable");
-        }
-      } finally {
-        running = false;
+      } catch {}
+      running = false;
+      if (stopped) return;
+      if (ok) failures = 0;
+      else {
+        failures += 1;
+        // Keep the last good prices on screen; only say "unavailable" when
+        // there is nothing to show.
+        setStatus((s) => (s === "ready" ? s : "unavailable"));
       }
+      schedule(ok ? 60_000 : Math.min(30_000, 5_000 * 2 ** (failures - 1)));
     };
     void refresh();
-    const interval = window.setInterval(() => void refresh(), 60_000);
     const onVisible = () => {
       if (!document.hidden) void refresh();
     };
+    const onOnline = () => void refresh();
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
     return () => {
       stopped = true;
-      window.clearInterval(interval);
+      window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
     };
   }, [request]);
 
@@ -94,45 +109,47 @@ export function MarketTicker({ request }: { request: RequestFn }) {
   );
 
   return (
-    <section
-      className="market-ticker"
-      aria-label="Market prices"
-      data-paused={paused}
-    >
+    <section className="market-ticker" aria-label="Market prices">
       <span className="market-ticker__label">
         {status === "ready" ? label : "Market"}
       </span>
       {status === "ready" ? (
-        <>
-          <div
-            className="market-ticker__window"
-            tabIndex={0}
-            role="group"
-            aria-label="Market prices"
-          >
-            <div className="market-ticker__track">
-              {renderQuotes()}
-              {renderQuotes(true)}
-            </div>
+        <div
+          className="market-ticker__window"
+          tabIndex={0}
+          role="group"
+          aria-label="Market prices"
+        >
+          <div className="market-ticker__track">
+            {renderQuotes()}
+            {renderQuotes(true)}
           </div>
-          <button
-            type="button"
-            className="market-ticker__pause"
-            onClick={() => setPaused((value) => !value)}
-            aria-label={paused ? "Resume market ticker" : "Pause market ticker"}
-          >
-            {paused ? (
-              <Play size={12} aria-hidden />
-            ) : (
-              <Pause size={12} aria-hidden />
-            )}
-          </button>
-        </>
+        </div>
       ) : (
         <span className="market-ticker__message" role="status">
-          {status === "loading" ? "Loading prices…" : "Prices unavailable"}
+          {status === "loading"
+            ? "Loading prices…"
+            : "Prices unavailable · retrying"}
         </span>
       )}
     </section>
+  );
+}
+
+/**
+ * The Brix cart from the landing page's progress bar, riding the bottom edge
+ * of the header on a loop. Decorative only; it stops for reduced motion.
+ */
+export function HeaderTrain() {
+  return (
+    <span className="header-train" aria-hidden="true">
+      <span className="header-train__cart">
+        <BrixMark className="header-train__rider" />
+        <span className="header-train__car">
+          <i />
+          <i />
+        </span>
+      </span>
+    </span>
   );
 }

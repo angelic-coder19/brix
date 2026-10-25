@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   onAuthStateChanged,
@@ -34,10 +34,11 @@ import {
   Check,
   RefreshCw,
   Scissors,
-  ChevronRight,
   Activity,
   GraduationCap,
   TrendingUp,
+  Code2,
+  BookOpen,
 } from "lucide-react";
 import BrixBuddy from "./brix/BrixBuddy";
 import MerchantLogo from "./ui/MerchantLogo";
@@ -45,11 +46,13 @@ import BrixChat from "./brix/BrixChat";
 import DeveloperKeys from "./DeveloperKeys";
 import MerchantNews from "./MerchantNews";
 import { CardShowcase } from "./CardShowcase";
-import { MarketTicker } from "./shell/MarketTicker";
+import { HeaderTrain, MarketTicker } from "./shell/MarketTicker";
 import GoogleOneTap, { disableGoogleAutoSelect } from "./GoogleOneTap";
 import SmsSignIn from "./SmsSignIn";
 import Refunds from "./refunds/Refunds";
-import GiftCards from "./giftcards/GiftCards";
+import { GiftCardStudio, GiftCardWallet } from "./giftcards/GiftCards";
+import { CardStudio } from "./cards/CardStudio";
+import "./cards/cards.css";
 import "./giftcards/giftcards.css";
 import { nextDecision, type NextDecision } from "@/lib/next-decision";
 import Practice from "./practice/Practice";
@@ -81,6 +84,7 @@ export type View =
   | "practice"
   | "connect"
   | "settings"
+  | "developer"
   | "admin";
 
 class ApiError extends Error {
@@ -113,7 +117,7 @@ const shortDate = (s: string) =>
   });
 const nav = [
   { href: "dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "subscriptions", label: "Your charges", icon: Layers3 },
+  { href: "subscriptions", label: "Charges", icon: Layers3 },
   { href: "cards", label: "Cards", icon: CreditCard },
   { href: "connect", label: "Connections", icon: Cable },
 ] as const;
@@ -121,13 +125,13 @@ const nav = [
 const titles: Record<View, [string, string]> = {
   dashboard: ["Overview", "Your next charges, all in one place."],
   subscriptions: [
-    "Your charges",
+    "Charges",
     "Every subscription and free trial Brix is watching.",
   ],
   cards: ["Cards", "One-time cards and gift balances."],
   refunds: ["Refunds", "Give your school refund a plan."],
   practice: [
-    "Practice investing",
+    "Invest",
     "Real prices, virtual money. Learn before you risk anything.",
   ],
   connect: [
@@ -135,6 +139,7 @@ const titles: Record<View, [string, string]> = {
     "Link a bank through Plaid and choose how Brix reaches you.",
   ],
   settings: ["Settings", "Reminder channels, your phone number and your data."],
+  developer: ["Developers", "API keys for building on Brix, and the docs."],
   admin: ["Admin", "Demo controls and integration checks."],
 };
 
@@ -246,8 +251,22 @@ function ChargeRow({
   );
 }
 
-export default function BrixApp({ view }: { view: View }) {
+const VIEWS: View[] = [
+  "dashboard",
+  "subscriptions",
+  "cards",
+  "refunds",
+  "practice",
+  "connect",
+  "settings",
+  "developer",
+  "admin",
+];
+
+export default function BrixApp() {
   const router = useRouter();
+  const segment = usePathname().split("/")[1] as View;
+  const view: View = VIEWS.includes(segment) ? segment : "dashboard";
   const sidebar = useSidebarState();
   const { setDrawerOpen } = sidebar;
   const closeDrawer = useCallback(() => setDrawerOpen(false), [setDrawerOpen]);
@@ -432,9 +451,10 @@ export default function BrixApp({ view }: { view: View }) {
     () => [
       ...nav.map((n) => ({ href: n.href, label: n.label })),
       { href: "refunds", label: "School refunds" },
-      { href: "practice", label: "Practice investing" },
+      { href: "practice", label: "Invest" },
       { href: "cards#gift-title", label: "Gift cards" },
       { href: "settings", label: "Settings" },
+      { href: "developer", label: "Developers" },
       { href: "onboarding", label: "Setup guide" },
     ],
     [],
@@ -481,7 +501,7 @@ export default function BrixApp({ view }: { view: View }) {
             label: `${newRefunds} refund${newRefunds === 1 ? "" : "s"} to plan`,
           },
         },
-        { href: "practice", label: "Practice investing", icon: TrendingUp },
+        { href: "practice", label: "Invest", icon: TrendingUp },
       ],
     },
     {
@@ -489,6 +509,7 @@ export default function BrixApp({ view }: { view: View }) {
       items: [
         { ...nav[3] },
         { href: "settings", label: "Settings", icon: Settings },
+        { href: "developer", label: "Developers", icon: Code2 },
       ],
     },
   ];
@@ -533,13 +554,6 @@ export default function BrixApp({ view }: { view: View }) {
           <Link href="/" className="wordmark wordmark--sm topbar__brand">
             <Wordmark />
           </Link>
-          <span className="topbar__crumbs">
-            Your space <ChevronRight size={14} />
-            <strong>
-              {nav.find((n) => n.href === view)?.label ||
-                view.charAt(0).toUpperCase() + view.slice(1)}
-            </strong>
-          </span>
           <MarketTicker request={request} />
           <AppSearch
             pages={searchPages}
@@ -548,6 +562,7 @@ export default function BrixApp({ view }: { view: View }) {
             events={state?.events ?? []}
             onSelect={openResult}
           />
+          <HeaderTrain />
         </header>
         {demo && (
           <div className="demo-banner" role="note">
@@ -557,9 +572,6 @@ export default function BrixApp({ view }: { view: View }) {
         <main className="page" id="main">
           <div className="page-heading">
             <div>
-              <span className="eyebrow">
-                {name ? `${name.split(" ")[0]}’s money` : "Your money"}
-              </span>
               <h1>{titles[view][0]}</h1>
               <p>{titles[view][1]}</p>
             </div>
@@ -959,132 +971,114 @@ export default function BrixApp({ view }: { view: View }) {
                 </>
               )}
               {view === "cards" && (
-                <div className="cards-layout">
-                  <section className="card form-card">
-                    <CreditCard size={28} />
-                    <h2>New one-time card</h2>
-                    <p>
-                      Create a single-use sandbox card. Brix will ask you to
-                      confirm before creating it.
-                    </p>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const f = new FormData(e.currentTarget);
-                        void action(async () => {
+                <div className="cards-page">
+                  <div className="cards-studios">
+                    <CardStudio
+                      busy={busy}
+                      onCreate={(card) =>
+                        action(async () => {
                           const result = await request<{ eventId?: string }>(
                             "/api/cards",
                             "POST",
-                            {
-                              purpose: f.get("purpose"),
-                              spendLimit: Number(f.get("spendLimit")),
-                            },
+                            card,
                           );
                           setChatOpen(true);
                           if (result.eventId) chat.stream(result.eventId);
-                        });
-                      }}
+                        })
+                      }
+                    />
+                    <GiftCardStudio
+                      request={request}
+                      action={action}
+                      busy={busy}
+                    />
+                  </div>
+                  <div className="card wallet">
+                    <section
+                      className="wallet-group"
+                      aria-labelledby="issued-title"
                     >
-                      <label className="field">
-                        What’s it for?
-                        <input
-                          name="purpose"
-                          required
-                          maxLength={80}
-                          placeholder="e.g. Notion AI trial"
-                        />
-                      </label>
-                      <label className="field">
-                        Spending limit (USD)
-                        <input
-                          name="spendLimit"
-                          required
-                          type="number"
-                          min="0.01"
-                          max="500"
-                          step="0.01"
-                          placeholder="10.00"
-                        />
-                      </label>
-                      <button className="btn btn--primary" disabled={busy}>
-                        Review card <ArrowRight size={17} />
-                      </button>
-                    </form>
-                    <small>
-                      Sandbox only. These cards cannot spend real money.
-                    </small>
-                  </section>
-                  <aside className="cards-side">
-                    <GiftCards
+                      <div className="wallet-group__head">
+                        <h2 id="issued-title">One-time cards</h2>
+                        <p>
+                          {openCards
+                            ? `${openCards} open ${openCards === 1 ? "card" : "cards"}.`
+                            : state.cards.length
+                              ? "All closed."
+                              : "No cards yet."}
+                        </p>
+                      </div>
+                      {state.cards.length ? (
+                        <div className="wallet-grid card-list">
+                          {state.cards.map((c) => (
+                            <article
+                              className="card-item"
+                              key={c.id}
+                              id={`card-${c.id}`}
+                            >
+                              <VirtualCard
+                                purpose={c.purpose}
+                                last4={c.last4}
+                                limit={c.spendLimit}
+                                state={c.state}
+                                expiry={null}
+                                created={c.createdAt}
+                                design={c.design}
+                              />
+                              <div className="card-item__meta">
+                                <span
+                                  className={`badge ${c.state === "OPEN" ? "badge--green" : ""}`}
+                                >
+                                  {c.state === "OPEN"
+                                    ? "Open"
+                                    : c.state === "PAUSED"
+                                      ? "Paused"
+                                      : "Closed"}
+                                </span>
+                                <small>
+                                  {c.source === "mock"
+                                    ? "Demo card · simulated single use"
+                                    : "Sandbox single-use card"}
+                                </small>
+                                {c.state !== "CLOSED" && (
+                                  <ConfirmAction
+                                    className="btn btn--sm"
+                                    label="Close card"
+                                    question={`Close the ${c.purpose} card? This can’t be undone.`}
+                                    confirmLabel="Close card"
+                                    tone="danger"
+                                    disabled={busy}
+                                    onConfirm={() =>
+                                      void action(async () => {
+                                        await request("/api/cards", "PATCH", {
+                                          id: c.id,
+                                          state: "CLOSED",
+                                        });
+                                        setNotice("Card closed.");
+                                      })
+                                    }
+                                  />
+                                )}
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="wallet-empty">
+                          <CreditCard size={20} aria-hidden />
+                          <span>
+                            Cards you create show up here with their limit and
+                            the last four digits.
+                          </span>
+                        </div>
+                      )}
+                    </section>
+                    <GiftCardWallet
                       cards={state.giftCards ?? []}
                       request={request}
                       action={action}
                       busy={busy}
                     />
-                  </aside>
-                  <div className="card-list">
-                    {state.cards.length ? (
-                      state.cards.map((c) => (
-                        <article
-                          className="card-item"
-                          key={c.id}
-                          id={`card-${c.id}`}
-                        >
-                          <VirtualCard
-                            purpose={c.purpose}
-                            last4={c.last4}
-                            limit={c.spendLimit}
-                            state={c.state}
-                            expiry={null}
-                            created={c.createdAt}
-                          />
-                          <div className="card-item__meta">
-                            <span
-                              className={`badge ${c.state === "OPEN" ? "badge--green" : ""}`}
-                            >
-                              {c.state === "OPEN"
-                                ? "Open"
-                                : c.state === "PAUSED"
-                                  ? "Paused"
-                                  : "Closed"}
-                            </span>
-                            <small>
-                              {c.source === "mock"
-                                ? "Demo card · simulated single use"
-                                : "Sandbox single-use card"}
-                            </small>
-                            {c.state !== "CLOSED" && (
-                              <ConfirmAction
-                                className="btn btn--sm"
-                                label="Close card"
-                                question={`Close the ${c.purpose} card? This can’t be undone.`}
-                                confirmLabel="Close card"
-                                tone="danger"
-                                disabled={busy}
-                                onConfirm={() =>
-                                  void action(async () => {
-                                    await request("/api/cards", "PATCH", {
-                                      id: c.id,
-                                      state: "CLOSED",
-                                    });
-                                    setNotice("Card closed.");
-                                  })
-                                }
-                              />
-                            )}
-                          </div>
-                        </article>
-                      ))
-                    ) : (
-                      <div className="card empty-state">
-                        <CreditCard size={30} />
-                        <h3>No cards yet</h3>
-                        <p>
-                          Cards you create show up here with their limit and the
-                          last four digits.
-                        </p>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -1207,6 +1201,23 @@ export default function BrixApp({ view }: { view: View }) {
                       />
                     </div>
                   </form>
+                </div>
+              )}
+              {view === "developer" && (
+                <div className="settings-stack">
+                  <section className="card form-card developer-intro">
+                    <BookOpen size={26} />
+                    <h2>Build on Brix</h2>
+                    <p>
+                      Read your subscriptions, trials, refunds and practice
+                      portfolio from your own app, mark charges to cancel and
+                      schedule reminders. Every key is scoped and can be revoked
+                      here.
+                    </p>
+                    <Link href="/developers" className="btn btn--sm">
+                      Read the API docs <ArrowUpRight size={15} />
+                    </Link>
+                  </section>
                   <DeveloperKeys request={request} />
                 </div>
               )}
@@ -1277,11 +1288,7 @@ export default function BrixApp({ view }: { view: View }) {
               aria-current={view === n.href ? "page" : undefined}
             >
               <n.icon size={20} />
-              <span>
-                {n.label
-                  .replace("One-time cards", "Cards")
-                  .replace("Your charges", "Charges")}
-              </span>
+              <span>{n.label}</span>
             </Link>
           ),
         )}

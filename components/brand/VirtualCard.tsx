@@ -19,6 +19,7 @@ export function VirtualCard({
   state = "OPEN",
   note,
   tilt = true,
+  design,
   className = "",
 }: {
   purpose: string;
@@ -30,6 +31,7 @@ export function VirtualCard({
   state?: string;
   note?: string;
   tilt?: boolean;
+  design?: "graphite" | "clay" | "cobalt";
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export function VirtualCard({
   return (
     <div
       ref={ref}
-      className={`vcard${closed ? " vcard--closed" : ""} ${className}`.trim()}
+      className={`vcard${design ? ` vcard--${design}` : ""}${closed ? " vcard--closed" : ""} ${className}`.trim()}
       onPointerMove={onMove}
       onPointerLeave={reset}
       role="img"

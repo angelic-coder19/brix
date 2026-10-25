@@ -14,6 +14,7 @@ import type { RequestFn } from "../brix/useBrixChat";
 import type { AutoRule, Order } from "@/lib/practice/engine";
 import type { Quote } from "@/lib/market/quotes";
 import type { Security } from "@/lib/market/universe";
+import { Leaderboard, PriceChart } from "./PracticeInsights";
 import "./practice.css";
 
 interface PositionView {
@@ -241,6 +242,10 @@ function Start({
           </button>
         </form>
       </section>
+      <div className="practice-insights">
+        <PriceChart request={request} symbols={["VOO", "QQQ", "VTI"]} />
+        <Leaderboard request={request} />
+      </div>
       <MarketSnapshot request={request} />
     </div>
   );
@@ -319,6 +324,14 @@ function Portfolio({
           <p>Realized gain: {usd(p.realized)}</p>
         </div>
       </section>
+
+      <div className="practice-insights">
+        <PriceChart
+          request={request}
+          symbols={p.positions.map((x) => x.symbol)}
+        />
+        <Leaderboard request={request} />
+      </div>
 
       <AllocationChart portfolio={p} sample={view.sample} />
 
