@@ -1,4 +1,4 @@
-import { getQuotes } from "../market/quotes";
+import { getQuotes, type Quote } from "../market/quotes";
 import { getPortfolio, getState, listPortfolioOwners } from "../store";
 import { valuation, type Portfolio } from "./engine";
 
@@ -54,6 +54,24 @@ export function publicName(displayName: string) {
     : first;
 }
 
+async function rowFor(
+  uid: string,
+  p: Portfolio,
+  quotes: Record<string, Quote>,
+) {
+  const v = valuation(p, quotes);
+  const trades = p.orders.filter((o) => o.status === "filled").length;
+  const rules = p.rules.filter((r) => r.active).length;
+  return {
+    uid,
+    name: publicName((await getState(uid)).user.displayName ?? ""),
+    gainPct: v.gainPct,
+    trades,
+    rules,
+    coins: coinsFor(v.gainPct, trades, rules),
+  };
+}
+
 async function players() {
   if (cached && Date.now() - cached.at < TTL_MS) return cached.rows;
   const owners = (await listPortfolioOwners()).slice(0, MAX_PLAYERS);
@@ -66,20 +84,7 @@ async function players() {
     ...new Set(portfolios.flatMap(({ p }) => Object.keys(p.positions))),
   ]);
   const rows = await Promise.all(
-    portfolios.map(async ({ uid, p }) => {
-      const v = valuation(p, quotes);
-      const trades = p.orders.filter((o) => o.status === "filled").length;
-      const rules = p.rules.filter((r) => r.active).length;
-      const name = publicName((await getState(uid)).user.displayName ?? "");
-      return {
-        uid,
-        name,
-        gainPct: v.gainPct,
-        trades,
-        rules,
-        coins: coinsFor(v.gainPct, trades, rules),
-      };
-    }),
+    portfolios.map(({ uid, p }) => rowFor(uid, p, quotes)),
   );
   cached = { at: Date.now(), rows };
   return rows;
@@ -87,7 +92,14 @@ async function players() {
 
 /** The top 10 by coins, plus your own row if you're further down. */
 export async function leaderboard(uid: string) {
-  const real = await players();
+  // Everyone else may be up to 5 minutes old; your own row is always fresh.
+  const mine = await getPortfolio(uid);
+  const real = [
+    ...(await players()).filter((r) => r.uid !== uid),
+    ...(mine
+      ? [await rowFor(uid, mine, await getQuotes(Object.keys(mine.positions)))]
+      : []),
+  ];
   const samples =
     real.length < 5
       ? SAMPLES.map((s) => ({
@@ -103,9 +115,9 @@ export async function leaderboard(uid: string) {
       return { ...rest, rank: i + 1, ...(owner === uid ? { you: true } : {}) };
     });
   const top = ranked.slice(0, 10);
-  const mine = ranked.find((r) => r.you);
+  const you = ranked.find((r) => r.you);
   return {
-    entries: mine && mine.rank > 10 ? [...top, mine] : top,
+    entries: you && you.rank > 10 ? [...top, you] : top,
     players: real.length,
     hasSamples: samples.length > 0,
   };
