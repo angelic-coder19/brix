@@ -409,8 +409,9 @@
   background: var(--color-accent-soft);
   overflow: hidden;
 }
-.chat-launcher__face .buddy {
-  margin: 6px 0 0 2px;
+.chat-launcher__mark {
+  width: 32px;
+  height: 30px;
 }
 .chat-launcher__dot {
   width: 9px;

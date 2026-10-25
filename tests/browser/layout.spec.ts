@@ -1,17 +1,41 @@
 import { test, expect } from "@playwright/test";
 
-test("header compresses into a pill and tracks scroll progress", async ({ page }) => {
+test("header stays full-width while the progress train rides its bottom edge", async ({
+  page,
+}) => {
   await page.goto("/");
   const header = page.locator("header.lp-nav");
-  await expect(header).toHaveAttribute("data-compact", "false");
+  const bar = header.locator(".lp-nav__bar");
+  const train = header.locator(".lp-progress__train");
+  await expect(header).toHaveAttribute("data-riding", "false");
+  await expect(train).toHaveCSS("opacity", "0");
+
   await page.evaluate(() => window.scrollTo(0, 1600));
-  await expect(header).toHaveAttribute("data-compact", "true");
+  await expect(header).toHaveAttribute("data-riding", "true");
+  await expect(train).toHaveCSS("opacity", "1");
   const progress = await header.evaluate((el) =>
     Number(getComputedStyle(el).getPropertyValue("--progress")),
   );
   expect(progress).toBeGreaterThan(0);
+
+  // No floating pill: square corners and the full viewport width.
+  await expect(bar).toHaveCSS("border-top-left-radius", "0px");
+  const viewport = page.viewportSize()!;
+  const barBox = (await bar.boundingBox())!;
+  expect(barBox.x).toBe(0);
+  expect(Math.round(barBox.width)).toBe(viewport.width);
+
+  // The train stays inside the header and below every nav link.
+  const t = (await train.boundingBox())!;
+  expect(t.y + t.height).toBeLessThanOrEqual(barBox.y + barBox.height + 1);
+  for (const link of await header.locator(".lp-nav__links a").all()) {
+    if (!(await link.isVisible())) continue;
+    const l = (await link.boundingBox())!;
+    expect(t.y).toBeGreaterThanOrEqual(l.y + l.height - 1);
+  }
+
   await page.evaluate(() => window.scrollTo(0, 0));
-  await expect(header).toHaveAttribute("data-compact", "false");
+  await expect(header).toHaveAttribute("data-riding", "false");
 });
 
 test("help launcher opens, minimizes with Escape and closes", async ({ page }) => {

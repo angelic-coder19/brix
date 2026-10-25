@@ -25,8 +25,9 @@ function StatusBar({ tone = "light" }: { tone?: "light" | "dark" }) {
 }
 
 /**
- * A realistic phone: bezel, side buttons, dynamic island and a status bar, with
- * a full-screen capture of the Brix app (390×797 below the status bar).
+ * A modern phone at true proportions: a 393×852 screen (19.5:9) inside a thin
+ * bezel, with the island and status bar drawn over a full-screen 3x capture.
+ * Every measurement is in container units, so it scales without distorting.
  */
 export function Phone({
   src,
@@ -43,19 +44,21 @@ export function Phone({
 }) {
   return (
     <figure className={`device-phone ${className}`}>
-      <div className="device-phone__screen">
-        <StatusBar />
-        <Image
-          src={src}
-          alt={alt}
-          width={780}
-          height={1594}
+      <div className="device-phone__frame">
+        <div className="device-phone__screen">
+          <Image
+            src={src}
+            alt={alt}
+            width={1179}
+            height={2556}
           sizes={sizes}
           preload={preload}
-          loading={preload ? "eager" : "lazy"}
-        />
-        <span className="device-phone__island" aria-hidden="true" />
-        <span className="device-phone__home" aria-hidden="true" />
+            loading={preload ? "eager" : "lazy"}
+          />
+          <StatusBar />
+          <span className="device-phone__island" aria-hidden="true" />
+          <span className="device-phone__home" aria-hidden="true" />
+        </div>
       </div>
     </figure>
   );

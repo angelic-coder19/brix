@@ -24,6 +24,7 @@ import { CardStack } from "@/components/landing/Visuals";
 import { BrandMark } from "@/components/ui/MerchantLogo";
 import type { BrandSlug } from "@/lib/brands";
 import "./landing.css";
+import { BrixMark } from "@/components/brand/BrixMark";
 
 const links = [
   { href: "#product", label: "Product" },
@@ -145,14 +146,14 @@ export default function Home() {
           </div>
           <div className="hero__visual">
             <Phone
-              src="/screens/dashboard-mobile.webp"
+              src="/screens/dashboard-mobile-393.webp"
               alt="The Brix overview on a phone: $62.94 a month in recurring charges, with Spotify, Netflix and Adobe coming up"
               preload
               sizes="(max-width: 640px) 62vw, 300px"
               className="hero__phone hero__phone--main"
             />
             <Phone
-              src="/screens/chat-confirm-mobile.webp"
+              src="/screens/chat-confirm-mobile-393.webp"
               alt="Brix chat asking you to reply yes before it marks Spotify to cancel"
               sizes="(max-width: 640px) 48vw, 250px"
               className="hero__phone hero__phone--side"
@@ -209,7 +210,7 @@ export default function Home() {
               </ul>
             </div>
             <Browser
-              src="/screens/dashboard-desktop.webp"
+              src="/screens/dashboard-desktop-1680.webp"
               alt="The Brix overview in a browser, listing a Notion trial ending Oct 28 above Spotify and Netflix renewals"
               url="usebrix.app/dashboard"
               className="row__media"
@@ -232,12 +233,12 @@ export default function Home() {
             </div>
             <div className="row__media row__phones">
               <Phone
-                src="/screens/chat-confirm-mobile.webp"
+                src="/screens/chat-confirm-mobile-393.webp"
                 alt="Brix asks: Mark Spotify ($11.99) to cancel? Reply yes to confirm"
                 sizes="(max-width: 640px) 46vw, 260px"
               />
               <Phone
-                src="/screens/chat-cancelled-mobile.webp"
+                src="/screens/chat-cancelled-mobile-393.webp"
                 alt="After replying yes, Brix confirms Spotify is marked to cancel and links the cancellation page"
                 sizes="(max-width: 640px) 46vw, 260px"
               />
@@ -464,7 +465,7 @@ export default function Home() {
         <div className="container lp-footer__grid">
           <div className="lp-footer__brand">
             <Link href="/" className="wordmark">
-              <span className="brand-block" />
+              <BrixMark className="brand-mark" />
               brix<span className="brand-period">.</span>
             </Link>
             <p>Tracks subscriptions and free trials for college students. Never moves money.</p>

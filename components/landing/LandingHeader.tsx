@@ -1,39 +1,34 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import BrixBuddy from "@/components/brix/BrixBuddy";
-import type { BuddyMood } from "@/lib/agent/persona";
 import MobileMenu from "./MobileMenu";
+import { BrixMark } from "@/components/brand/BrixMark";
 
 type NavLink = { href: string; label: string };
 
 /**
- * Sticky header that tucks into a floating pill once you scroll, highlights the
- * section you're reading, and runs Brix along a little track as a progress bar.
+ * Full-width sticky header. Highlights the section you're reading and runs Brix
+ * along its bottom edge as a scroll progress bar.
  */
 export default function LandingHeader({ links }: { links: NavLink[] }) {
   const header = useRef<HTMLElement>(null);
-  const [compact, setCompact] = useState(false);
+  const [riding, setRiding] = useState(false);
+  const [arrived, setArrived] = useState(false);
   const [active, setActive] = useState<string>("");
-  const [mood, setMood] = useState<BuddyMood>("idle");
 
-  // Progress + compact state: one rAF per scroll burst, writes a CSS variable.
+  // One rAF per scroll burst; the position itself is a CSS variable.
   useEffect(() => {
     let raf = 0;
-    let idle: ReturnType<typeof setTimeout> | undefined;
     const update = () => {
       raf = 0;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const y = window.scrollY;
       const p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
       header.current?.style.setProperty("--progress", p.toFixed(4));
-      setCompact(y > 24);
-      setMood(p > 0.985 ? "celebrate" : y < 8 ? "idle" : "happy");
-      clearTimeout(idle);
-      idle = setTimeout(
-        () => setMood((m) => (m === "happy" ? "idle" : m)),
-        900,
-      );
+      // The cart appears once you've scrolled a little and stays until you're
+      // back at the top; it hops when it reaches the end.
+      setRiding(y > 80);
+      setArrived(p > 0.985);
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -43,7 +38,6 @@ export default function LandingHeader({ links }: { links: NavLink[] }) {
     window.addEventListener("resize", onScroll);
     return () => {
       cancelAnimationFrame(raf);
-      clearTimeout(idle);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
@@ -70,12 +64,13 @@ export default function LandingHeader({ links }: { links: NavLink[] }) {
   return (
     <header
       ref={header}
-      className={`lp-nav${compact ? " is-compact" : ""}`}
-      data-compact={compact ? "true" : "false"}
+      className="lp-nav"
+      data-riding={riding ? "true" : "false"}
+      data-arrived={arrived ? "true" : "false"}
     >
       <div className="lp-nav__bar">
         <Link href="/" className="wordmark" aria-label="Brix home">
-          <span className="brand-block" />
+          <BrixMark className="brand-mark" />
           brix<span className="brand-period">.</span>
         </Link>
         <nav className="lp-nav__links" aria-label="Main">
@@ -100,12 +95,9 @@ export default function LandingHeader({ links }: { links: NavLink[] }) {
           <MobileMenu links={links} />
         </div>
         <div className="lp-progress" aria-hidden="true">
-          <span className="lp-progress__rail" />
           <span className="lp-progress__fill" />
           <span className="lp-progress__train">
-            <span className="lp-progress__rider">
-              <BrixBuddy mood={mood} scale={0.1} decorative follow={false} />
-            </span>
+            <BrixMark className="lp-progress__rider" />
             <span className="lp-progress__car">
               <i />
               <i />

@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { Minus, X } from "lucide-react";
-import BrixBuddy from "@/components/brix/BrixBuddy";
 import BotDemo from "./BotDemo";
+import { BrixMark } from "@/components/brand/BrixMark";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea, select, [tabindex]:not([tabindex="-1"])';
@@ -98,7 +98,7 @@ export default function HelpLauncher() {
           onClick={() => setState("open")}
         >
           <span className="chat-launcher__face">
-            <BrixBuddy mood="happy" scale={0.17} decorative follow={false} />
+            <BrixMark className="chat-launcher__mark" />
           </span>
           <span className="chat-launcher__label">Questions?</span>
           {state === "minimized" && <span className="chat-launcher__dot" aria-hidden="true" />}

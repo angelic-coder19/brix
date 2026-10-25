@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { BrixMark } from "@/components/brand/BrixMark";
 
 const NOTICES = [
   { title: "Spotify renews Friday", body: "$11.99 from checking. Reply “remind” or “cancel”." },
@@ -20,7 +21,7 @@ export default function HeroNotice() {
     <div className="hero__notice" data-buddy-mood="concerned" aria-hidden="true">
       <div className="hero__notice-inner" key={i}>
         <span className="hero__notice-app">
-          <span className="brand-block" /> Brix
+          <BrixMark className="brand-mark" /> Brix
           <time>now</time>
         </span>
         <strong>{n.title}</strong>
