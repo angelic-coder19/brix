@@ -66,7 +66,7 @@ export async function runAnthropicTurn(
         .map((b) => b.text)
         .join("")
         .trim();
-      reply = text || reply;
+      reply = text ? plainText(text, channel) : reply;
       break;
     }
     messages.push({ role: "assistant", content: response.content });
@@ -109,4 +109,14 @@ export async function runAnthropicTurn(
     messages.push({ role: "user", content: results });
   }
   return reply;
+}
+
+/** Chat surfaces show raw text, so strip Markdown; WhatsApp keeps its own *bold*. */
+export function plainText(text: string, channel: Channel) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, channel === "whatsapp" ? "*$1*" : "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*]\s+/gm, channel === "whatsapp" ? "• " : "- ")
+    .trim();
 }

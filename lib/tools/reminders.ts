@@ -2,6 +2,24 @@ import { randomUUID } from "node:crypto";
 import { getState, updateState } from "../store";
 import { isDemo } from "../auth";
 import { sendWhatsApp } from "../twilio";
+import { placeReminderCall } from "../vapi-calls";
+import type { AppState, Reminder } from "../types";
+
+/** Calls for the 2-day heads-up when allowed, otherwise WhatsApp, otherwise in-app. */
+export function pickChannel(
+  s: AppState,
+  threshold: number,
+): Reminder["channel"] {
+  if (isDemo()) return "push";
+  if (threshold === 2 && s.user.callOptIn && s.user.phoneE164) return "call";
+  return s.user.whatsappOptIn ? "whatsapp" : "push";
+}
+/** A phone channel can be used only while the user still allows it. */
+export function channelAllowed(s: AppState, channel: Reminder["channel"]) {
+  if (channel === "whatsapp") return s.user.whatsappOptIn && !!s.user.phoneE164;
+  if (channel === "call") return s.user.callOptIn && !!s.user.phoneE164;
+  return true;
+}
 export async function runReminders(uid: string) {
   const now = new Date(),
     today = now.toISOString().slice(0, 10);
@@ -22,7 +40,7 @@ export async function runReminders(uid: string) {
           id,
           chargeId: charge.id,
           remindAt: now.toISOString(),
-          channel: !isDemo() && s.user.whatsappOptIn ? "whatsapp" : "push",
+          channel: pickChannel(s, threshold),
           sent: false,
           createdBy: "system",
         });
@@ -51,9 +69,7 @@ export async function runReminders(uid: string) {
     }
     if (
       (isDemo() && reminder.channel !== "push") ||
-      reminder.channel === "call" ||
-      (reminder.channel === "whatsapp" &&
-        (!state.user.whatsappOptIn || !state.user.phoneE164))
+      !channelAllowed(state, reminder.channel)
     ) {
       skipped++;
       continue;
@@ -71,8 +87,9 @@ export async function runReminders(uid: string) {
         !currentCharge ||
         currentCharge.status === "to_cancel" ||
         currentCharge.status === "cancelled" ||
-        (item.channel === "whatsapp" &&
-          (!s.user.whatsappOptIn || s.user.phoneE164 !== state.user.phoneE164))
+        (item.channel !== "push" &&
+          (!channelAllowed(s, item.channel) ||
+            s.user.phoneE164 !== state.user.phoneE164))
       )
         return;
       item.status = "sending";
@@ -84,7 +101,9 @@ export async function runReminders(uid: string) {
       const providerId =
         reminder.channel === "whatsapp"
           ? await sendWhatsApp(state.user.phoneE164!, text)
-          : undefined;
+          : reminder.channel === "call"
+            ? await placeReminderCall(state.user.phoneE164!, spoken(charge))
+            : undefined;
       await updateState(uid, (s) => {
         const item = s.reminders.find((r) => r.id === reminder.id)!;
         item.sent = true;
@@ -95,7 +114,7 @@ export async function runReminders(uid: string) {
           type:
             reminder.channel === "push" ? "reminder_in_app" : "reminder_sent",
           channel: "system",
-          text: `${reminder.channel === "push" ? "In-app reminder" : "WhatsApp accepted for delivery"}: ${text}`,
+          text: `${reminder.channel === "push" ? "In-app reminder" : reminder.channel === "call" ? "Reminder call placed" : "WhatsApp accepted for delivery"}: ${text}`,
           createdAt: new Date().toISOString(),
         });
       });
@@ -113,4 +132,23 @@ export async function runReminders(uid: string) {
     }
   }
   return { sent, inApp, skipped, failed };
+}
+
+/** What the assistant says first on a reminder call. */
+function spoken(charge: {
+  merchant: string;
+  amount: number;
+  nextDate: string;
+  kind: string;
+}) {
+  const day = new Date(`${charge.nextDate}T12:00:00Z`).toLocaleDateString(
+    "en-US",
+    {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      timeZone: "UTC",
+    },
+  );
+  return `Hi, it's Brix with a quick heads-up. ${charge.merchant} is expected to charge $${charge.amount.toFixed(2)} on ${day}${charge.kind === "trial" ? ", when your free trial ends" : ""}. Want to keep it, or should I mark it to cancel?`;
 }
