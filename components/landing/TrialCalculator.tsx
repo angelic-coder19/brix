@@ -19,6 +19,73 @@ export function estimate(trials: number, price: number, months: number) {
   };
 }
 
+const SEMESTER_MONTHS = 4;
+const SECOND_SEMESTER_START = 5;
+
+/**
+ * What forgotten trials have cost by each month of the school year. Trials
+ * start spread across each semester, then bill monthly until noticed, so the
+ * total climbs, steepens as charges overlap, and levels off.
+ */
+export function costByMonth(
+  trials: number,
+  price: number,
+  months: number,
+  semesters = SEMESTERS,
+) {
+  const bills: number[] = [];
+  for (let sem = 0; sem < semesters; sem++)
+    for (let i = 0; i < trials; i++) {
+      const start =
+        sem * SECOND_SEMESTER_START + (i * SEMESTER_MONTHS) / Math.max(1, trials);
+      for (let k = 1; k <= months; k++) bills.push(start + k);
+    }
+  const end = Math.ceil(Math.max(...bills, SECOND_SEMESTER_START + 4));
+  return Array.from({ length: end + 1 }, (_, m) => ({
+    month: m,
+    total: bills.filter((b) => b <= m).length * price,
+  }));
+}
+
+/** A smooth path through points that never overshoots (monotone cubic). */
+function smooth(points: [number, number][]) {
+  const n = points.length;
+  if (n < 2) return "";
+  const dx = points.slice(1).map((p, i) => p[0] - points[i][0]);
+  const m = points.slice(1).map((p, i) => (p[1] - points[i][1]) / dx[i]);
+  const t = points.map((_, i) =>
+    i === 0
+      ? m[0]
+      : i === n - 1
+        ? m[n - 2]
+        : m[i - 1] * m[i] <= 0
+          ? 0
+          : (m[i - 1] + m[i]) / 2,
+  );
+  for (let i = 0; i < n - 1; i++) {
+    if (m[i] === 0) {
+      t[i] = t[i + 1] = 0;
+      continue;
+    }
+    const a = t[i] / m[i],
+      b = t[i + 1] / m[i],
+      h = a * a + b * b;
+    if (h > 9) {
+      const k = 3 / Math.sqrt(h);
+      t[i] = k * a * m[i];
+      t[i + 1] = k * b * m[i];
+    }
+  }
+  let d = `M${points[0][0].toFixed(1)},${points[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const [x0, y0] = points[i],
+      [x1, y1] = points[i + 1],
+      h = dx[i] / 3;
+    d += ` C${(x0 + h).toFixed(1)},${(y0 + t[i] * h).toFixed(1)} ${(x1 - h).toFixed(1)},${(y1 - t[i + 1] * h).toFixed(1)} ${x1.toFixed(1)},${y1.toFixed(1)}`;
+  }
+  return d;
+}
+
 /** Counts toward a new value; jumps straight there under reduced motion. */
 function useTween(value: number, ms = 450) {
   const [shown, setShown] = useState(value);
@@ -110,16 +177,23 @@ export default function TrialCalculator() {
   const shownSemester = useTween(semester);
   const ceiling = Math.max(50, Math.ceil(year / 100) * 100);
   const chart = { left: 52, right: 454, top: 24, bottom: 210 };
+  const both = costByMonth(trials, price, months);
+  const first = costByMonth(trials, price, months, 1);
+  const last = both.at(-1)!.month;
   const x = (month: number) =>
-    chart.left + (month / months) * (chart.right - chart.left);
+    chart.left + (month / last) * (chart.right - chart.left);
   const y = (amount: number) =>
     chart.bottom - (amount / ceiling) * (chart.bottom - chart.top);
-  const series = (cohorts: number) =>
-    Array.from(
-      { length: months + 1 },
-      (_, month) => `${x(month)},${y(trials * price * month * cohorts)}`,
-    ).join(" ");
-  const ticks = [...new Set([0, Math.ceil(months / 2), months])];
+  const curve = (rows: { month: number; total: number }[]) =>
+    smooth(
+      [...rows, ...both.slice(rows.length)].map((r, i) => [
+        x(r.month),
+        y(i < rows.length ? r.total : rows.at(-1)!.total),
+      ]),
+    );
+  const yearPath = curve(both);
+  const semesterPath = curve(first);
+  const ticks = [0, Math.round(last / 2), last];
 
   return (
     <div className="calc" data-buddy-mood="thinking">
@@ -201,18 +275,18 @@ export default function TrialCalculator() {
                 </text>
               </g>
             ))}
-            <polygon
+            <path
               className="calc-chart__area"
-              points={`${chart.left},${chart.bottom} ${series(SEMESTERS)} ${chart.right},${chart.bottom}`}
+              d={`${yearPath} L${chart.right},${chart.bottom} L${chart.left},${chart.bottom} Z`}
             />
-            <polyline
+            <path
               className="calc-chart__line calc-chart__line--semester"
-              points={series(1)}
+              d={semesterPath}
             />
-            <polyline className="calc-chart__line" points={series(SEMESTERS)} />
+            <path className="calc-chart__line" d={yearPath} />
             <circle
               className="calc-chart__point"
-              cx={x(months)}
+              cx={x(last)}
               cy={y(year)}
               r="5"
             />
@@ -228,15 +302,15 @@ export default function TrialCalculator() {
               </text>
             ))}
           </svg>
-          <div className="calc-chart__axis">Paid months per trial</div>
+          <div className="calc-chart__axis">Months into the school year</div>
           <div className="calc-chart__legend">
             <span>
               <i />
-              Two semesters
+              Whole school year
             </span>
             <span>
               <i />
-              One semester
+              First semester only
             </span>
           </div>
         </figure>

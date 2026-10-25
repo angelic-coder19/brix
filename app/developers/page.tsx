@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { operations, type Operation } from "@/lib/api/openapi";
+import { operations } from "@/lib/api/openapi";
 import {
   MAX_KEYS_PER_USER,
   RATE_LIMIT_PER_MINUTE,
@@ -10,6 +10,8 @@ import { API_VERSION } from "@/lib/api/v1";
 import { ArrowUpRight } from "lucide-react";
 import LandingHeader from "@/components/landing/LandingHeader";
 import PeekCta from "@/components/landing/PeekCta";
+import { anchor, base, curl, ERRORS, REPO, SNIPPETS } from "@/lib/api/docs";
+import { CodeBlock, PageAsMarkdown } from "@/components/developers/CodeBlock";
 import "../landing.css";
 import "./developers.css";
 
@@ -19,86 +21,19 @@ export const metadata: Metadata = {
     "The Brix API: read subscriptions and trials, mark charges to cancel, and schedule reminders from your own apps.",
 };
 
-const origin = process.env.APP_URL?.startsWith("https://")
-  ? process.env.APP_URL.replace(/\/$/, "")
-  : "https://www.usebrix.app";
-const base = `${origin}/api/v1`;
-
-const anchor = (op: Operation) =>
-  `${op.method}-${op.path.replace(/[{}]/g, "").replace(/\//g, "-").replace(/^-/, "")}`;
-const samplePath = (op: Operation) =>
-  op.path.replace(
-    "{id}",
-    op.path.startsWith("/reminders") ? "manual:…" : "ch_123",
-  ) + (op.example?.query ?? "");
-
-function curl(op: Operation) {
-  const lines = [
-    `curl${op.method === "get" ? "" : ` -X ${op.method.toUpperCase()}`} "${base}${samplePath(op)}"`,
-    `  -H "Authorization: Bearer $BRIX_API_KEY"`,
-  ];
-  if (op.path === "/trials")
-    lines.push(`  -H "Idempotency-Key: trial-notion-nov"`);
-  if (op.example?.body)
-    lines.push(
-      `  -H "Content-Type: application/json"`,
-      `  -d '${JSON.stringify(op.example.body)}'`,
-    );
-  return lines.join(" \\\n");
-}
-
-const ERRORS: [number, string, string][] = [
-  [400, "invalid_request", "A parameter or body field is missing or invalid."],
-  [
-    401,
-    "authentication_failed",
-    "The key is missing, malformed, unknown, or revoked.",
-  ],
-  [
-    403,
-    "insufficient_scope",
-    "The key doesn't have the scope this endpoint needs.",
-  ],
-  [
-    404,
-    "not_found",
-    "No charge or reminder with that ID belongs to this user.",
-  ],
-  [
-    409,
-    "conflict",
-    "The change conflicts with the current state, e.g. a sent reminder.",
-  ],
-  [413, "request_too_large", "The body is larger than 64 KB."],
-  [
-    429,
-    "rate_limited",
-    `More than ${RATE_LIMIT_PER_MINUTE} requests in a minute. Wait for \`Retry-After\`.`,
-  ],
-  [
-    502,
-    "upstream_unavailable",
-    "A provider such as the news service didn't respond.",
-  ],
-  [
-    500,
-    "api_error",
-    "Something failed on our side. Retry; share the request ID if it continues.",
-  ],
-];
-
-const REPO = "https://github.com/Timeless-Dave/brix";
-
 const siteLinks = [
   { href: "/#product", label: "Product" },
   { href: "/#how", label: "How it works" },
-  { href: "/#demo", label: "Try the bot" },
+  { href: "/#calculator", label: "Cost check" },
   { href: "/#faq", label: "FAQ" },
   { href: "/developers", label: "Developers" },
 ];
 
 const STACK: [string, string][] = [
-  ["Next.js 16", "App Router, route handlers for the API, React 19, TypeScript"],
+  [
+    "Next.js 16",
+    "App Router, route handlers for the API, React 19, TypeScript",
+  ],
   ["Firebase", "Auth for sign-in, Firestore for charges, reminders and keys"],
   ["Plaid", "sandbox, read-only recurring transactions"],
   ["Anthropic", "the Brix agent behind web chat, WhatsApp and voice"],
@@ -139,7 +74,13 @@ const ENV: [string, string[]][] = [
   ],
   [
     "Vapi",
-    ["VAPI_API_KEY", "VAPI_ASSISTANT_ID", "VAPI_PHONE_NUMBER_ID", "VAPI_SERVER_SECRET", "NEXT_PUBLIC_VAPI_PHONE_NUMBER"],
+    [
+      "VAPI_API_KEY",
+      "VAPI_ASSISTANT_ID",
+      "VAPI_PHONE_NUMBER_ID",
+      "VAPI_SERVER_SECRET",
+      "NEXT_PUBLIC_VAPI_PHONE_NUMBER",
+    ],
   ],
   ["Lithic", ["LITHIC_API_KEY", "LITHIC_ENV"]],
   ["Other", ["NEWS_API_KEY", "CRON_SECRET", "ADMIN_EMAILS"]],
@@ -160,6 +101,7 @@ export default function DevelopersPage() {
             shortcut on your phone. Every request acts for one Brix user with a
             key they create and can revoke.
           </p>
+          <PageAsMarkdown />
           <nav className="dev-subnav" aria-label="On this page">
             <a href="#quickstart">Quickstart</a>
             <a href="#reference">API reference</a>
@@ -169,9 +111,9 @@ export default function DevelopersPage() {
               GitHub <ArrowUpRight size={14} />
             </a>
             <PeekCta size="sm">
-            <Link href="/settings" className="btn btn--sm btn--dark">
-              Get a key
-            </Link>
+              <Link href="/developer" className="btn btn--sm btn--dark">
+                Get a key
+              </Link>
             </PeekCta>
           </nav>
         </section>
@@ -181,9 +123,9 @@ export default function DevelopersPage() {
           <ol className="dev-steps">
             <li>
               Sign in to Brix and open{" "}
-              <Link href="/developer">Developers → API keys</Link>. Name
-              the key, pick only the permissions you need, and copy it. It’s
-              shown once.
+              <Link href="/developer">Developers → API keys</Link>. Name the
+              key, pick only the permissions you need, and copy it. It’s shown
+              once.
             </li>
             <li>
               Store it as an environment variable on your server, e.g.{" "}
@@ -192,36 +134,15 @@ export default function DevelopersPage() {
             </li>
             <li>Make your first call:</li>
           </ol>
-          <pre className="dev-code" tabIndex={0}>
-            <code>{`curl ${base}/me \\\n  -H "Authorization: Bearer $BRIX_API_KEY"`}</code>
-          </pre>
+          <CodeBlock code={SNIPPETS.first} />
           <div className="dev-grid">
             <div>
               <h3>JavaScript</h3>
-              <pre className="dev-code" tabIndex={0}>
-                <code>{`const res = await fetch("${base}/charges/upcoming?days=7", {
-  headers: { Authorization: \`Bearer \${process.env.BRIX_API_KEY}\` },
-});
-if (!res.ok) throw new Error((await res.json()).error.message);
-const { data } = await res.json();
-for (const c of data)
-  console.log(\`\${c.merchant}: $\${c.amount} on \${c.next_date}\`);`}</code>
-              </pre>
+              <CodeBlock code={SNIPPETS.js} />
             </div>
             <div>
               <h3>Python</h3>
-              <pre className="dev-code" tabIndex={0}>
-                <code>{`import os, requests
-
-r = requests.post(
-    "${base}/reminders",
-    headers={"Authorization": f"Bearer {os.environ['BRIX_API_KEY']}"},
-    json={"merchant": "Spotify", "when": "2 days before"},
-    timeout=10,
-)
-r.raise_for_status()
-print(r.json()["remind_at"])`}</code>
-              </pre>
+              <CodeBlock code={SNIPPETS.python} />
             </div>
           </div>
         </section>
@@ -236,7 +157,12 @@ print(r.json()["remind_at"])`}</code>
             scopes, and an endpoint without its scope returns{" "}
             <code>403 insufficient_scope</code>.
           </p>
-          <div className="dev-table-wrap" tabIndex={0} role="region" aria-label="Table">
+          <div
+            className="dev-table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label="Table"
+          >
             <table className="dev-table">
               <thead>
                 <tr>
@@ -312,16 +238,13 @@ print(r.json()["remind_at"])`}</code>
 
         <section className="dev-section">
           <h2>Errors</h2>
-          <pre className="dev-code" tabIndex={0}>
-            <code>{`{
-  "error": {
-    "type": "insufficient_scope",
-    "message": "This key is missing the \`charges:write\` scope.",
-    "request_id": "req_4f1c9a0b2e7d4c3a8b19"
-  }
-}`}</code>
-          </pre>
-          <div className="dev-table-wrap" tabIndex={0} role="region" aria-label="Table">
+          <CodeBlock code={SNIPPETS.error} />
+          <div
+            className="dev-table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label="Table"
+          >
             <table className="dev-table">
               <thead>
                 <tr>
@@ -382,9 +305,7 @@ print(r.json()["remind_at"])`}</code>
               <p className="dev-endpoint__scope">
                 Scope: {op.scope ? <code>{op.scope}</code> : "any valid key"}
               </p>
-              <pre className="dev-code" tabIndex={0}>
-                <code>{curl(op)}</code>
-              </pre>
+              <CodeBlock code={curl(op)} />
             </article>
           ))}
         </section>
@@ -426,7 +347,7 @@ print(r.json()["remind_at"])`}</code>
             Charges from linked banks are Plaid sandbox data; cards are Lithic
             sandbox cards and can’t spend real money. Treat a key like a
             password: anyone holding it can read that user’s subscriptions. If
-            one leaks, revoke it in Settings and create a new one.
+            one leaks, revoke it on the Developers page and create a new one.
           </p>
         </section>
 
@@ -452,13 +373,7 @@ print(r.json()["remind_at"])`}</code>
             </div>
             <div>
               <h3>Local demo (Node 22+)</h3>
-              <pre className="dev-code" tabIndex={0}>
-                <code>{`git clone https://github.com/Timeless-Dave/brix
-cd brix
-npm install
-cp .env.example .env.local
-npm run dev`}</code>
-              </pre>
+              <CodeBlock code={SNIPPETS.local} />
               <p>
                 The example file turns on <code>BRIX_DEMO_MODE</code> and{" "}
                 <code>NEXT_PUBLIC_BRIX_DEMO_MODE</code>, which skip sign-in and
@@ -471,8 +386,8 @@ npm run dev`}</code>
           </div>
           <h3>Environment variables</h3>
           <p>
-            Names from <code>.env.example</code>. Leave a provider’s values empty
-            to keep that integration off.
+            Names from <code>.env.example</code>. Leave a provider’s values
+            empty to keep that integration off.
           </p>
           <div className="dev-table-wrap">
             <table className="dev-table">

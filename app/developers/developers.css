@@ -253,3 +253,57 @@
   display: inline-block;
   margin: 2px 6px 2px 0;
 }
+
+/* Copyable code blocks and the "use with AI" row. */
+.dev-code-wrap {
+  position: relative;
+}
+.dev-code-wrap .dev-code {
+  padding-right: 88px;
+}
+.dev-copy {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid #ffffff2e;
+  border-radius: 8px;
+  background: #ffffff14;
+  color: #f7f5ef;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.dev-copy:hover {
+  background: #ffffff26;
+}
+.dev-ai {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 6px;
+}
+.dev-code-wrap,
+.dev-grid > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.dev-code-wrap .dev-code {
+  max-width: 100%;
+  overflow-x: auto;
+}
+/* Solid, so long lines that scroll underneath never show through. */
+.dev-copy {
+  z-index: 1;
+  background: #3a3a32;
+  border-color: #5a5a50;
+  box-shadow: -10px 0 12px 2px #292920;
+}
+.dev-copy:hover {
+  background: #48483f;
+}

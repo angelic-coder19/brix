@@ -567,3 +567,36 @@
   font-weight: 600;
   color: var(--color-muted);
 }
+/* Two independent columns, so a short card never leaves a gap beside a tall one. */
+.practice-stack {
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  min-width: 0;
+}
+.practice .order-list li,
+.practice section > .muted:last-child {
+  padding-inline: var(--space-6);
+}
+.practice .order-list li:last-child {
+  border-bottom: 0;
+}
+@media (max-width: 760px) {
+  .practice .order-list li,
+  .practice section > .muted:last-child {
+    padding-inline: var(--space-4);
+  }
+}
+.practice .card > .practice-empty {
+  margin: 0;
+  padding: 0 var(--space-6) var(--space-6);
+  font-size: var(--text-sm);
+}
+@media (max-width: 760px) {
+  .practice .card > .practice-empty {
+    padding: 0 var(--space-4) var(--space-4);
+  }
+}
+.practice-stack > * {
+  min-width: 0;
+}

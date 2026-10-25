@@ -168,7 +168,7 @@ test("hero types a changing ending without shifting its heading", async ({
   const fragment = page.locator(".hero-type__text");
   const heading = page.locator(".hero h1");
   const initial = await heading.boundingBox();
-  await expect(fragment).toHaveText("before your trial ends.", {
+  await expect(fragment).toHaveText("before the trial ends.", {
     timeout: 7000,
   });
   const changed = await heading.boundingBox();

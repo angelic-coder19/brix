@@ -46,7 +46,7 @@ test("calculator shows the formula and updates live", async ({ page }) => {
   const initialLine = await calc
     .locator(".calc-chart__line")
     .last()
-    .getAttribute("points");
+    .getAttribute("d");
   const trials = page.getByLabel("Free trials you start per semester");
   await expect(trials).toHaveAttribute("aria-valuetext", "3 trials");
   await trials.focus();
@@ -61,7 +61,7 @@ test("calculator shows the formula and updates live", async ({ page }) => {
     calc.getByRole("img", { name: /4 trials at \$12 per month/ }),
   ).toBeVisible();
   await expect(calc.locator(".calc-chart__line").last()).not.toHaveAttribute(
-    "points",
+    "d",
     initialLine!,
   );
 });

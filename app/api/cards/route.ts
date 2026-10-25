@@ -79,3 +79,21 @@ export async function PATCH(request: Request) {
     return errorResponse(error);
   }
 }
+/** Removes a closed card from the list. Open cards must be closed first. */
+export async function DELETE(request: Request) {
+  try {
+    const { uid } = await requireUser(request);
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id) throw new HttpError(400, "Send the card `id`.");
+    await updateState(uid, (s) => {
+      const card = s.cards.find((c) => c.id === id);
+      if (!card) throw new HttpError(404, "That card doesn't exist.");
+      if (card.state !== "CLOSED")
+        throw new HttpError(409, "Close the card before removing it.");
+      s.cards = s.cards.filter((c) => c.id !== id);
+    });
+    return Response.json({ cards: (await getState(uid)).cards });
+  } catch (error) {
+    return errorResponse(error);
+  }
+}

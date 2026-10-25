@@ -110,17 +110,18 @@
     ),
     linear-gradient(125deg, #3a54a8, #1c2855);
 }
-.swatch--graphite::after {
+/* Scoped so the shared .swatch default (dark) can't override the colours. */
+.studio__swatches .swatch--graphite::after {
   background: #292924;
 }
-.swatch--clay::after {
-  background: #a33a20;
+.studio__swatches .swatch--clay::after {
+  background: #b4432a;
 }
-.swatch--cobalt::after {
-  background: #344c9e;
+.studio__swatches .swatch--cobalt::after {
+  background: #3a54a8;
 }
 
-/* Typing on the card face. */
+/* Typing on the card face: soft, rounded fields that brighten on focus. */
 .vcard--editing .vcard__face {
   transform: none;
 }
@@ -130,53 +131,72 @@
   flex: 1;
   min-width: 0;
 }
-.vcard__edit input,
-.vcard__limit--edit input {
+.vcard__edit input {
   width: 100%;
   min-width: 0;
-  padding: 0.6cqw 0;
-  border: 0;
-  border-bottom: 1px dashed #ffffff66;
-  background: transparent;
+  margin-left: -2cqw;
+  padding: 1.2cqw 2cqw;
+  border: 1px solid #ffffff26;
+  border-radius: 2cqw;
+  background: #ffffff12;
   color: inherit;
   font: inherit;
   font-size: 4.4cqw;
   font-weight: 700;
   outline: none;
   caret-color: #f08a62;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+.vcard__edit input:hover {
+  border-color: #ffffff47;
+}
+.vcard__edit input:focus,
+.vcard__edit input:focus-visible {
+  border-color: #f08a62;
+  background: #ffffff1c;
+  outline: none;
 }
 .vcard__edit input::placeholder {
   color: #ffffff70;
-}
-.vcard__edit input:focus,
-.vcard__limit--edit input:focus {
-  border-bottom-color: #f08a62;
-  border-bottom-style: solid;
 }
 .vcard__limit--edit {
   display: inline-flex;
   align-items: center;
   gap: 0.4cqw;
   cursor: text;
+  border: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.vcard__limit--edit:hover {
+  border-color: #29292033;
+}
+.vcard__limit--edit:focus-within {
+  border-color: #c8462a;
+  box-shadow: 0 0 0 0.6cqw #f08a6255;
 }
 .vcard__limit--edit input {
-  width: 13cqw;
+  width: 12cqw;
   padding: 0;
-  border-bottom-color: #29292055;
-  font-size: 3.4cqw;
+  border: 0;
+  background: transparent;
   color: #292920;
+  font: inherit;
+  font-size: 3.4cqw;
+  font-weight: 700;
+  outline: none;
   caret-color: #c8462a;
   -moz-appearance: textfield;
   appearance: textfield;
+}
+.vcard__limit--edit input:focus-visible {
+  outline: none;
 }
 .vcard__limit--edit input::-webkit-inner-spin-button,
 .vcard__limit--edit input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
-}
-.vcard__limit--edit:focus-within {
-  outline: 2px solid #f08a62;
-  outline-offset: 1px;
 }
 
 /* Gift card face. */
@@ -284,10 +304,11 @@
 .giftface__edit input {
   width: 100%;
   min-width: 0;
-  padding: 0.4cqw 0;
-  border: 0;
-  border-bottom: 1px dashed #ffffff70;
-  background: transparent;
+  margin-left: -2cqw;
+  padding: 0.8cqw 2cqw;
+  border: 1px solid #ffffff33;
+  border-radius: 2cqw;
+  background: #ffffff14;
   color: inherit;
   font: inherit;
   outline: none;
@@ -297,8 +318,11 @@
 .giftface__edit input::placeholder {
   color: #ffffff80;
 }
-.giftface__edit input:focus {
-  border-bottom: 1px solid var(--gf-ribbon);
+.giftface__edit input:focus,
+.giftface__edit input:focus-visible {
+  border-color: var(--gf-ribbon);
+  background: #ffffff22;
+  outline: none;
 }
 .giftface__edit--store input {
   margin-top: 1.5cqw;
@@ -427,4 +451,7 @@
 /* Saved cards keep a real-card size instead of filling a wide column. */
 .cards-page .wallet-grid {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 320px));
+}
+.giftface__edit--balance input {
+  margin-left: 0;
 }
