@@ -69,9 +69,9 @@ test("leave preview asks once, then confirms", async ({ page }) => {
 test("Brix peeks out when the hero CTA is hovered", async ({ page, isMobile }) => {
   test.skip(isMobile, "hover only");
   await page.goto("/");
-  const peek = page.locator(".hero .peek__brix");
+  const peek = page.locator(".hero .peek:has(.btn--primary) .peek__brix");
   await expect(peek).toHaveCSS("opacity", "0");
-  await page.locator(".hero .peek .btn").hover();
+  await page.locator(".hero .peek .btn--primary").hover();
   await expect(peek).toHaveCSS("opacity", "1");
 });
 

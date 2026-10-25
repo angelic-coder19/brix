@@ -57,7 +57,7 @@ test("landing interactions: FAQ, calculator, mobile menu", async ({ page, isMobi
   // name="faq" makes it an exclusive accordion
   await expect(items.first()).not.toHaveAttribute("open", "");
 
-  const output = page.locator(".calc__result strong");
+  const output = page.locator(".calc__total");
   const before = await output.textContent();
   const slider = page.getByRole("slider").first();
   await slider.focus();
