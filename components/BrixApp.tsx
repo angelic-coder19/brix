@@ -72,6 +72,14 @@ class ApiError extends Error {
 }
 
 const hasFirebase = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+const ONBOARDED_KEY = "brix.onboarded";
+function readOnboarded() {
+  try {
+    return localStorage.getItem(ONBOARDED_KEY) === "1";
+  } catch {
+    return true;
+  }
+}
 const DAY = 86400000;
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -223,6 +231,11 @@ function BuddyCard({
 
 export default function BrixApp({ view }: { view: View }) {
   const router = useRouter();
+  const [setupPending, setSetupPending] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setSetupPending(!readOnboarded()), 0);
+    return () => clearTimeout(t);
+  }, []);
   const [user, setUser] = useState<User | null>(null),
     [authReady, setAuthReady] = useState(!hasFirebase),
     [state, setState] = useState<ClientState | null>(null),
@@ -342,6 +355,7 @@ export default function BrixApp({ view }: { view: View }) {
         );
       await signInWithPopup(auth, new GoogleAuthProvider());
       await request("/api/auth/profile", "POST", {});
+      if (!readOnboarded()) router.push("/onboarding");
     });
   }
 
@@ -507,6 +521,9 @@ export default function BrixApp({ view }: { view: View }) {
               >
                 Continue with Google <ArrowRight size={18} />
               </button>
+              <Link href="/onboarding" className="sign-in__alt">
+                New here? Set up Brix step by step
+              </Link>
             </section>
           ) : !state ? (
             <div className="loading-skel" role="status" aria-label="Loading your charges">
@@ -570,6 +587,33 @@ export default function BrixApp({ view }: { view: View }) {
               )}
               {view === "dashboard" && (
                 <>
+                  {setupPending && (
+                    <section className="card setup-strip" aria-label="Finish setting up">
+                      <div>
+                        <strong>Finish setting up Brix</strong>
+                        <span>
+                          Name, bank, a first trial and reminders. About two
+                          minutes, and you can skip any step.
+                        </span>
+                      </div>
+                      <div className="setup-strip__actions">
+                        <Link href="/onboarding" className="btn btn--primary">
+                          Continue setup <ArrowRight size={16} />
+                        </Link>
+                        <button
+                          className="btn btn--ghost"
+                          onClick={() => {
+                            try {
+                              localStorage.setItem(ONBOARDED_KEY, "1");
+                            } catch {}
+                            setSetupPending(false);
+                          }}
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </section>
+                  )}
                   <section className="summary-grid" aria-label="Summary">
                     <div className="card stat-card">
                       <div className="stat-card__label">
