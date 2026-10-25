@@ -49,6 +49,7 @@ import BrixChat from "./brix/BrixChat";
 import DeveloperKeys from "./DeveloperKeys";
 import MerchantNews from "./MerchantNews";
 import GoogleOneTap, { disableGoogleAutoSelect } from "./GoogleOneTap";
+import SmsSignIn from "./SmsSignIn";
 import {
   useBrixChat,
   type BrixChatApi,
@@ -515,6 +516,7 @@ export default function BrixApp({ view }: { view: View }) {
               >
                 Continue with Google <ArrowRight size={18} />
               </button>
+              <SmsSignIn />
             </section>
           ) : !state ? (
             <div
@@ -1315,18 +1317,34 @@ function Connect({
                     "Sign in with Google to verify a phone number.",
                   );
                 if (!verificationId) {
-                  captcha.current ??= new RecaptchaVerifier(
-                    auth,
-                    "phone-captcha",
-                    { size: "invisible" },
-                  );
-                  setVerificationId(
-                    await new PhoneAuthProvider(auth).verifyPhoneNumber(
-                      phone,
-                      captcha.current,
-                    ),
-                  );
-                  setNotice("Verification code sent to your phone.");
+                  try {
+                    captcha.current ??= new RecaptchaVerifier(
+                      auth,
+                      "phone-captcha",
+                      { size: "invisible" },
+                    );
+                    setVerificationId(
+                      await new PhoneAuthProvider(auth).verifyPhoneNumber(
+                        phone,
+                        captcha.current,
+                      ),
+                    );
+                    setNotice("Verification code sent to your phone.");
+                  } catch {
+                    // Firebase SMS unavailable (quota, billing, captcha): use Twilio Verify.
+                    captcha.current?.clear();
+                    captcha.current = null;
+                    await request("/api/auth/sms/start", "POST", { phone });
+                    setVerificationId("twilio");
+                    setNotice("We texted your code from Brix.");
+                  }
+                } else if (verificationId === "twilio") {
+                  await request("/api/auth/sms/verify", "POST", {
+                    phone,
+                    code,
+                  });
+                  await auth.currentUser.getIdToken(true);
+                  setNotice("Your phone number is verified.");
                 } else {
                   await linkWithCredential(
                     auth.currentUser,
