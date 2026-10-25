@@ -57,6 +57,7 @@ import type { Charge } from "@/lib/types";
 import { summarizeCharges } from "@/lib/summary";
 import "./app.css";
 import { BrixMark } from "@/components/brand/BrixMark";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 export type View =
   "dashboard" | "subscriptions" | "cards" | "connect" | "settings" | "admin";
@@ -370,8 +371,7 @@ export default function BrixApp({ view }: { view: View }) {
       </a>
       <aside className="sidebar" aria-label="Brix navigation">
         <Link href="/" className="wordmark">
-          <BrixMark className="brand-mark" />
-          brix<span className="brand-period">.</span>
+          <Wordmark />
         </Link>
         <div className="sidebar-caption">Subscriptions &amp; trials</div>
         <nav>
@@ -428,8 +428,7 @@ export default function BrixApp({ view }: { view: View }) {
       <div className="app-main">
         <header className="topbar">
           <Link href="/" className="wordmark wordmark--sm topbar__brand">
-            <BrixMark className="brand-mark" />
-            brix<span className="brand-period">.</span>
+          <Wordmark />
           </Link>
           <span className="topbar__crumbs">
             Your space <ChevronRight size={14} />

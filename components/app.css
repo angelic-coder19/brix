@@ -843,7 +843,7 @@
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   overflow-wrap: anywhere;
 }
@@ -864,7 +864,7 @@
   border-bottom: 1px solid var(--color-line);
 }
 .key-list code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-xs);
   color: var(--color-ink-soft);
 }
@@ -872,7 +872,7 @@
   justify-self: start;
 }
 .scope-option code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-sm);
   font-weight: 650;
 }

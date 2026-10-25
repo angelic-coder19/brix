@@ -23,16 +23,22 @@ export default function HeroBuddy() {
   const [cheer, setCheer] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
-    const onOver = (e: PointerEvent) => {
+    const onOver = (e: Event) => {
       const target = (e.target as Element | null)?.closest?.(
         "[data-buddy-mood]",
       );
       const mood = target?.getAttribute("data-buddy-mood") as BuddyMood | null;
       setHover(mood && MOODS.includes(mood) ? mood : null);
     };
+    // Keyboard focus counts too, so tabbing to a CTA gets the same reaction.
+    const onBlur = () => setHover(null);
     document.addEventListener("pointerover", onOver);
+    document.addEventListener("focusin", onOver);
+    document.addEventListener("focusout", onBlur);
     return () => {
       document.removeEventListener("pointerover", onOver);
+      document.removeEventListener("focusin", onOver);
+      document.removeEventListener("focusout", onBlur);
       clearTimeout(timer.current);
     };
   }, []);
