@@ -725,3 +725,18 @@ input[type="range"] {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Merchant tiles with real brand marks */
+.merchant-logo {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  font-weight: 750;
+  line-height: 1;
+}
+.merchant-logo--initial {
+  border-color: transparent;
+}

@@ -42,9 +42,9 @@ import {
   Scissors,
   ChevronRight,
   Activity,
-  LoaderCircle,
 } from "lucide-react";
 import BrixBuddy from "./brix/BrixBuddy";
+import MerchantLogo from "./ui/MerchantLogo";
 import BrixChat from "./brix/BrixChat";
 import {
   useBrixChat,
@@ -83,8 +83,6 @@ const shortDate = (s: string) =>
     month: "short",
     day: "numeric",
   });
-const tone = (merchant: string) =>
-  String((merchant.charCodeAt(0) || 0) % 6) as "0" | "1" | "2" | "3" | "4" | "5";
 
 const nav = [
   { href: "dashboard", label: "Overview", icon: LayoutDashboard },
@@ -95,23 +93,23 @@ const nav = [
 
 const titles: Record<View, [string, string]> = {
   dashboard: [
-    "A little clarity goes a long way.",
-    "Here’s what’s happening with your money.",
+    "Overview",
+    "What bills in the next 14 days, and what you’ve already handled.",
   ],
   subscriptions: [
-    "Small charges. Full picture.",
-    "Your subscriptions and free trials, all in one place.",
+    "Your charges",
+    "Every subscription and free trial Brix is watching.",
   ],
   cards: [
-    "Try it. On your terms.",
-    "Single-use sandbox cards for a little extra control.",
+    "One-time cards",
+    "Single-use sandbox cards with a hard spending limit.",
   ],
   connect: [
-    "Let’s get connected.",
-    "One buddy. Your bank, your phone, your choice.",
+    "Connections",
+    "Link a bank through Plaid and choose how Brix reaches you.",
   ],
-  settings: ["Make Brix yours.", "You decide how we stay in touch."],
-  admin: ["Behind the bricks.", "Demo controls and integration checks."],
+  settings: ["Settings", "Reminder channels, your phone number and your data."],
+  admin: ["Admin", "Demo controls and integration checks."],
 };
 
 function ChargeRow({
@@ -124,9 +122,7 @@ function ChargeRow({
   const live = c.status === "active" || c.status === "trial";
   return (
     <article className="charge-row">
-      <div className="merchant-icon" data-tone={tone(c.merchant)} aria-hidden>
-        {c.merchant.slice(0, 1).toUpperCase()}
-      </div>
+      <MerchantLogo merchant={c.merchant} size={42} />
       <div className="charge-name">
         <strong>
           {c.merchant}
@@ -151,7 +147,7 @@ function ChargeRow({
               rel="noreferrer"
               className="cancel-link"
             >
-              Finish on the merchant site ↗
+              Finish on the merchant site <ArrowUpRight size={13} />
             </a>
           ) : (
             <span className="cancel-link">Cancel with the merchant</span>
@@ -207,7 +203,7 @@ function BuddyCard({
             ? "Hmm, let’s try that again."
             : chat.mood === "happy"
               ? "Glad I could help!"
-              : "You bring the big dreams. I’ll watch the little charges.";
+              : "Ask what bills next, or tell me what to cancel.";
   return (
     <button
       type="button"
@@ -474,9 +470,7 @@ export default function BrixApp({ view }: { view: View }) {
           <div className="page-heading">
             <div>
               <span className="eyebrow">
-                {view === "dashboard"
-                  ? `Hey ${name.split(" ")[0] || "there"}, meet your money`
-                  : "Your Brix workspace"}
+                {name ? `${name.split(" ")[0]}’s money` : "Your money"}
               </span>
               <h1>{titles[view][0]}</h1>
               <p>{titles[view][1]}</p>
@@ -526,9 +520,21 @@ export default function BrixApp({ view }: { view: View }) {
               </button>
             </section>
           ) : !state ? (
-            <div className="empty-state" role="status">
-              <LoaderCircle className="spin" />
-              Getting your space ready…
+            <div className="loading-skel" role="status" aria-label="Loading your charges">
+              <div className="summary-grid">
+                <div className="card skel-card"><span className="skeleton" style={{ width: "40%" }} /><span className="skeleton skeleton--xl" /><span className="skeleton" style={{ width: "70%" }} /></div>
+                <div className="card skel-card"><span className="skeleton" style={{ width: "50%" }} /><span className="skeleton skeleton--xl" /><span className="skeleton" style={{ width: "60%" }} /></div>
+                <div className="card skel-card"><span className="skeleton" style={{ width: "30%" }} /><span className="skeleton skeleton--xl" /><span className="skeleton" style={{ width: "80%" }} /></div>
+              </div>
+              <div className="card skel-list">
+                {[0, 1, 2, 3].map((i) => (
+                  <div className="skel-row" key={i}>
+                    <span className="skeleton skeleton--tile" />
+                    <span className="skel-row__text"><span className="skeleton" style={{ width: "34%" }} /><span className="skeleton" style={{ width: "22%" }} /></span>
+                    <span className="skeleton" style={{ width: 64 }} />
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <>
@@ -587,7 +593,7 @@ export default function BrixApp({ view }: { view: View }) {
                       <p>
                         Across{" "}
                         {active.filter((c) => c.kind !== "trial").length}{" "}
-                        subscriptions. A little awareness adds up.
+                        subscriptions, billed monthly unless noted.
                       </p>
                       <div className="stat-card__footer">
                         <span>
@@ -613,7 +619,8 @@ export default function BrixApp({ view }: { view: View }) {
                         needs a visit to the merchant.
                       </p>
                       <span className="badge badge--green">
-                        A good start, brick by brick.
+                        {state.charges.filter((c) => c.status === "to_cancel").length}{" "}
+                        marked to cancel
                       </span>
                     </div>
                     <BuddyCard chat={chat} onOpen={() => setChatOpen(true)} />
@@ -623,7 +630,7 @@ export default function BrixApp({ view }: { view: View }) {
                       <div className="card-head">
                         <div>
                           <h2>Coming up next</h2>
-                          <p>Your next 14 days, without the surprises.</p>
+                          <p>Sorted by date, next 14 days.</p>
                         </div>
                         <span className="badge">{upcoming.length} upcoming</span>
                       </div>
@@ -634,10 +641,10 @@ export default function BrixApp({ view }: { view: View }) {
                       ) : (
                         <div className="empty-state">
                           <Bell size={28} />
-                          <strong>A little breathing room.</strong>
+                          <strong>Nothing bills in the next 14 days.</strong>
                           <p>
-                            No charges due in the next 14 days. Add a trial or
-                            connect your bank.
+                            Add a free trial you just started, or connect a
+                            bank so Brix can find recurring charges.
                           </p>
                           <Link href="/connect" className="text-link">
                             Connect a bank <ArrowRight size={16} />
@@ -651,7 +658,7 @@ export default function BrixApp({ view }: { view: View }) {
                     <aside className="right-column">
                       <div className="card card--accent ask-card">
                         <MessageCircle size={24} />
-                        <h2>Just ask Brix.</h2>
+                        <h2>Ask Brix</h2>
                         <p>
                           “What’s my next charge?”
                           <br />
@@ -661,12 +668,12 @@ export default function BrixApp({ view }: { view: View }) {
                           className="btn btn--block"
                           onClick={() => setChatOpen(true)}
                         >
-                          Let’s talk <ArrowUpRight size={17} />
+                          Open chat <ArrowUpRight size={17} />
                         </button>
                       </div>
                       <section className="activity" aria-label="Recent activity">
                         <h3>
-                          <Activity size={17} /> The latest
+                          <Activity size={17} /> Recent activity
                         </h3>
                         {state.events.some((e) => e.type !== "agent_message") ? (
                           state.events
@@ -731,10 +738,11 @@ export default function BrixApp({ view }: { view: View }) {
                     {!visible.length && (
                       <div className="empty-state">
                         <Layers3 size={28} />
-                        <h3>No charges here yet.</h3>
+                        <h3>{search ? `Nothing matches “${search}”.` : "No charges in this view."}</h3>
                         <p>
-                          Add a free trial or connect a bank to start your
-                          picture.
+                          {search
+                            ? "Check the spelling, or switch to All charges."
+                            : "Add a free trial or connect a bank and they’ll show up here."}
                         </p>
                       </div>
                     )}
@@ -749,7 +757,7 @@ export default function BrixApp({ view }: { view: View }) {
                 <div className="cards-layout">
                   <section className="card form-card">
                     <CreditCard size={28} />
-                    <h2>A card with a clear limit.</h2>
+                    <h2>New one-time card</h2>
                     <p>
                       Create a single-use sandbox card. Brix will ask you to
                       confirm before creating it.
@@ -1007,7 +1015,7 @@ export default function BrixApp({ view }: { view: View }) {
             </>
           )}
           <footer className="app-footer">
-            <span>brix. A little more peace of mind.</span>
+            <span>Brix reads your charges. It never moves money.</span>
             <span>
               <ShieldCheck size={14} /> Your money stays yours.
             </span>

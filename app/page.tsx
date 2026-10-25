@@ -368,7 +368,7 @@ export default function Home() {
             </article>
             <article className="bento__item bento__item--photo card">
               <Image
-                src="/images/student-cafe.webp"
+                src="/images/card-and-phone.webp"
                 alt="A student smiling at her phone in a sunny campus cafe"
                 fill
                 sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 400px"
@@ -447,7 +447,7 @@ export default function Home() {
         <section id="how" className="section container how" aria-labelledby="how-title">
           <div className="how__media" data-reveal>
             <Image
-              src="/images/desk-flatlay.webp"
+              src="/images/laptop-window.webp"
               alt="A tidy desk with a laptop, a planner, and a phone showing a reminder"
               width={1152}
               height={864}
@@ -485,7 +485,7 @@ export default function Home() {
         <section id="channels" className="section container channels" aria-labelledby="channels-title">
           <div className="channels__photo" data-reveal>
             <Image
-              src="/images/campus-friends.webp"
+              src="/images/friends-cafe.webp"
               alt="Three friends laughing as they walk across an autumn campus"
               fill
               sizes="(max-width: 900px) 100vw, 1200px"
