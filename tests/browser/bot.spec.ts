@@ -75,9 +75,12 @@ test("landing preview bot runs the full propose → confirm loop", async ({ page
   const preview = page.getByRole("region", { name: "Brix chat preview with sample data" });
   await preview.getByLabel("Message the Brix preview").fill("cancel netflix");
   await preview.getByRole("button", { name: "Send preview message" }).click();
-  await expect(preview.getByText(/Mark Netflix \(\$15\.49\) to cancel\?/)).toBeVisible();
+  const bubbles = preview.locator(".msg--assistant .msg__bubble");
+  await expect(bubbles.filter({ hasText: /Mark Netflix \(\$15\.49\) to cancel\?/ })).toBeVisible();
+  // Wait for the reply to finish streaming before answering.
+  await expect(preview.locator(".stream-caret")).toHaveCount(0);
   await preview.getByLabel("Message the Brix preview").fill("yes");
   await preview.getByRole("button", { name: "Send preview message" }).click();
-  await expect(preview.getByText(/Netflix is marked to cancel/)).toBeVisible();
+  await expect(bubbles.filter({ hasText: /Netflix is marked to cancel/ })).toBeVisible();
   await expect(preview.getByRole("img", { name: "Brix reacted 🎉" })).toBeVisible();
 });

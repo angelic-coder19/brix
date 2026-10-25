@@ -982,7 +982,7 @@
   border-bottom: 0;
 }
 .steps__num {
-  color: var(--color-accent);
+  color: var(--color-accent-ink);
   font-size: var(--text-sm);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
