@@ -214,3 +214,14 @@
     transition: none;
   }
 }
+
+/* The nav scrolls, so a ring drawn outside an item gets clipped. Draw it
+   inside instead, wherever an item sits in the list. */
+.sidebar-nav .nav-item:focus-visible,
+.sidebar-bottom .account-trigger:focus-visible {
+  outline-offset: -3px;
+  border-radius: var(--radius-sm);
+}
+.sidebar-nav .nav-item:focus:not(:focus-visible) {
+  outline: none;
+}

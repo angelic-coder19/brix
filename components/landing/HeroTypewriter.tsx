@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-const phrases = ["it catches you.", "your trial ends.", "renewal day."];
+// The first phrase is the longest; the reserved line is sized to it.
+const phrases = ["it catches you.", "the trial ends.", "renewal day."];
 
-/** Only the ending changes; a reserved line keeps the hero from jumping. */
+/**
+ * Only the ending changes. The second line never wraps and a reserved copy of
+ * the longest phrase holds its width, so the headline stays on two lines.
+ */
 export default function HeroTypewriter() {
   const [text, setText] = useState(phrases[0]);
 
@@ -49,7 +53,7 @@ export default function HeroTypewriter() {
     <span className="accent-text hero__accent hero-type">
       <span className="sr-only">before it catches you.</span>
       <span className="hero-type__reserve" aria-hidden="true">
-        before your trial ends.
+        before it catches you.
       </span>
       <span className="hero-type__text" aria-hidden="true">
         before {text}

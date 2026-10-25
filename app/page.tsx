@@ -9,7 +9,12 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import BrixBuddy from "@/components/brix/BrixBuddy";
-import { Browser, Phone } from "@/components/landing/Devices";
+import {
+  Browser,
+  CallPhone,
+  formatUsPhone,
+  Phone,
+} from "@/components/landing/Devices";
 import HeroTypewriter from "@/components/landing/HeroTypewriter";
 import HeroBuddy from "@/components/landing/HeroBuddy";
 import HelpLauncher from "@/components/landing/HelpLauncher";
@@ -32,7 +37,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 const links = [
   { href: "#product", label: "Product" },
   { href: "#how", label: "How it works" },
-  { href: "#calculator", label: "Trial calculator" },
+  { href: "#calculator", label: "Cost check" },
   { href: "#faq", label: "FAQ" },
   { href: "/developers", label: "Developers" },
 ];
@@ -101,6 +106,10 @@ const faqs = [
   },
 ];
 
+const BRIX_NUMBER = formatUsPhone(
+  process.env.NEXT_PUBLIC_TWILIO_PHONE_NUMBER || "+18703958999",
+);
+
 const screens: ScrollyStep[] = [
   {
     id: "list",
@@ -135,7 +144,7 @@ const screens: ScrollyStep[] = [
         <span className="row__num">02</span>
         <h3>Your call. Your confirmation.</h3>
         <p>
-          Say “cancel Spotify.” Brix asks first, then marks the charge and
+          Say “cancel Spotify” in the chat or on a call. Brix asks first, then marks the charge and
           shares the merchant’s cancellation link.
         </p>
         <ul className="row__list">
@@ -151,11 +160,7 @@ const screens: ScrollyStep[] = [
           alt="Brix asks: Mark Spotify ($11.99) to cancel? Reply yes to confirm"
           sizes="(max-width: 640px) 46vw, 260px"
         />
-        <Phone
-          src="/screens/chat-cancelled-mobile-393.webp"
-          alt="After replying yes, Brix confirms Spotify is marked to cancel and links the cancellation page"
-          sizes="(max-width: 640px) 46vw, 260px"
-        />
+        <CallPhone number={BRIX_NUMBER} />
       </div>
     ),
   },
@@ -213,7 +218,8 @@ export default function Home() {
         <section className="hero container">
           <div className="hero__copy">
             <h1>
-              Catch the charge <HeroTypewriter />
+              <span className="hero__line">Catch the charge</span>{" "}
+              <HeroTypewriter />
             </h1>
             <p className="hero__lead">
               Your subscriptions and trials. A heads-up before they bill.
@@ -554,7 +560,7 @@ export default function Home() {
             <h3>Learn</h3>
             <a href="#product">Product</a>
             <a href="#how">How it works</a>
-            <a href="#calculator">Trial calculator</a>
+            <a href="#calculator">Cost check</a>
             <a href="#faq">FAQ</a>
             <Link href="/developers">Developer API</Link>
           </nav>

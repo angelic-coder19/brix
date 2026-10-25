@@ -642,6 +642,42 @@ export default function BrixApp() {
                   </button>
                 </div>
               )}
+            {view === "settings" && state && !needsSignIn && (
+              <div
+                className="page-heading__actions"
+                role="group"
+                aria-label="Your data"
+              >
+                <ConfirmAction
+                  label="Disconnect bank"
+                  question="Disconnect all linked banks from Brix?"
+                  confirmLabel="Disconnect"
+                  disabled={busy}
+                  onConfirm={() =>
+                    void action(async () => {
+                      await request("/api/plaid/disconnect", "POST", {});
+                      setNotice("Your banks have been disconnected.");
+                    })
+                  }
+                />
+                <ConfirmAction
+                  className="btn btn--danger"
+                  label="Delete my data"
+                  question="Delete your Brix data and disconnect your banks? This can’t be undone."
+                  confirmLabel="Delete my data"
+                  tone="danger"
+                  disabled={busy}
+                  onConfirm={() =>
+                    void action(async () => {
+                      await request("/api/account", "DELETE");
+                      const auth = getClientAuth();
+                      if (auth) await signOut(auth);
+                      router.push("/");
+                    })
+                  }
+                />
+              </div>
+            )}
           </div>
           {error && (
             <div className="alert alert--error" role="alert">
@@ -1045,6 +1081,25 @@ export default function BrixApp() {
                                     ? "Demo card · simulated single use"
                                     : "Sandbox single-use card"}
                                 </small>
+                                {c.state === "CLOSED" && (
+                                  <ConfirmAction
+                                    className="btn btn--sm"
+                                    label="Remove"
+                                    question={`Remove the closed ${c.purpose} card from your list?`}
+                                    confirmLabel="Remove card"
+                                    tone="danger"
+                                    disabled={busy}
+                                    onConfirm={() =>
+                                      void action(async () => {
+                                        await request(
+                                          `/api/cards?id=${encodeURIComponent(c.id)}`,
+                                          "DELETE",
+                                        );
+                                        setNotice("Card removed.");
+                                      })
+                                    }
+                                  />
+                                )}
                                 {c.state !== "CLOSED" && (
                                   <ConfirmAction
                                     className="btn btn--sm"
@@ -1169,58 +1224,25 @@ export default function BrixApp() {
                     <button className="btn btn--primary" disabled={busy}>
                       Save preferences <Check size={17} />
                     </button>
-                    <hr className="divider" />
-                    <h2>Your data</h2>
-                    <p>
-                      Disconnecting removes linked bank access. Deleting your
-                      account removes your Brix profile and stored data.
-                    </p>
-                    <div className="button-row">
-                      <ConfirmAction
-                        label="Disconnect bank"
-                        question="Disconnect all linked banks from Brix?"
-                        confirmLabel="Disconnect"
-                        disabled={busy}
-                        onConfirm={() =>
-                          void action(async () => {
-                            await request("/api/plaid/disconnect", "POST", {});
-                            setNotice("Your banks have been disconnected.");
-                          })
-                        }
-                      />
-                      <ConfirmAction
-                        className="btn btn--danger"
-                        label="Delete my data"
-                        question="Delete your Brix data and disconnect your banks? This can’t be undone."
-                        confirmLabel="Delete my data"
-                        tone="danger"
-                        disabled={busy}
-                        onConfirm={() =>
-                          void action(async () => {
-                            await request("/api/account", "DELETE");
-                            const auth = getClientAuth();
-                            if (auth) await signOut(auth);
-                            router.push("/");
-                          })
-                        }
-                      />
-                    </div>
                   </form>
                 </div>
               )}
               {view === "developer" && (
                 <div className="settings-stack">
-                  <section className="card form-card developer-intro">
-                    <BookOpen size={26} />
-                    <h2>Build on Brix</h2>
-                    <p>
-                      Read your subscriptions, trials, refunds and practice
-                      portfolio from your own app, mark charges to cancel and
-                      schedule reminders. Every key is scoped and can be revoked
-                      here.
-                    </p>
+                  <section
+                    className="card developer-intro"
+                    aria-labelledby="build-title"
+                  >
+                    <BookOpen size={22} aria-hidden />
+                    <div>
+                      <h2 id="build-title">Build on Brix</h2>
+                      <p>
+                        Scoped, revocable keys for your charges, refunds and
+                        practice portfolio.
+                      </p>
+                    </div>
                     <Link href="/developers" className="btn btn--sm">
-                      Read the API docs <ArrowUpRight size={15} />
+                      API docs <ArrowUpRight size={15} />
                     </Link>
                   </section>
                   <DeveloperKeys request={request} />
@@ -1331,7 +1353,6 @@ export default function BrixApp() {
             />
           </span>
           <span className="chat-launcher__label">Ask Brix</span>
-          {chat.mood === "concerned" && <span className="chat-launcher__dot" />}
         </button>
       )}
       {chatOpen && <BrixChat chat={chat} onClose={() => setChatOpen(false)} />}

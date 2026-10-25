@@ -2481,3 +2481,206 @@
     display: inline;
   }
 }
+
+/* Hero: a two-line headline that never re-wraps while it types, and the
+   phone and card side by side instead of stacked on top of each other. */
+.hero {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+}
+.hero__copy {
+  container-type: inline-size;
+  min-width: 0;
+}
+.hero h1 {
+  max-width: none;
+  font-size: min(76px, 8.6cqi);
+  text-wrap: initial;
+}
+.hero__line,
+.hero-type {
+  display: block;
+  white-space: nowrap;
+}
+.hero-type__text {
+  white-space: nowrap;
+}
+.hero__visual {
+  display: flex;
+  align-items: center;
+  gap: 4%;
+  max-width: 560px;
+  aspect-ratio: auto;
+}
+.hero__visual .hero__phone,
+.hero__phone--main {
+  position: relative;
+  inset: auto;
+  flex: 0 0 50%;
+  width: 50%;
+  z-index: 1;
+}
+.hero__card {
+  position: relative;
+  inset: auto;
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  transform: rotate(-6deg);
+}
+.hero__buddy {
+  left: -6%;
+  bottom: -2%;
+}
+@media (max-width: 860px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .hero h1 {
+    font-size: min(64px, 8.6cqi);
+  }
+  .hero__visual {
+    max-width: 520px;
+  }
+}
+@media (max-width: 640px) {
+  .hero__visual {
+    max-width: none;
+    aspect-ratio: auto;
+  }
+  .hero__phone--main {
+    left: auto;
+    width: 50%;
+  }
+  .hero__card {
+    width: auto;
+    right: auto;
+    bottom: auto;
+  }
+  .hero__card .vcard__face {
+    padding: 6.5cqw 7cqw;
+  }
+}
+
+/* Section titles: the subtitle sits to the right, its last line level with
+   the title's last line. */
+.landing .section-head,
+.landing .section-head--split {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5) var(--space-8);
+  max-width: none;
+}
+.landing .section-head h2 {
+  margin: 0;
+}
+.landing .section-head p,
+.landing .section-head--split p {
+  max-width: 420px;
+  margin: 0;
+  text-align: right;
+  line-height: 1.45;
+}
+@media (max-width: 760px) {
+  .landing .section-head,
+  .landing .section-head--split {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .landing .section-head p,
+  .landing .section-head--split p {
+    text-align: left;
+  }
+}
+
+/* A live call with Brix, drawn in the phone frame. */
+.device-call__screen {
+  background: linear-gradient(180deg, #2c2c26 0%, #1b1b17 100%);
+  color: #f7f5ef;
+}
+.device-call__body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 22cqw 8cqw 12cqw;
+  text-align: center;
+}
+.device-call__timer {
+  font-size: 4.2cqw;
+  font-variant-numeric: tabular-nums;
+  color: #b9b6a8;
+}
+.device-call__face {
+  display: grid;
+  place-items: center;
+  width: 34cqw;
+  height: 34cqw;
+  margin-top: 8cqw;
+  border-radius: 50%;
+  background: #f7f5ef;
+  box-shadow: 0 0 0 3cqw #f7f5ef1f, 0 0 0 6cqw #f7f5ef0f;
+}
+.device-call__face svg {
+  width: 24cqw;
+  height: 22cqw;
+}
+.device-call__name {
+  margin-top: 7cqw;
+  font-size: 8cqw;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.device-call__number {
+  margin-top: 1.5cqw;
+  font-size: 4.6cqw;
+  font-variant-numeric: tabular-nums;
+  color: #d9d6c8;
+}
+.device-call__caption {
+  margin: 8cqw 0 0;
+  padding: 3.5cqw 4.5cqw;
+  border-radius: 4cqw;
+  background: #f7f5ef14;
+  font-size: 4cqw;
+  line-height: 1.4;
+  color: #f7f5ef;
+}
+.device-call__keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4cqw;
+  width: 100%;
+  margin-top: auto;
+  font-size: 3.4cqw;
+  color: #b9b6a8;
+}
+.device-call__keys span {
+  display: grid;
+  justify-items: center;
+  gap: 1.6cqw;
+}
+.device-call__keys i {
+  width: 15cqw;
+  height: 15cqw;
+  border-radius: 50%;
+  background: #f7f5ef1f;
+}
+.device-call__end {
+  display: grid;
+  place-items: center;
+  width: 17cqw;
+  height: 17cqw;
+  margin-top: 6cqw;
+  border-radius: 50%;
+  background: #d93a2b;
+  color: #fff;
+}
+.device-call__end svg {
+  width: 7cqw;
+  height: 7cqw;
+}
+.device-phone__status--dark {
+  color: #f7f5ef;
+}

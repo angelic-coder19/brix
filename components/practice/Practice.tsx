@@ -336,336 +336,350 @@ function Portfolio({
       <AllocationChart portfolio={p} sample={view.sample} />
 
       <div className="practice-columns">
-        <section className="card" aria-labelledby="holdings">
-          <div className="card-head">
-            <h2 id="holdings">Holdings</h2>
-          </div>
-          {p.positions.length ? (
-            <div
-              className="table-wrap"
-              tabIndex={0}
-              role="region"
-              aria-label="Holdings table"
-            >
-              <table className="practice-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Symbol</th>
-                    <th scope="col">Shares</th>
-                    <th scope="col">Value</th>
-                    <th scope="col">Gain</th>
-                    <th scope="col">Stop / target</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {p.positions.map((pos) => (
-                    <tr key={pos.symbol}>
-                      <th scope="row">
-                        {pos.symbol}
-                        <small>{pos.name}</small>
-                      </th>
-                      <td>{pos.shares}</td>
-                      <td>
-                        {usd(pos.value)}
-                        <small>
-                          {pos.price ? `at ${usd(pos.price)}` : "no live price"}
-                        </small>
-                      </td>
-                      <td className={tone(pos.gain)}>{usd(pos.gain)}</td>
-                      <td>
-                        <form
-                          className="stops"
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            const f = new FormData(e.currentTarget);
-                            const v = (k: string) =>
-                              f.get(k) === "" ? null : Number(f.get(k));
-                            void run(async () => {
-                              await request(
-                                `/api/practice/positions/${pos.symbol}`,
-                                "PATCH",
-                                {
-                                  stopLoss: v("stopLoss"),
-                                  takeProfit: v("takeProfit"),
-                                },
-                              );
-                            }, `Saved stops for ${pos.symbol}.`);
-                          }}
-                        >
-                          <input
-                            name="stopLoss"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="Stop"
-                            aria-label={`Stop-loss price for ${pos.symbol}`}
-                            defaultValue={pos.stopLoss ?? ""}
-                          />
-                          <input
-                            name="takeProfit"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="Target"
-                            aria-label={`Take-profit price for ${pos.symbol}`}
-                            defaultValue={pos.takeProfit ?? ""}
-                          />
-                          <button className="btn btn--sm" disabled={busy}>
-                            Save
-                          </button>
-                        </form>
-                      </td>
+        <div className="practice-stack">
+          <section className="card" aria-labelledby="holdings">
+            <div className="card-head">
+              <h2 id="holdings">Holdings</h2>
+            </div>
+            {p.positions.length ? (
+              <div
+                className="table-wrap"
+                tabIndex={0}
+                role="region"
+                aria-label="Holdings table"
+              >
+                <table className="practice-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Symbol</th>
+                      <th scope="col">Shares</th>
+                      <th scope="col">Value</th>
+                      <th scope="col">Gain</th>
+                      <th scope="col">Stop / target</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="muted">
-              Nothing yet. Many people start with a broad index fund like VOO or
-              VTI.
-            </p>
-          )}
-        </section>
-
-        <section
-          className="card form-card trade-ticket"
-          aria-labelledby="trade"
-        >
-          <h2 id="trade">Trade</h2>
-          {review ? (
-            <div
-              className="trade-review"
-              role="group"
-              aria-label="Review order"
-            >
-              <p>
-                {review.side === "buy" ? "Buy" : "Sell"}{" "}
-                <strong>{usd(review.amount)}</strong> of{" "}
-                <strong>{review.symbol}</strong>
-                {quoteFor(review.symbol)
-                  ? ` at about ${usd(quoteFor(review.symbol)!.price)} a share`
-                  : ""}{" "}
-                with virtual money?
-              </p>
-              <div className="button-row">
-                <button
-                  className="btn btn--primary"
-                  disabled={busy}
-                  onClick={() =>
-                    void run(async () => {
-                      const { order } = await request<{ order: Order }>(
-                        "/api/practice/orders",
-                        "POST",
-                        {
-                          ...review,
-                          clientKey,
-                        },
-                      );
-                      setReview(null);
-                      setClientKey(crypto.randomUUID());
-                      if (order.status !== "filled")
-                        throw new Error(order.reason || "Order not filled.");
-                    }, "Order filled.")
-                  }
-                >
-                  Confirm
-                </button>
-                <button
-                  className="btn"
-                  disabled={busy}
-                  onClick={() => setReview(null)}
-                >
-                  Back
-                </button>
+                  </thead>
+                  <tbody>
+                    {p.positions.map((pos) => (
+                      <tr key={pos.symbol}>
+                        <th scope="row">
+                          {pos.symbol}
+                          <small>{pos.name}</small>
+                        </th>
+                        <td>{pos.shares}</td>
+                        <td>
+                          {usd(pos.value)}
+                          <small>
+                            {pos.price
+                              ? `at ${usd(pos.price)}`
+                              : "no live price"}
+                          </small>
+                        </td>
+                        <td className={tone(pos.gain)}>{usd(pos.gain)}</td>
+                        <td>
+                          <form
+                            className="stops"
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              const v = (k: string) =>
+                                f.get(k) === "" ? null : Number(f.get(k));
+                              void run(async () => {
+                                await request(
+                                  `/api/practice/positions/${pos.symbol}`,
+                                  "PATCH",
+                                  {
+                                    stopLoss: v("stopLoss"),
+                                    takeProfit: v("takeProfit"),
+                                  },
+                                );
+                              }, `Saved stops for ${pos.symbol}.`);
+                            }}
+                          >
+                            <input
+                              name="stopLoss"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Stop"
+                              aria-label={`Stop-loss price for ${pos.symbol}`}
+                              defaultValue={pos.stopLoss ?? ""}
+                            />
+                            <input
+                              name="takeProfit"
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="Target"
+                              aria-label={`Take-profit price for ${pos.symbol}`}
+                              defaultValue={pos.takeProfit ?? ""}
+                            />
+                            <button className="btn btn--sm" disabled={busy}>
+                              Save
+                            </button>
+                          </form>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          ) : (
+            ) : (
+              <p className="muted practice-empty">
+                Nothing yet. Many people start with a broad index fund like VOO
+                or VTI.
+              </p>
+            )}
+          </section>
+
+          <section className="card form-card" aria-labelledby="rules">
+            <h2 id="rules">Auto-invest</h2>
+            <p className="muted">
+              Buy a fixed amount on a schedule (dollar-cost averaging). Brix
+              runs due rules each weekday morning.
+            </p>
+            {p.rules.length > 0 && (
+              <ul className="rule-list">
+                {p.rules.map((r) => (
+                  <li key={r.id}>
+                    <div>
+                      <strong>
+                        {usd(r.amount)} of {r.symbol}
+                      </strong>
+                      <small>
+                        {CADENCE[r.cadence]} ·{" "}
+                        {r.active ? `next ${r.nextRunOn}` : "paused"}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      aria-label={`${r.active ? "Pause" : "Resume"} ${r.symbol} rule`}
+                      disabled={busy}
+                      onClick={() =>
+                        void run(async () => {
+                          await request(
+                            `/api/practice/rules/${r.id}`,
+                            "PATCH",
+                            {
+                              active: !r.active,
+                            },
+                          );
+                        })
+                      }
+                    >
+                      {r.active ? <Pause size={16} /> : <Play size={16} />}
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      aria-label={`Delete ${r.symbol} rule`}
+                      disabled={busy}
+                      onClick={() =>
+                        void run(async () => {
+                          await request(
+                            `/api/practice/rules/${r.id}`,
+                            "DELETE",
+                          );
+                        })
+                      }
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             <form
+              className="rule-form"
               onSubmit={(e) => {
                 e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                setReview({ symbol, side, amount: Number(f.get("amount")) });
+                const form = e.currentTarget,
+                  f = new FormData(form);
+                void run(async () => {
+                  await request("/api/practice/rules", "POST", {
+                    symbol: f.get("symbol"),
+                    amount: Number(f.get("amount")),
+                    cadence: f.get("cadence"),
+                  });
+                  form.reset();
+                }, "Auto-invest rule added.");
               }}
             >
-              <div className="segmented" role="group" aria-label="Buy or sell">
-                {(["buy", "sell"] as const).map((s) => (
-                  <button
-                    type="button"
-                    key={s}
-                    className={side === s ? "is-active" : undefined}
-                    aria-pressed={side === s}
-                    onClick={() => setSide(s)}
-                  >
-                    {s === "buy" ? "Buy" : "Sell"}
-                  </button>
-                ))}
-              </div>
               <label className="field">
                 Symbol
-                <select
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
-                >
+                <select name="symbol" defaultValue="VOO">
                   {sorted.map((s) => (
                     <option key={s.symbol} value={s.symbol}>
-                      {s.symbol} · {s.name}
+                      {s.symbol}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="field">
-                Amount (USD)
+                Each time
                 <input
                   name="amount"
                   type="number"
                   min="1"
-                  step="0.01"
+                  step="1"
+                  defaultValue={25}
                   required
-                  defaultValue={100}
                 />
               </label>
-              <p className="muted">
-                {price ? `Last price ${usd(price)}` : "Loading the price…"}
-              </p>
-              <button className="btn btn--primary">Review order</button>
+              <label className="field">
+                How often
+                <select name="cadence" defaultValue="weekly">
+                  {Object.entries(CADENCE).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button className="btn" disabled={busy}>
+                Add rule
+              </button>
             </form>
-          )}
-        </section>
-      </div>
-
-      <div className="practice-columns">
-        <section className="card form-card" aria-labelledby="rules">
-          <h2 id="rules">Auto-invest</h2>
-          <p className="muted">
-            Buy a fixed amount on a schedule (dollar-cost averaging). Brix runs
-            due rules each weekday morning.
-          </p>
-          {p.rules.length > 0 && (
-            <ul className="rule-list">
-              {p.rules.map((r) => (
-                <li key={r.id}>
-                  <div>
-                    <strong>
-                      {usd(r.amount)} of {r.symbol}
-                    </strong>
-                    <small>
-                      {CADENCE[r.cadence]} ·{" "}
-                      {r.active ? `next ${r.nextRunOn}` : "paused"}
-                    </small>
-                  </div>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    aria-label={`${r.active ? "Pause" : "Resume"} ${r.symbol} rule`}
-                    disabled={busy}
-                    onClick={() =>
-                      void run(async () => {
-                        await request(`/api/practice/rules/${r.id}`, "PATCH", {
-                          active: !r.active,
-                        });
-                      })
-                    }
-                  >
-                    {r.active ? <Pause size={16} /> : <Play size={16} />}
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    aria-label={`Delete ${r.symbol} rule`}
-                    disabled={busy}
-                    onClick={() =>
-                      void run(async () => {
-                        await request(`/api/practice/rules/${r.id}`, "DELETE");
-                      })
-                    }
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <form
-            className="rule-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const form = e.currentTarget,
-                f = new FormData(form);
-              void run(async () => {
-                await request("/api/practice/rules", "POST", {
-                  symbol: f.get("symbol"),
-                  amount: Number(f.get("amount")),
-                  cadence: f.get("cadence"),
-                });
-                form.reset();
-              }, "Auto-invest rule added.");
-            }}
+          </section>
+        </div>
+        <div className="practice-stack">
+          <section
+            className="card form-card trade-ticket"
+            aria-labelledby="trade"
           >
-            <label className="field">
-              Symbol
-              <select name="symbol" defaultValue="VOO">
-                {sorted.map((s) => (
-                  <option key={s.symbol} value={s.symbol}>
-                    {s.symbol}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              Each time
-              <input
-                name="amount"
-                type="number"
-                min="1"
-                step="1"
-                defaultValue={25}
-                required
-              />
-            </label>
-            <label className="field">
-              How often
-              <select name="cadence" defaultValue="weekly">
-                {Object.entries(CADENCE).map(([v, l]) => (
-                  <option key={v} value={v}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="btn" disabled={busy}>
-              Add rule
-            </button>
-          </form>
-        </section>
+            <h2 id="trade">Trade</h2>
+            {review ? (
+              <div
+                className="trade-review"
+                role="group"
+                aria-label="Review order"
+              >
+                <p>
+                  {review.side === "buy" ? "Buy" : "Sell"}{" "}
+                  <strong>{usd(review.amount)}</strong> of{" "}
+                  <strong>{review.symbol}</strong>
+                  {quoteFor(review.symbol)
+                    ? ` at about ${usd(quoteFor(review.symbol)!.price)} a share`
+                    : ""}{" "}
+                  with virtual money?
+                </p>
+                <div className="button-row">
+                  <button
+                    className="btn btn--primary"
+                    disabled={busy}
+                    onClick={() =>
+                      void run(async () => {
+                        const { order } = await request<{ order: Order }>(
+                          "/api/practice/orders",
+                          "POST",
+                          {
+                            ...review,
+                            clientKey,
+                          },
+                        );
+                        setReview(null);
+                        setClientKey(crypto.randomUUID());
+                        if (order.status !== "filled")
+                          throw new Error(order.reason || "Order not filled.");
+                      }, "Order filled.")
+                    }
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    className="btn"
+                    disabled={busy}
+                    onClick={() => setReview(null)}
+                  >
+                    Back
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const f = new FormData(e.currentTarget);
+                  setReview({ symbol, side, amount: Number(f.get("amount")) });
+                }}
+              >
+                <div
+                  className="segmented"
+                  role="group"
+                  aria-label="Buy or sell"
+                >
+                  {(["buy", "sell"] as const).map((s) => (
+                    <button
+                      type="button"
+                      key={s}
+                      className={side === s ? "is-active" : undefined}
+                      aria-pressed={side === s}
+                      onClick={() => setSide(s)}
+                    >
+                      {s === "buy" ? "Buy" : "Sell"}
+                    </button>
+                  ))}
+                </div>
+                <label className="field">
+                  Symbol
+                  <select
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value)}
+                  >
+                    {sorted.map((s) => (
+                      <option key={s.symbol} value={s.symbol}>
+                        {s.symbol} · {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  Amount (USD)
+                  <input
+                    name="amount"
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    required
+                    defaultValue={100}
+                  />
+                </label>
+                <p className="muted">
+                  {price ? `Last price ${usd(price)}` : "Loading the price…"}
+                </p>
+                <button className="btn btn--primary">Review order</button>
+              </form>
+            )}
+          </section>
 
-        <section className="card news-card" aria-labelledby="stock-news">
-          <h3 id="stock-news">
-            <Newspaper size={17} /> News on your holdings
-          </h3>
-          {news === null ? (
-            <p className="muted">Loading…</p>
-          ) : news.length ? (
-            <ul className="news-list">
-              {news.map((h) => (
-                <li key={h.url}>
-                  <a href={h.url} target="_blank" rel="noopener noreferrer">
-                    {h.title} <ExternalLink size={13} aria-hidden />
-                  </a>
-                  <small>
-                    {h.symbol} · {h.source} ·{" "}
-                    {new Date(h.publishedAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">No recent headlines.</p>
-          )}
-        </section>
+          <section className="card news-card" aria-labelledby="stock-news">
+            <h3 id="stock-news">
+              <Newspaper size={17} /> News on your holdings
+            </h3>
+            {news === null ? (
+              <p className="muted">Loading…</p>
+            ) : news.length ? (
+              <ul className="news-list">
+                {news.map((h) => (
+                  <li key={h.url}>
+                    <a href={h.url} target="_blank" rel="noopener noreferrer">
+                      {h.title} <ExternalLink size={13} aria-hidden />
+                    </a>
+                    <small>
+                      {h.symbol} · {h.source} ·{" "}
+                      {new Date(h.publishedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">No recent headlines.</p>
+            )}
+          </section>
+        </div>
       </div>
 
       <section className="card" aria-labelledby="orders">
@@ -715,7 +729,7 @@ function Portfolio({
             ))}
           </ul>
         ) : (
-          <p className="muted">Your trades will show up here.</p>
+          <p className="muted practice-empty">Your trades will show up here.</p>
         )}
       </section>
     </>

@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { PhoneOff } from "lucide-react";
+import { BrixMark } from "@/components/brand/BrixMark";
 
 function StatusBar({ tone = "light" }: { tone?: "light" | "dark" }) {
   return (
@@ -101,6 +103,58 @@ export function Browser({
         <span className="device-browser__url">{url}</span>
       </div>
       <Image src={src} alt={alt} width={1680} height={1050} sizes={sizes} />
+    </figure>
+  );
+}
+
+/** "+18703958999" → "+1 (870) 395-8999"; other formats are shown as given. */
+export function formatUsPhone(e164: string) {
+  const m = e164.replace(/[^\d+]/g, "").match(/^\+1(\d{3})(\d{3})(\d{4})$/);
+  return m ? `+1 (${m[1]}) ${m[2]}-${m[3]}` : e164;
+}
+
+/** The same phone frame, showing a live call with Brix and its real number. */
+export function CallPhone({
+  number,
+  className = "",
+}: {
+  number: string;
+  className?: string;
+}) {
+  return (
+    <figure
+      className={`device-phone device-call ${className}`}
+      aria-label={`A phone on a call with Brix at ${number}`}
+    >
+      <div className="device-phone__frame">
+        <div className="device-phone__screen device-call__screen">
+          <StatusBar tone="dark" />
+          <span className="device-phone__island" aria-hidden="true" />
+          <div className="device-call__body">
+            <span className="device-call__timer">02:14</span>
+            <span className="device-call__face">
+              <BrixMark decorative mood="talking" />
+            </span>
+            <strong className="device-call__name">Brix</strong>
+            <span className="device-call__number">{number}</span>
+            <p className="device-call__caption">
+              “Spotify is marked to cancel. Here’s the link to finish.”
+            </p>
+            <span className="device-call__keys" aria-hidden="true">
+              {["Mute", "Keypad", "Speaker"].map((k) => (
+                <span key={k}>
+                  <i />
+                  {k}
+                </span>
+              ))}
+            </span>
+            <span className="device-call__end" aria-hidden="true">
+              <PhoneOff />
+            </span>
+          </div>
+          <span className="device-phone__home" aria-hidden="true" />
+        </div>
+      </div>
     </figure>
   );
 }
