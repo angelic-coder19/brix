@@ -1,4 +1,5 @@
 "use client";
+import "./shell.css";
 import {
   Fragment,
   useEffect,
@@ -98,7 +99,7 @@ export function searchAll(
       id: `page-${p.href}`,
       title: p.label,
       sub: "Page",
-      href: `/${p.href}`,
+      href: `/${p.href.replace(/^\/+/, "")}`,
     })),
     ...rank(data.charges, (c) => c.merchant).map<SearchResult>((c) => ({
       type: "charge",
@@ -147,7 +148,7 @@ export function AppSearch({
   onSelect: (r: SearchResult) => void;
 }) {
   const [value, setValue] = useState("");
-  const [query, setQuery] = useState("");
+  const query = value;
   const [open, setOpen] = useState(false);
   const [sheet, setSheet] = useState(false);
   const [active, setActive] = useState(0);
@@ -155,15 +156,6 @@ export function AppSearch({
   const wrap = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const listId = useId();
-
-  // Debounce typing so results don't flicker on every key.
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setQuery(value);
-      setActive(0);
-    }, 90);
-    return () => clearTimeout(t);
-  }, [value]);
 
   const results = useMemo(
     () => searchAll(query, { pages, charges, cards, events }),
@@ -222,6 +214,28 @@ export function AppSearch({
     return () => document.removeEventListener("pointerdown", onDown);
   }, [open]);
 
+  useEffect(() => {
+    if (!sheet) return;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onResize = () => {
+      if (!window.matchMedia("(max-width: 760px)").matches) setSheet(false);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.body.style.overflow = overflow;
+      window.removeEventListener("resize", onResize);
+    };
+  }, [sheet]);
+
+  useEffect(() => {
+    if (!open) return;
+    const selected = wrap.current?.querySelector<HTMLElement>(
+      '[aria-selected="true"]',
+    );
+    selected?.scrollIntoView({ block: "nearest" });
+  }, [active, open]);
+
   const closeSheet = () => {
     setSheet(false);
     setOpen(false);
@@ -254,10 +268,34 @@ export function AppSearch({
       </button>
       <div
         ref={wrap}
-        className={`app-search${sheet ? " is-sheet" : ""}`}
+        className={`app-search app-search--stable${sheet ? " is-sheet" : ""}`}
         role={sheet ? "dialog" : undefined}
         aria-modal={sheet ? true : undefined}
         aria-label={sheet ? "Search Brix" : undefined}
+        onBlur={(event) => {
+          if (
+            !sheet &&
+            !event.currentTarget.contains(event.relatedTarget as Node | null)
+          )
+            setOpen(false);
+        }}
+        onKeyDown={(event) => {
+          if (!sheet || event.key !== "Tab") return;
+          const items = [
+            ...event.currentTarget.querySelectorAll<HTMLElement>(
+              "button:not([disabled]), input",
+            ),
+          ];
+          const first = items[0],
+            last = items.at(-1);
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first?.focus();
+          }
+        }}
       >
         <div className="app-search__field">
           {sheet ? (
@@ -288,6 +326,7 @@ export function AppSearch({
             maxLength={80}
             onChange={(e) => {
               setValue(e.target.value);
+              setActive(0);
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
@@ -307,9 +346,11 @@ export function AppSearch({
                 }
               } else if (e.key === "Escape") {
                 e.preventDefault();
-                if (value) setValue("");
-                else if (sheet) closeSheet();
-                else {
+                if (sheet) closeSheet();
+                else if (value) {
+                  setValue("");
+                  setOpen(false);
+                } else {
                   setOpen(false);
                   input.current?.blur();
                 }
@@ -363,7 +404,9 @@ export function AppSearch({
                             className="app-search__option"
                             onPointerMove={() => setActive(i)}
                             onPointerDown={(e) => e.preventDefault()}
-                            onClick={() => choose(r)}
+                            onClick={() => {
+                              if (!pending) choose(r);
+                            }}
                           >
                             <span className="app-search__glyph" aria-hidden>
                               <g.icon size={15} />

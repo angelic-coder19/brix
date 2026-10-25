@@ -60,13 +60,22 @@ const SAMPLE: Record<string, number> = {
   UBER: 96.2,
 };
 
+function sampleMove(symbol: string) {
+  let h = 0;
+  for (const c of symbol) h = (h * 31 + c.charCodeAt(0)) % 997;
+  return Math.round(((h % 37) - 18) * 10) / 100;
+}
+
 function sampleQuote(symbol: string): Quote | null {
   const price = SAMPLE[symbol];
   if (!price) return null;
   return {
     symbol,
     price,
-    previousClose: Math.round(price * 0.994 * 100) / 100,
+    // A fixed, per-symbol daily move (about -1.8% to +1.8%) so sample
+    // prices look like a real market day without changing between loads.
+    previousClose:
+      Math.round((price / (1 + sampleMove(symbol) / 100)) * 100) / 100,
     at: new Date().toISOString(),
     marketOpen: true,
     sample: true,

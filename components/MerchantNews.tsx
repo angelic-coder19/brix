@@ -34,15 +34,15 @@ export default function MerchantNews({ request }: { request: RequestFn }) {
   }
 
   return (
-    <section className="card news-card" aria-labelledby="merchant-news">
+    <section
+      className="card news-card merchant-news"
+      aria-labelledby="merchant-news"
+    >
       <h3 id="merchant-news">
         <Newspaper size={17} /> Merchant news
       </h3>
       {!news && !error && (
-        <p className="muted">
-          Price hikes and renewal changes at the places you pay, checked when
-          you ask.
-        </p>
+        <p className="muted">Price changes at the places you pay.</p>
       )}
       {error && (
         <p className="alert alert--error" role="alert">
@@ -74,7 +74,7 @@ export default function MerchantNews({ request }: { request: RequestFn }) {
       )}
       <button
         type="button"
-        className="btn btn--block btn--sm"
+        className="btn btn--sm"
         disabled={busy}
         onClick={() => void load()}
       >

@@ -1,14 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   onAuthStateChanged,
   GoogleAuthProvider,
@@ -51,6 +44,8 @@ import MerchantLogo from "./ui/MerchantLogo";
 import BrixChat from "./brix/BrixChat";
 import DeveloperKeys from "./DeveloperKeys";
 import MerchantNews from "./MerchantNews";
+import { CardShowcase } from "./CardShowcase";
+import { MarketTicker } from "./shell/MarketTicker";
 import GoogleOneTap, { disableGoogleAutoSelect } from "./GoogleOneTap";
 import SmsSignIn from "./SmsSignIn";
 import Refunds from "./refunds/Refunds";
@@ -61,7 +56,6 @@ import Practice from "./practice/Practice";
 import "./refunds/refunds.css";
 import {
   useBrixChat,
-  type BrixChatApi,
   type ClientState,
   type RequestFn,
 } from "./brix/useBrixChat";
@@ -125,22 +119,13 @@ const nav = [
 ] as const;
 
 const titles: Record<View, [string, string]> = {
-  dashboard: [
-    "Overview",
-    "What bills in the next 14 days, and what you’ve already handled.",
-  ],
+  dashboard: ["Overview", "Your next charges, all in one place."],
   subscriptions: [
     "Your charges",
     "Every subscription and free trial Brix is watching.",
   ],
-  cards: [
-    "Cards",
-    "Single-use sandbox cards with a hard limit, and gift cards so balances get spent.",
-  ],
-  refunds: [
-    "Refunds",
-    "School refunds, what's borrowed, and a plan before the money disappears.",
-  ],
+  cards: ["Cards", "One-time cards and gift balances."],
+  refunds: ["Refunds", "Give your school refund a plan."],
   practice: [
     "Practice investing",
     "Real prices, virtual money. Learn before you risk anything.",
@@ -258,44 +243,6 @@ function ChargeRow({
         </div>
       )}
     </article>
-  );
-}
-
-function BuddyCard({
-  chat,
-  onOpen,
-}: {
-  chat: BrixChatApi;
-  onOpen: () => void;
-}) {
-  const line: ReactNode =
-    chat.mood === "concerned" && chat.headsUp
-      ? `Heads up: ${chat.headsUp}.`
-      : chat.mood === "celebrate"
-        ? "Nice! That’s one less surprise."
-        : chat.mood === "thinking"
-          ? "Let me check that…"
-          : chat.mood === "error"
-            ? "Hmm, let’s try that again."
-            : chat.mood === "happy"
-              ? "Glad I could help!"
-              : "Ask what bills next, or tell me what to cancel.";
-  return (
-    <section
-      className={`card card--accent ask-card ask-card--${chat.mood}`}
-      aria-labelledby="ask-title"
-    >
-      <div className="ask-card__head">
-        <BrixMark mood={chat.mood} decorative className="ask-card__mark" />
-        <div>
-          <h2 id="ask-title">Ask Brix</h2>
-          <p aria-live="polite">{line}</p>
-        </div>
-      </div>
-      <button type="button" className="btn btn--block" onClick={onOpen}>
-        Open chat <ArrowUpRight size={17} />
-      </button>
-    </section>
   );
 }
 
@@ -484,6 +431,9 @@ export default function BrixApp({ view }: { view: View }) {
   const searchPages = useMemo(
     () => [
       ...nav.map((n) => ({ href: n.href, label: n.label })),
+      { href: "refunds", label: "School refunds" },
+      { href: "practice", label: "Practice investing" },
+      { href: "cards#gift-title", label: "Gift cards" },
       { href: "settings", label: "Settings" },
       { href: "onboarding", label: "Setup guide" },
     ],
@@ -590,6 +540,7 @@ export default function BrixApp({ view }: { view: View }) {
                 view.charAt(0).toUpperCase() + view.slice(1)}
             </strong>
           </span>
+          <MarketTicker request={request} />
           <AppSearch
             pages={searchPages}
             charges={state?.charges ?? []}
@@ -597,18 +548,6 @@ export default function BrixApp({ view }: { view: View }) {
             events={state?.events ?? []}
             onSelect={openResult}
           />
-          <div className="topbar__actions">
-            <span className="badge badge--green read-only">
-              <ShieldCheck size={14} /> Read-only & secure
-            </span>
-            <button
-              className="icon-btn icon-btn--outline"
-              aria-label="Open Brix assistant"
-              onClick={() => setChatOpen(true)}
-            >
-              <MessageCircle size={19} />
-            </button>
-          </div>
         </header>
         {demo && (
           <div className="demo-banner" role="note">
@@ -626,13 +565,65 @@ export default function BrixApp({ view }: { view: View }) {
             </div>
             {(view === "dashboard" || view === "subscriptions") &&
               !needsSignIn && (
-                <button
-                  className="btn btn--primary"
-                  onClick={() => setTrialOpen(true)}
-                >
-                  <Plus size={18} />
-                  Add a free trial
-                </button>
+                <div className="page-heading__actions">
+                  {view === "dashboard" && state && setupPending && (
+                    <section
+                      className="setup-strip setup-strip--compact"
+                      aria-label="Finish setting up"
+                    >
+                      <div className="setup-strip__text">
+                        <strong>
+                          Setup {setupDone}/{setupSteps.length}
+                        </strong>
+                        {setupNext && (
+                          <span>Next: {setupNext.label.toLowerCase()}</span>
+                        )}
+                      </div>
+                      <ol
+                        className="setup-strip__dots"
+                        aria-label="Setup steps"
+                      >
+                        {setupSteps.map((st) => (
+                          <li
+                            key={st.label}
+                            data-done={st.done ? "true" : "false"}
+                          >
+                            <span className="sr-only">
+                              {st.label}: {st.done ? "done" : "to do"}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                      <div className="setup-strip__actions">
+                        <Link
+                          href="/onboarding"
+                          className="btn btn--primary btn--sm"
+                        >
+                          Continue setup <ArrowRight size={15} />
+                        </Link>
+                        <button
+                          className="icon-btn"
+                          aria-label="Dismiss setup"
+                          onClick={() => {
+                            try {
+                              localStorage.setItem(ONBOARDED_KEY, "1");
+                            } catch {}
+                            setSetupPending(false);
+                          }}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    </section>
+                  )}
+                  <button
+                    className="btn btn--primary"
+                    onClick={() => setTrialOpen(true)}
+                  >
+                    <Plus size={18} />
+                    Add a free trial
+                  </button>
+                </div>
               )}
           </div>
           {error && (
@@ -768,61 +759,12 @@ export default function BrixApp({ view }: { view: View }) {
               )}
               {view === "dashboard" && (
                 <>
-                  <NextDecisionCard
-                    decision={nextDecision(state)}
-                    onAsk={ask}
-                  />
-                  {setupPending && (
-                    <section
-                      className="card setup-strip"
-                      aria-label="Finish setting up"
-                    >
-                      <div className="setup-strip__text">
-                        <strong>Finish setting up Brix</strong>
-                        <span>
-                          {setupDone} of {setupSteps.length} done
-                          {setupNext
-                            ? ` · Next: ${setupNext.label.toLowerCase()}`
-                            : ""}
-                        </span>
-                      </div>
-                      <ol
-                        className="setup-strip__dots"
-                        aria-label="Setup steps"
-                      >
-                        {setupSteps.map((st) => (
-                          <li
-                            key={st.label}
-                            data-done={st.done ? "true" : "false"}
-                          >
-                            <span className="sr-only">
-                              {st.label}: {st.done ? "done" : "to do"}
-                            </span>
-                          </li>
-                        ))}
-                      </ol>
-                      <div className="setup-strip__actions">
-                        <Link
-                          href="/onboarding"
-                          className="btn btn--primary btn--sm"
-                        >
-                          Continue setup <ArrowRight size={15} />
-                        </Link>
-                        <button
-                          className="icon-btn"
-                          aria-label="Dismiss setup"
-                          onClick={() => {
-                            try {
-                              localStorage.setItem(ONBOARDED_KEY, "1");
-                            } catch {}
-                            setSetupPending(false);
-                          }}
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    </section>
-                  )}
+                  <div className="overview-status">
+                    <NextDecisionCard
+                      decision={nextDecision(state)}
+                      onAsk={ask}
+                    />
+                  </div>
                   <section className="card summary-row" aria-label="Summary">
                     <div className="summary-stat summary-stat--lead">
                       <span className="summary-stat__label">
@@ -918,7 +860,7 @@ export default function BrixApp({ view }: { view: View }) {
                       </Link>
                     </section>
                     <aside className="right-column">
-                      <BuddyCard chat={chat} onOpen={() => setChatOpen(true)} />
+                      <CardShowcase />
                       <MerchantNews request={request} />
                       <section
                         className="card activity"
@@ -1072,6 +1014,14 @@ export default function BrixApp({ view }: { view: View }) {
                       Sandbox only. These cards cannot spend real money.
                     </small>
                   </section>
+                  <aside className="cards-side">
+                    <GiftCards
+                      cards={state.giftCards ?? []}
+                      request={request}
+                      action={action}
+                      busy={busy}
+                    />
+                  </aside>
                   <div className="card-list">
                     {state.cards.length ? (
                       state.cards.map((c) => (
@@ -1137,14 +1087,6 @@ export default function BrixApp({ view }: { view: View }) {
                     )}
                   </div>
                 </div>
-              )}
-              {view === "cards" && (
-                <GiftCards
-                  cards={state.giftCards ?? []}
-                  request={request}
-                  action={action}
-                  busy={busy}
-                />
               )}
               {view === "refunds" && (
                 <Refunds

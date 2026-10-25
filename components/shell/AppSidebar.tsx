@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import "./shell.css";
 import { useEffect, useId, useRef, useState, type ComponentType } from "react";
 import {
   ChevronsUpDown,
@@ -107,26 +108,69 @@ export function AppSidebar({
   onSignOut: () => void;
 }) {
   const ref = useRef<HTMLElement>(null);
-  // Hover or focus peeks a collapsed rail open as an overlay; the toggle pins it.
-  const [peek, setPeek] = useState(false);
-  const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const canPeek = () =>
-    collapsed &&
-    window.matchMedia("(min-width: 761px) and (hover: hover)").matches;
-  const clearTimer = () => {
-    if (peekTimer.current) clearTimeout(peekTimer.current);
-    peekTimer.current = null;
-  };
-  useEffect(() => clearTimer, []);
-  const showRail = collapsed && !peek;
+  const closeDrawerRef = useRef(onCloseDrawer);
+  useEffect(() => {
+    closeDrawerRef.current = onCloseDrawer;
+  });
   useEffect(() => {
     if (!drawerOpen) return;
     const el = ref.current;
-    el?.querySelector<HTMLElement>("a, button")?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseDrawer();
+    const opener = document.activeElement as HTMLElement | null;
+    const main = document.querySelector<HTMLElement>(".app-main");
+    const previousInert = main?.inert ?? false;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    if (main) main.inert = true;
+    const focusable = () =>
+      [
+        ...(el?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex="0"]',
+        ) ?? []),
+      ].filter((node) => node.getClientRects().length > 0);
+    focusable()[0]?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeDrawerRef.current();
+      }
+      if (event.key !== "Tab") return;
+      const items = focusable(),
+        first = items[0],
+        last = items.at(-1);
+      if (!first) {
+        event.preventDefault();
+        return;
+      }
+      if (
+        event.shiftKey &&
+        (document.activeElement === first ||
+          !el?.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        last?.focus();
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last ||
+          !el?.contains(document.activeElement))
+      ) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    const onResize = () => {
+      if (window.matchMedia("(min-width: 761px)").matches)
+        closeDrawerRef.current();
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drawerOpen, onCloseDrawer]);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+      document.body.style.overflow = previousOverflow;
+      if (main) main.inert = previousInert;
+      if (opener?.isConnected) opener.focus();
+    };
+  }, [drawerOpen]);
 
   const item = (n: NavItem) => {
     const active = view === n.href;
@@ -137,6 +181,7 @@ export function AppSidebar({
         className={active ? "nav-item is-active" : "nav-item"}
         aria-current={active ? "page" : undefined}
         data-tip={n.label}
+        title={collapsed ? n.label : undefined}
         onClick={onCloseDrawer}
       >
         <n.icon size={18} aria-hidden />
@@ -159,33 +204,12 @@ export function AppSidebar({
       <aside
         ref={ref}
         id="app-sidebar"
-        className="sidebar"
+        className="sidebar sidebar--stable"
         aria-label="Brix navigation"
-        data-collapsed={showRail ? "true" : "false"}
-        data-peek={collapsed && peek ? "true" : "false"}
+        data-collapsed={collapsed ? "true" : "false"}
         data-drawer={drawerOpen ? "open" : "closed"}
-        onPointerEnter={(e) => {
-          if (e.pointerType !== "mouse" || !canPeek()) return;
-          clearTimer();
-          peekTimer.current = setTimeout(() => setPeek(true), 150);
-        }}
-        onPointerLeave={(e) => {
-          if (e.pointerType !== "mouse") return;
-          clearTimer();
-          if (
-            !ref.current?.contains(document.activeElement) ||
-            !document.activeElement?.matches(":focus-visible")
-          )
-            setPeek(false);
-        }}
-        onFocus={(e) => {
-          if (canPeek() && (e.target as HTMLElement).matches(":focus-visible"))
-            setPeek(true);
-        }}
-        onBlur={(e) => {
-          if (!ref.current?.contains(e.relatedTarget as Node | null))
-            setPeek(false);
-        }}
+        role={drawerOpen ? "dialog" : undefined}
+        aria-modal={drawerOpen ? true : undefined}
       >
         <div className="sidebar-head">
           <Link
@@ -203,11 +227,7 @@ export function AppSidebar({
           <button
             type="button"
             className="icon-btn sidebar-toggle"
-            onClick={() => {
-              clearTimer();
-              setPeek(false);
-              onToggle();
-            }}
+            onClick={onToggle}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-controls="app-sidebar"
             aria-expanded={!collapsed}
@@ -247,8 +267,8 @@ export function AppSidebar({
           <div className="sidebar-trust">
             <ShieldCheck size={16} aria-hidden />
             <p>
-              <strong>Read-only.</strong> Brix sees charges through Plaid. It
-              can’t pay or cancel without your yes.
+              <strong>Read-only banking.</strong> Brix spots charges and helps
+              you plan. You finish cancellations with the merchant.
             </p>
           </div>
           <AccountMenu

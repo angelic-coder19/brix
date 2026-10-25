@@ -9,11 +9,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import BrixBuddy from "@/components/brix/BrixBuddy";
-import BotDemo from "@/components/landing/BotDemo";
 import { Browser, Phone } from "@/components/landing/Devices";
+import HeroTypewriter from "@/components/landing/HeroTypewriter";
 import HeroBuddy from "@/components/landing/HeroBuddy";
 import HelpLauncher from "@/components/landing/HelpLauncher";
-import HeroNotice from "@/components/landing/HeroNotice";
 import LandingHeader from "@/components/landing/LandingHeader";
 import GoogleOneTap from "@/components/GoogleOneTap";
 import Marquee from "@/components/landing/Marquee";
@@ -33,7 +32,7 @@ import { Wordmark } from "@/components/brand/Wordmark";
 const links = [
   { href: "#product", label: "Product" },
   { href: "#how", label: "How it works" },
-  { href: "#demo", label: "Try the bot" },
+  { href: "#calculator", label: "Trial calculator" },
   { href: "#faq", label: "FAQ" },
   { href: "/developers", label: "Developers" },
 ];
@@ -50,28 +49,28 @@ const tracked: BrandSlug[] = [
 ];
 
 const facts = [
-  { n: "7 & 2", unit: "days", text: "before a renewal or trial ends, you get a reminder." },
-  { n: "14", unit: "days", text: "of upcoming charges on your overview, sorted by date." },
-  { n: "$0", unit: "", text: "is what Brix can move. Bank access is read-only." },
-  { n: "1", unit: "yes", text: "from you before anything changes. No yes, no action." },
+  { n: "7 & 2", unit: "days", text: "before each charge. Time to decide." },
+  { n: "14", unit: "days", text: "of charges, in one clear view." },
+  { n: "$0", unit: "", text: "moved by Brix. Read-only, always." },
+  { n: "1", unit: "yes", text: "from you before Brix takes action." },
 ];
 
 const steps = [
   {
-    title: "Link a bank, or don’t",
-    text: "Connect through Plaid with read-only access, or skip it and add trials by hand.",
+    title: "Start your list",
+    text: "Link a bank through Plaid, or add trials yourself.",
   },
   {
-    title: "Brix lists what repeats",
-    text: "Recurring charges show up with their next date and amount. Trials show their end date.",
+    title: "See what repeats",
+    text: "Know the amount and date of your next charge.",
   },
   {
-    title: "You get a heads-up",
-    text: "7 days and 2 days before each charge, in the app, on WhatsApp or by phone.",
+    title: "Get a heads-up",
+    text: "Reminders arrive 7 and 2 days before a charge.",
   },
   {
-    title: "Keep it or drop it",
-    text: "Tell Brix to remind you again or mark it to cancel. It asks first, then links you to the merchant’s cancel page.",
+    title: "Make your choice",
+    text: "Keep it, set a reminder, or get the cancellation link.",
   },
 ];
 
@@ -108,10 +107,10 @@ const screens: ScrollyStep[] = [
     copy: (
       <>
         <span className="row__num">01</span>
-        <h3>Every charge that repeats, in one list</h3>
+        <h3>Every charge. One place.</h3>
         <p>
-          Link a bank and Brix pulls recurring charges from Plaid. Started a trial? Add the name,
-          end date and price in three fields. Each line shows when it bills next and what it costs.
+          Connect a bank or add a trial. See what renews next, what it costs,
+          and what needs your attention.
         </p>
         <ul className="row__list">
           <li>Monthly total across subscriptions</li>
@@ -134,11 +133,10 @@ const screens: ScrollyStep[] = [
     copy: (
       <>
         <span className="row__num">02</span>
-        <h3>Cancel by chat, after you say yes</h3>
+        <h3>Your call. Your confirmation.</h3>
         <p>
-          Tap Cancel on a charge or type “cancel Spotify”. Brix saves it as a proposal and waits.
-          Reply yes and it marks the charge, logs it, and hands you the merchant’s cancel link.
-          Reply no and nothing changes.
+          Say “cancel Spotify.” Brix asks first, then marks the charge and
+          shares the merchant’s cancellation link.
         </p>
         <ul className="row__list">
           <li>Proposals run once, even if you send yes twice</li>
@@ -166,10 +164,10 @@ const screens: ScrollyStep[] = [
     copy: (
       <>
         <span className="row__num">03</span>
-        <h3>Reminders that reach you</h3>
+        <h3>A timely heads-up.</h3>
         <p>
-          A week out, then two days out. Brix posts the reminder in the app, and if you opt in,
-          texts it on WhatsApp or calls you. Answer with “remind me again” or “cancel”.
+          A week before. Then two days before. Get reminders in the app, on
+          WhatsApp, or by phone.
         </p>
       </>
     ),
@@ -192,8 +190,8 @@ const screens: ScrollyStep[] = [
             </span>
             <strong>Brix</strong>
             <p>
-              Heads-up: your Notion trial ends in 2 days. After that it’s $10.00/mo. Keep it or
-              cancel?
+              Heads-up: your Notion trial ends in 2 days. After that it’s
+              $10.00/mo. Keep it or cancel?
             </p>
           </div>
         </div>
@@ -215,25 +213,30 @@ export default function Home() {
         <section className="hero container">
           <div className="hero__copy">
             <h1>
-              Catch the charge <span className="accent-text hero__accent">before it catches you.</span>
+              Catch the charge <HeroTypewriter />
             </h1>
             <p className="hero__lead">
-              Brix tracks your subscriptions and free trials, and reminds you before they bill.
+              Your subscriptions and trials. A heads-up before they bill.
             </p>
             <div className="hero__ctas">
               <PeekCta>
-                <Link href="/dashboard" className="btn btn--primary btn--lg" data-buddy-mood="celebrate">
+                <Link
+                  href="/dashboard"
+                  className="btn btn--primary btn--lg"
+                  data-buddy-mood="celebrate"
+                >
                   Try the demo <ArrowRight size={18} />
                 </Link>
               </PeekCta>
               <PeekCta>
-              <a href="#how" className="btn btn--lg btn--ghost hero__how">
-                How it works
-              </a>
+                <a href="#how" className="btn btn--lg btn--ghost hero__how">
+                  How it works
+                </a>
               </PeekCta>
             </div>
             <p className="hero__note">
-              <ShieldCheck size={16} /> Read-only bank access. Brix never moves money.
+              <ShieldCheck size={16} /> Read-only bank access. Brix never moves
+              money.
             </p>
           </div>
           <div className="hero__visual">
@@ -244,13 +247,15 @@ export default function Home() {
               sizes="(max-width: 640px) 62vw, 300px"
               className="hero__phone hero__phone--main"
             />
-            <Phone
-              src="/screens/chat-confirm-mobile-393.webp"
-              alt="Brix chat asking you to reply yes before it marks Spotify to cancel"
-              sizes="(max-width: 640px) 48vw, 250px"
-              className="hero__phone hero__phone--side"
-            />
-            <HeroNotice />
+            <div className="hero__card">
+              <VirtualCard
+                purpose="Your next trial"
+                last4="4242"
+                limit={15}
+                expiry="11/26"
+                note="Sandbox preview"
+              />
+            </div>
             <div className="hero__buddy">
               <HeroBuddy />
             </div>
@@ -258,20 +263,27 @@ export default function Home() {
         </section>
 
         <section className="tracked container" aria-labelledby="tracked-title">
-          <p id="tracked-title">Recognizes the subscriptions you already pay for</p>
+          <p id="tracked-title">
+            Recognizes the subscriptions you already pay for
+          </p>
           <Marquee
             label="Subscriptions Brix recognizes"
-            items={tracked.map((slug) => ({ key: slug, node: <BrandMark slug={slug} size={26} /> }))}
+            items={tracked.map((slug) => ({
+              key: slug,
+              node: <BrandMark slug={slug} size={26} />,
+            }))}
           />
         </section>
 
-        <section className="facts container" aria-label="How Brix works, in numbers">
+        <section
+          className="facts container"
+          aria-label="How Brix works, in numbers"
+        >
           <ul className="facts__row" data-reveal data-reveal-stagger>
             {facts.map((f, i) => (
               <li
                 key={f.text}
                 className={`facts__col facts__col--${i % 2 ? "accent" : "dark"}`}
-                data-surface={i % 2 ? "accent" : "dark"}
               >
                 <strong>
                   {f.n}
@@ -283,13 +295,14 @@ export default function Home() {
           </ul>
         </section>
 
-        <section id="product" className="section container" aria-labelledby="product-title">
+        <section
+          id="product"
+          className="section container"
+          aria-labelledby="product-title"
+        >
           <div className="section-head section-head--split" data-reveal>
-            <h2 id="product-title">What Brix does, screen by screen.</h2>
-            <p>
-              These are captures of the demo you can open right now. Same sample account, same
-              buttons.
-            </p>
+            <h2 id="product-title">Meet your money.</h2>
+            <p>A clear view of what’s coming. A simple way to act.</p>
           </div>
 
           <Scrolly steps={screens} />
@@ -297,13 +310,18 @@ export default function Home() {
           <ul className="extras">
             <li className="card extra extra--card" data-reveal>
               <div className="extra__visual extra__visual--card">
-                <VirtualCard purpose="Notion AI trial" last4="4242" limit={15} expiry="11/26" />
+                <VirtualCard
+                  purpose="Notion AI trial"
+                  last4="4242"
+                  limit={15}
+                  expiry="11/26"
+                />
               </div>
               <div className="extra__copy">
                 <h3>One-time cards</h3>
                 <p>
-                  Make a single-use card with a hard limit for a trial you want to try. If the
-                  trial tries to bill more, the card says no. Sandbox only in this build.
+                  A single-use card with a spending limit. Try the sandbox
+                  preview; no real money.
                 </p>
               </div>
             </li>
@@ -314,8 +332,8 @@ export default function Home() {
               <div className="extra__copy">
                 <h3>Call it</h3>
                 <p>
-                  Ring Brix and ask what’s due. Card requests by voice also need your 4-digit PIN
-                  in the app.
+                  Ring Brix and ask what’s due. Card requests by voice also need
+                  your 4-digit PIN in the app.
                 </p>
               </div>
             </li>
@@ -324,24 +342,25 @@ export default function Home() {
                 <LeavePreview />
               </div>
               <div className="extra__copy">
-                <h3>Leave whenever you want</h3>
+                <h3>Leave on your terms</h3>
                 <p>
-                  Settings has two buttons: disconnect your bank, which ends Brix’s read access, or
-                  delete your account and everything Brix stored. Each asks once, then it’s done.
+                  Disconnect your bank or delete your data in Settings. You keep
+                  control.
                 </p>
               </div>
             </li>
           </ul>
         </section>
 
-        <section className="night" data-surface="dark" aria-labelledby="night-title">
+        <section
+          className="night"
+          data-surface="dark"
+          aria-labelledby="night-title"
+        >
           <div className="container night__grid">
             <div className="night__copy" data-reveal>
-              <h2 id="night-title">Nothing happens without your yes.</h2>
-              <p>
-                Brix can read and remind. It can’t pay, transfer or cancel on its own. Here’s what
-                happens when you ask it to drop a charge:
-              </p>
+              <h2 id="night-title">You have the final say.</h2>
+              <p>Brix reads and reminds. You decide what happens next.</p>
               <ol className="night__flow" data-reveal data-reveal-stagger>
                 <li>
                   <span>
@@ -374,39 +393,25 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="demo" className="section demo" aria-labelledby="demo-title">
-          <div className="container demo__grid">
-            <div className="demo__copy" data-reveal>
-              <span className="eyebrow">Try the bot</span>
-              <h2 id="demo-title">Talk to Brix right here.</h2>
-              <p>
-                This preview runs on sample data. Ask what’s coming up, or tell it to cancel
-                something. Watch its face: it listens while you type, thinks while it checks, and
-                cheers when you skip a charge.
-              </p>
-              <PeekCta>
-                <Link href="/dashboard" className="btn btn--primary">
-                  Try the full demo <ArrowRight size={17} />
-                </Link>
-              </PeekCta>
-            </div>
-            <div data-reveal>
-              <BotDemo />
-            </div>
-          </div>
-        </section>
-
-        <section className="section container calc-section" aria-labelledby="calc-title">
+        <section
+          id="calculator"
+          className="section container calc-section"
+          aria-labelledby="calc-title"
+        >
           <div className="section-head section-head--split" data-reveal>
-            <h2 id="calc-title">What do forgotten trials cost you?</h2>
-            <p>Move the sliders to match your semester.</p>
+            <h2 id="calc-title">Small charges add up.</h2>
+            <p>See what a forgotten trial could cost.</p>
           </div>
           <div data-reveal>
             <TrialCalculator />
           </div>
         </section>
 
-        <section id="how" className="section container how" aria-labelledby="how-title">
+        <section
+          id="how"
+          className="section container how"
+          aria-labelledby="how-title"
+        >
           <div className="how__media" data-reveal>
             <Image
               src="/images/laptop-window.webp"
@@ -419,7 +424,7 @@ export default function Home() {
           </div>
           <div data-reveal>
             <span className="eyebrow">How it works</span>
-            <h2 id="how-title">Four steps, about two minutes.</h2>
+            <h2 id="how-title">Ready in minutes.</h2>
             <ol className="steps" data-reveal data-reveal-stagger>
               {steps.map((s) => (
                 <li key={s.title}>
@@ -431,7 +436,11 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="channels" className="section container channels channels--flip" aria-labelledby="channels-title">
+        <section
+          id="channels"
+          className="section container channels channels--flip"
+          aria-labelledby="channels-title"
+        >
           <div className="channels__photo" data-reveal>
             <Image
               src="/images/friends-cafe.webp"
@@ -442,7 +451,7 @@ export default function Home() {
             />
           </div>
           <div className="channels__body" data-reveal>
-            <h2 id="channels-title">Same Brix in every channel.</h2>
+            <h2 id="channels-title">Wherever you are.</h2>
             <dl className="channels__list">
               <div>
                 <dt>
@@ -466,12 +475,19 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="faq" className="section container faq" aria-labelledby="faq-title">
+        <section
+          id="faq"
+          className="section container faq"
+          aria-labelledby="faq-title"
+        >
           <div className="section-head" data-reveal>
             <h2 id="faq-title">Questions</h2>
             <p>
-              Anything else? <Link href="/dashboard" className="text-link">Try the demo</Link> and
-              ask Brix.
+              Anything else?{" "}
+              <Link href="/dashboard" className="text-link">
+                Try the demo
+              </Link>{" "}
+              and ask Brix.
             </p>
           </div>
           <div className="faq__list" data-reveal data-reveal-stagger>
@@ -491,9 +507,13 @@ export default function Home() {
           <div className="final-cta" data-reveal>
             <div className="final-cta__inner">
               <h2 id="cta-title">
-                Find out what you’re paying for <span className="accent-text">in two minutes.</span>
+                Fewer surprises.{" "}
+                <span className="accent-text">More control.</span>
               </h2>
-              <p>The demo opens with a sample account. No sign-up, no card, no real money.</p>
+              <p>
+                The demo opens with a sample account. No sign-up, no card, no
+                real money.
+              </p>
               <div className="hero__ctas">
                 <PeekCta>
                   <Link href="/dashboard" className="btn btn--primary btn--lg">
@@ -516,9 +536,12 @@ export default function Home() {
         <div className="container lp-footer__grid">
           <div className="lp-footer__brand">
             <Link href="/" className="wordmark">
-          <Wordmark />
+              <Wordmark />
             </Link>
-            <p>Tracks subscriptions and free trials for college students. Never moves money.</p>
+            <p>
+              Tracks subscriptions and free trials for college students. Never
+              moves money.
+            </p>
           </div>
           <nav aria-label="Product">
             <h3>Product</h3>
@@ -531,7 +554,7 @@ export default function Home() {
             <h3>Learn</h3>
             <a href="#product">Product</a>
             <a href="#how">How it works</a>
-            <a href="#demo">Try the bot</a>
+            <a href="#calculator">Trial calculator</a>
             <a href="#faq">FAQ</a>
             <Link href="/developers">Developer API</Link>
           </nav>

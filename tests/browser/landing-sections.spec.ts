@@ -1,14 +1,40 @@
 import { test, expect } from "@playwright/test";
 
-test("numbers row alternates ink and accent columns", async ({ page }) => {
+test("numbers alternate text colors on the page background with dividers", async ({
+  page,
+}) => {
   await page.goto("/");
   const cols = page.locator(".facts__col");
   await expect(cols).toHaveCount(4);
-  const bgs = await cols.evaluateAll((els) =>
-    els.map((el) => getComputedStyle(el).backgroundColor),
+  const styles = await cols.evaluateAll((els) =>
+    els.map((el) => {
+      const style = getComputedStyle(el);
+      return {
+        background: style.backgroundColor,
+        color: style.color,
+        divider: style.borderLeftWidth,
+      };
+    }),
   );
-  expect(new Set(bgs).size).toBe(2);
-  expect(bgs[0]).not.toBe(bgs[1]);
+  for (const style of styles) expect(style.background).toBe("rgba(0, 0, 0, 0)");
+  expect(styles[0].color).toBe(styles[2].color);
+  expect(styles[1].color).toBe(styles[3].color);
+  expect(styles[0].color).not.toBe(styles[1].color);
+  expect(styles[1].divider).toBe("1px");
+});
+
+test("hero has one phone and a Brix card, with reduced-motion typing fallback", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(page.locator(".hero .device-phone")).toHaveCount(1);
+  await expect(page.locator(".hero .vcard")).toHaveCount(1);
+  await expect(page.locator(".hero__notice")).toHaveCount(0);
+  await expect(page.locator(".hero-type__text")).toBeHidden();
+  await expect(page.locator(".hero-type__still")).toBeVisible();
+  await expect(page.locator("main .bot-demo--inline")).toHaveCount(0);
+  await expect(page.locator('a[href="#demo"]')).toHaveCount(0);
 });
 
 test("wordmark i is the accent colour and status bars carry no text", async ({
@@ -133,4 +159,18 @@ test("developers page is linked from the header and documents the stack", async 
     page.getByText("NEXT_PUBLIC_BRIX_DEMO_MODE").first(),
   ).toBeVisible();
   await expect(page.locator("header .brand-i")).toHaveText("i");
+});
+
+test("hero types a changing ending without shifting its heading", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const fragment = page.locator(".hero-type__text");
+  const heading = page.locator(".hero h1");
+  const initial = await heading.boundingBox();
+  await expect(fragment).toHaveText("before your trial ends.", {
+    timeout: 7000,
+  });
+  const changed = await heading.boundingBox();
+  expect(changed?.height).toBe(initial?.height);
 });

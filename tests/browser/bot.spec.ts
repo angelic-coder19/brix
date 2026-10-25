@@ -89,13 +89,12 @@ test("saying yes with nothing pending gets a friendly reply, not an error", asyn
   await expect(chat.locator(".msg--error")).toHaveCount(0);
 });
 
-test("landing preview bot runs the full propose → confirm loop", async ({
+test("landing help bot runs the full propose → confirm loop", async ({
   page,
 }) => {
-  await page.goto("/#demo");
-  const preview = page.getByRole("region", {
-    name: "Brix chat preview with sample data",
-  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Open Brix help" }).click();
+  const preview = page.getByRole("dialog", { name: "Brix help" });
   await preview.getByLabel("Message the Brix preview").fill("cancel netflix");
   await preview.getByRole("button", { name: "Send preview message" }).click();
   const bubbles = preview.locator(".msg--assistant .msg__bubble");

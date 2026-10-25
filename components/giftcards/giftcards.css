@@ -95,3 +95,15 @@
   max-width: 620px;
   color: var(--color-ink-soft);
 }
+/* `.form-card form` makes forms a stacked grid; spend rows stay on one line. */
+.gift-cards form.gift-spend {
+  display: flex;
+  width: auto;
+  gap: var(--space-2);
+}
+.gift-cards form.gift-spend .btn {
+  width: auto;
+}
+.gift-cards .gift-list li {
+  align-items: center;
+}

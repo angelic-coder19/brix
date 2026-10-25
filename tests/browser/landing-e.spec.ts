@@ -1,6 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-test("header CTA reads Try now and peeks on hover", async ({ page, isMobile }) => {
+test("header CTA reads Try now and peeks on hover", async ({
+  page,
+  isMobile,
+}) => {
   test.skip(isMobile, "Header CTA is hidden on phones; the menu has its own");
   await page.goto("/");
   const cta = page.getByRole("link", { name: "Try now, the Brix demo" });
@@ -13,14 +16,18 @@ test("header CTA reads Try now and peeks on hover", async ({ page, isMobile }) =
 
 test("every landing CTA has the peek effect", async ({ page }) => {
   await page.goto("/");
-  const ctas = page.locator("main a.btn--primary, main .hero__how, .lp-nav__actions a.btn");
+  const ctas = page.locator(
+    "main a.btn--primary, main .hero__how, .lp-nav__actions a.btn",
+  );
   const n = await ctas.count();
   expect(n).toBeGreaterThan(3);
   for (let i = 0; i < n; i++) {
     const inPeek = await ctas.nth(i).evaluate((el) => !!el.closest(".peek"));
     expect(inPeek).toBe(true);
   }
-  await expect(page.getByRole("link", { name: /Open the demo/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /Open the demo/ })).toHaveCount(
+    0,
+  );
 });
 
 test("calculator shows the formula and updates live", async ({ page }) => {
@@ -31,19 +38,38 @@ test("calculator shows the formula and updates live", async ({ page }) => {
   await expect(calc.locator(".calc__formula")).toHaveText(
     "3 trials × $12/mo × 3 months = $108 per semester × 2 semesters = $216 per school year",
   );
-  await expect(calc).toContainText("12 heads-ups");
-  await expect(calc).toContainText("Estimate for illustration");
+  await expect(calc).toContainText("12 reminders");
+  await expect(calc).toContainText("Illustration, not a savings promise");
+  const chart = calc.getByRole("img", { name: /3 trials at \$12 per month/ });
+  await expect(chart).toBeVisible();
+  await expect(calc.locator(".calc-chart__line")).toHaveCount(2);
+  const initialLine = await calc
+    .locator(".calc-chart__line")
+    .last()
+    .getAttribute("points");
   const trials = page.getByLabel("Free trials you start per semester");
   await expect(trials).toHaveAttribute("aria-valuetext", "3 trials");
   await trials.focus();
   await page.keyboard.press("ArrowRight");
   await expect(trials).toHaveAttribute("aria-valuetext", "4 trials");
   await expect(calc.locator(".calc__total")).toContainText("$288");
-  await expect(calc.locator(".calc__formula")).toContainText("= $144 per semester");
-  await expect(calc).toContainText("16 heads-ups");
+  await expect(calc.locator(".calc__formula")).toContainText(
+    "= $144 per semester",
+  );
+  await expect(calc).toContainText("16 reminders");
+  await expect(
+    calc.getByRole("img", { name: /4 trials at \$12 per month/ }),
+  ).toBeVisible();
+  await expect(calc.locator(".calc-chart__line").last()).not.toHaveAttribute(
+    "points",
+    initialLine!,
+  );
 });
 
-test("how it works is a 2x2 grid with diagonal colors and single numbering", async ({ page, isMobile }) => {
+test("how it works is a 2x2 grid with diagonal colors and single numbering", async ({
+  page,
+  isMobile,
+}) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   const items = page.locator("#how ol.steps > li");
@@ -79,14 +105,21 @@ test("how it works is a 2x2 grid with diagonal colors and single numbering", asy
   }
 });
 
-test("the Brix card has an even border and no edge stripe", async ({ page }) => {
+test("the Brix card has an even border and no edge stripe", async ({
+  page,
+}) => {
   await page.goto("/");
   const face = page.locator(".vcard__face").first();
   await face.scrollIntoViewIfNeeded();
   const r = await face.evaluate((el) => {
     const cs = getComputedStyle(el);
     return {
-      widths: [cs.borderTopWidth, cs.borderRightWidth, cs.borderBottomWidth, cs.borderLeftWidth],
+      widths: [
+        cs.borderTopWidth,
+        cs.borderRightWidth,
+        cs.borderBottomWidth,
+        cs.borderLeftWidth,
+      ],
       after: getComputedStyle(el, "::after").content,
     };
   });
