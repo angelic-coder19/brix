@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Minus, X } from "lucide-react";
 import BotDemo from "./BotDemo";
 import { BrixMark } from "@/components/brand/BrixMark";
+import type { BuddyMood } from "@/lib/agent/persona";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea, select, [tabindex]:not([tabindex="-1"])';
@@ -18,6 +19,11 @@ export default function HelpLauncher() {
   const launcher = useRef<HTMLButtonElement>(null);
   const open = state === "open";
   const wasOpen = useRef(false);
+  // The launcher's face mirrors the chat's mood, so a minimized chat that is
+  // still thinking or celebrating shows it. Hovering the launcher cheers Brix up.
+  const [chatMood, setChatMood] = useState<BuddyMood>("idle");
+  const [hover, setHover] = useState(false);
+  const mood: BuddyMood = hover && chatMood === "idle" ? "happy" : chatMood;
 
   // Hand focus back to the launcher whenever the panel goes away.
   useEffect(() => {
@@ -80,12 +86,19 @@ export default function HelpLauncher() {
               type="button"
               className="icon-btn"
               aria-label="Close help"
-              onClick={() => setState("closed")}
+              onClick={() => {
+                setState("closed");
+                setChatMood("idle");
+              }}
             >
               <X size={18} />
             </button>
           </div>
-          <BotDemo variant="panel" label="Brix help chat with sample data" />
+          <BotDemo
+            variant="panel"
+            label="Brix help chat with sample data"
+            onMoodChange={setChatMood}
+          />
         </div>
       )}
       {!open && (
@@ -95,10 +108,16 @@ export default function HelpLauncher() {
           className="chat-launcher help-launcher"
           aria-label="Questions? Open Brix help"
           aria-expanded={false}
-          onClick={() => setState("open")}
+          data-mood={mood}
+          onClick={() => {
+            setHover(false);
+            setState("open");
+          }}
+          onPointerEnter={() => setHover(true)}
+          onPointerLeave={() => setHover(false)}
         >
           <span className="chat-launcher__face">
-            <BrixMark className="chat-launcher__mark" />
+            <BrixMark className="chat-launcher__mark" mood={mood} decorative />
           </span>
           <span className="chat-launcher__label">Questions?</span>
           {state === "minimized" && <span className="chat-launcher__dot" aria-hidden="true" />}

@@ -86,3 +86,44 @@ test("landing page has no horizontal overflow", async ({ page }) => {
   );
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test("help launcher face follows the chat's mood", async ({ page }) => {
+  await page.goto("/");
+  const launcher = page.getByRole("button", { name: "Open Brix help" });
+  const face = launcher.locator("svg.brix-mark");
+  await expect(face).toHaveAttribute("data-mood", "idle");
+
+  await launcher.click();
+  const panel = page.getByRole("dialog", { name: "Brix help" });
+  await panel.getByRole("button", { name: "Mark Netflix to cancel" }).click();
+  await panel.getByRole("button", { name: "Yes", exact: true }).click();
+  await panel.getByRole("button", { name: "Minimize help" }).click();
+
+  // Still working when minimized, then celebrating the cancellation.
+  await expect(launcher).toHaveAttribute("data-mood", /thinking|talking|celebrate/);
+  await expect(launcher).toHaveAttribute("data-mood", "celebrate", { timeout: 8000 });
+  await expect(face).toHaveAttribute("data-mood", "celebrate");
+});
+
+test("app launcher face follows the chat's mood", async ({ page, request }) => {
+  expect((await request.post("/api/admin/reset-demo")).ok()).toBeTruthy();
+  await page.goto("/dashboard");
+  const launcher = page.getByRole("button", { name: "Ask Brix" });
+  await expect(launcher).toHaveAttribute("data-mood", /idle|concerned/);
+  const resting = await launcher.getAttribute("data-mood");
+
+  await launcher.click();
+  const chat = page.getByRole("dialog", { name: "Talk with Brix" });
+  await chat
+    .getByRole("group", { name: "Suggested replies" })
+    .getByRole("button", { name: "What's coming up?" })
+    .click();
+  await page.keyboard.press("Escape");
+  await expect(chat).toBeHidden();
+  await expect(launcher).toHaveAttribute("data-mood", /thinking|talking|happy|listening/);
+  await expect(launcher.locator("svg.brix-mark")).toHaveAttribute(
+    "data-mood",
+    /thinking|talking|happy|listening/,
+  );
+  await expect(launcher).toHaveAttribute("data-mood", resting!, { timeout: 10000 });
+});
