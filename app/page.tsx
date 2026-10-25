@@ -421,13 +421,10 @@ export default function Home() {
             <span className="eyebrow">How it works</span>
             <h2 id="how-title">Four steps, about two minutes.</h2>
             <ol className="steps" data-reveal data-reveal-stagger>
-              {steps.map((s, i) => (
+              {steps.map((s) => (
                 <li key={s.title}>
-                  <span className="steps__num">{i + 1}</span>
-                  <div>
-                    <h3>{s.title}</h3>
-                    <p>{s.text}</p>
-                  </div>
+                  <h3>{s.title}</h3>
+                  <p>{s.text}</p>
                 </li>
               ))}
             </ol>

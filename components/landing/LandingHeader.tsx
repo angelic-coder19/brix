@@ -113,6 +113,7 @@ export default function LandingHeader({
               href="/dashboard"
               className="btn btn--dark"
               data-buddy-mood="happy"
+              aria-label="Try now, the Brix demo"
             >
               Try now
             </Link>
