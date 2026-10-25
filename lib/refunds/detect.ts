@@ -8,6 +8,9 @@ export interface IncomingTransaction {
   name?: string;
   merchant_name?: string | null;
   personal_finance_category?: { primary?: string; detailed?: string } | null;
+  logo_url?: string | null;
+  website?: string | null;
+  counterparties?: { logo_url?: string | null; website?: string | null }[];
 }
 
 const MIN_AMOUNT = 200;

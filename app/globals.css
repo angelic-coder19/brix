@@ -907,3 +907,12 @@ input[type="range"] {
     transition: none;
   }
 }
+.merchant-logo--image {
+  overflow: hidden;
+  background: #fff;
+}
+.merchant-logo--image img {
+  display: block;
+  object-fit: contain;
+  border-radius: 4px;
+}

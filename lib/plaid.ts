@@ -4,6 +4,8 @@ import { normalizeRecurring, type RecurringStream } from "./recurring";
 import { detectRefund, type IncomingTransaction } from "./refunds/detect";
 import { notifyRefunds, recordRefunds } from "./refunds";
 import type { Refund } from "./types";
+import { merchantDomain, safeLogoUrl } from "./merchant-domains";
+
 export class PlaidError extends HttpError {
   constructor(public code: string) {
     super(502, "Plaid could not complete this request. Please try again.");
@@ -41,6 +43,9 @@ export async function syncPlaid(uid: string) {
   const cursors = { ...secret.plaidCursors };
   // Only school refunds are kept from the transaction feed; nothing else is stored.
   const refunds: Refund[] = [];
+  // Merchant logos and sites seen in this sync, keyed by merchant name.
+  const brands = new Map<string, { logoUrl?: string; website?: string }>();
+  const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
   for (const [id, access_token] of items) {
     let cursor = cursors[id],
       hasMore = true,
@@ -62,6 +67,14 @@ export async function syncPlaid(uid: string) {
         for (const tx of page.added ?? []) {
           const refund = detectRefund(tx);
           if (refund) refunds.push(refund);
+          const party = tx.counterparties?.[0];
+          const logoUrl = safeLogoUrl(tx.logo_url ?? party?.logo_url);
+          const website = merchantDomain(
+            "",
+            tx.website ?? party?.website ?? "",
+          );
+          if (tx.merchant_name && (logoUrl || website))
+            brands.set(key(tx.merchant_name), { logoUrl, website });
         }
         cursor = page.next_cursor;
         hasMore = page.has_more;
@@ -81,12 +94,21 @@ export async function syncPlaid(uid: string) {
       "/transactions/recurring/get",
       { access_token },
     );
-    const charges = normalizeRecurring(streams.outflow_streams ?? []);
+    const charges = normalizeRecurring(streams.outflow_streams ?? []).map(
+      (c) => ({ ...c, ...brands.get(key(c.merchant)) }),
+    );
     count += charges.length;
     await updateState(uid, (state) => {
       for (const charge of charges) {
         const old = state.charges.find((c) => c.id === charge.id);
-        if (old) Object.assign(old, { ...charge, status: old.status });
+        if (old)
+          Object.assign(old, {
+            ...charge,
+            status: old.status,
+            // A later sync may not resend the transactions that carried the logo.
+            logoUrl: charge.logoUrl ?? old.logoUrl,
+            website: charge.website ?? old.website,
+          });
         else state.charges.push(charge);
       }
     });

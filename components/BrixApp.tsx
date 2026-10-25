@@ -184,7 +184,12 @@ function ChargeRow({
   const live = c.status === "active" || c.status === "trial";
   return (
     <article className="charge-row">
-      <MerchantLogo merchant={c.merchant} size={42} />
+      <MerchantLogo
+        merchant={c.merchant}
+        logoUrl={c.logoUrl}
+        website={c.website}
+        size={42}
+      />
       <div className="charge-name">
         <strong>
           {c.merchant}

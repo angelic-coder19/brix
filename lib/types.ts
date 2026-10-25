@@ -12,6 +12,10 @@ export interface Charge {
   cancelUrl?: string;
   usageNote?: string;
   plaidStreamId?: string;
+  /** Merchant logo from Plaid's logo CDN, when the bank provides one. */
+  logoUrl?: string;
+  /** Merchant website domain from Plaid, used for a site icon fallback. */
+  website?: string;
 }
 export interface Reminder {
   id: string;
