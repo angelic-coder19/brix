@@ -305,6 +305,12 @@ export default function BrixApp({ view }: { view: View }) {
   }, [authReady, user, refresh]);
 
   const chat = useBrixChat({ state, setState, request });
+  // A reply only "finishes" when its bubble has typed out. If the chat is
+  // closed mid-reply, finish it here so the launcher doesn't stay talking.
+  const { streamingId, finishStreaming } = chat;
+  useEffect(() => {
+    if (!chatOpen && streamingId) finishStreaming();
+  }, [chatOpen, streamingId, finishStreaming]);
 
   async function action(work: () => Promise<void>) {
     setBusy(true);
@@ -1045,9 +1051,10 @@ export default function BrixApp({ view }: { view: View }) {
           className="chat-launcher"
           onClick={() => setChatOpen(true)}
           aria-label="Ask Brix"
+          data-mood={chat.mood}
         >
           <span className="chat-launcher__face">
-            <BrixMark className="chat-launcher__mark" />
+            <BrixMark className="chat-launcher__mark" mood={chat.mood} decorative />
           </span>
           <span className="chat-launcher__label">Ask Brix</span>
           {chat.mood === "concerned" && <span className="chat-launcher__dot" />}

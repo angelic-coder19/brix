@@ -144,8 +144,11 @@ function respond(
 export default function BotDemo({
   variant = "inline",
   label = "Brix chat preview with sample data",
+  onMoodChange,
 }: {
   variant?: "inline" | "panel";
+  /** Called whenever Brix's mood changes (the help launcher mirrors it). */
+  onMoodChange?: (mood: BuddyMood) => void;
   label?: string;
 } = {}) {
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -160,6 +163,9 @@ export default function BotDemo({
   const id = useRef(0);
   const list = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    onMoodChange?.(mood);
+  }, [mood, onMoodChange]);
   useEffect(() => {
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);

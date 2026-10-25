@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, type CSSProperties } from "react";
-import type { BuddyMood } from "@/lib/agent/persona";
+import { MOOD_LABEL, type BuddyMood } from "@/lib/agent/persona";
 import "./buddy.css";
 
 /* One shared pointer listener drives every buddy on the page. */
@@ -38,17 +38,6 @@ function subscribe(watch: Watcher) {
     }
   };
 }
-
-const MOOD_LABEL: Record<BuddyMood, string> = {
-  idle: "relaxed",
-  listening: "listening closely",
-  thinking: "thinking",
-  talking: "talking",
-  happy: "happy",
-  celebrate: "celebrating",
-  concerned: "concerned about an upcoming charge",
-  error: "a little confused",
-};
 
 export default function BrixBuddy({
   mood = "idle",

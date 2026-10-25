@@ -248,6 +248,70 @@ p {
   vertical-align: -0.12em;
 }
 
+/* Live mark (chat launchers): small, calm motions per mood */
+.brix-mark__body,
+.brix-mark__eyes,
+.brix-mark__mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.brix-mark--idle .brix-mark__eyes,
+.brix-mark--concerned .brix-mark__eyes {
+  animation: mark-blink 5s infinite;
+}
+.brix-mark--listening .brix-mark__body {
+  animation: mark-lean 1.6s var(--ease-out) infinite alternate;
+}
+.brix-mark--thinking .brix-mark__eyes {
+  animation: mark-ponder 1.8s ease-in-out infinite alternate;
+}
+.brix-mark--talking .brix-mark__mouth {
+  animation: mark-talk 0.32s ease-in-out infinite alternate;
+}
+.brix-mark--happy .brix-mark__body {
+  animation: mark-nod 0.9s var(--ease-out) 2;
+}
+.brix-mark--celebrate .brix-mark__body {
+  animation: mark-hop 0.7s var(--ease-out) infinite;
+}
+.brix-mark--error .brix-mark__body {
+  animation: mark-shake 0.45s ease-in-out 2;
+}
+@keyframes mark-blink {
+  0%, 92%, 100% { transform: none; }
+  95% { transform: scaleY(0.1); }
+}
+@keyframes mark-lean {
+  to { transform: rotate(4deg); }
+}
+@keyframes mark-ponder {
+  from { transform: translateX(-1.5px); }
+  to { transform: translateX(1px) translateY(-0.5px); }
+}
+@keyframes mark-talk {
+  from { transform: scaleY(0.45); }
+  to { transform: scaleY(1); }
+}
+@keyframes mark-nod {
+  50% { transform: translateY(1.5px); }
+}
+@keyframes mark-hop {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-4px) rotate(-4deg); }
+  70% { transform: translateY(0) scaleY(0.94); }
+}
+@keyframes mark-shake {
+  25% { transform: translateX(-1.5px); }
+  75% { transform: translateX(1.5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brix-mark__body,
+  .brix-mark__eyes,
+  .brix-mark__mouth {
+    animation: none !important;
+  }
+}
+
 /* ---------- Eyebrow & badges ---------- */
 .eyebrow {
   display: inline-flex;
