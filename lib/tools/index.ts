@@ -10,7 +10,14 @@ import { practiceOrder, practiceView } from "../practice";
 import { getTickerNews } from "../news/tickers";
 import { planRefund } from "../refunds/plan";
 import { giftCardSummary } from "../giftcards";
-import type { AppState, Charge, Channel, PendingAction } from "../types";
+import {
+  CARD_DESIGNS,
+  type AppState,
+  type CardDesign,
+  type Charge,
+  type Channel,
+  type PendingAction,
+} from "../types";
 export const mutations = new Set([
   "mark_to_cancel",
   "set_reminder",
@@ -79,7 +86,8 @@ export async function proposeAction(
         400,
         "Provide a purpose and a limit from $0.01 to $500, with at most two decimals.",
       );
-    clean = { purpose, spendLimit: limit };
+    const design = CARD_DESIGNS.find((d) => d === args.design);
+    clean = { purpose, spendLimit: limit, ...(design ? { design } : {}) };
     summary = `Create a ${process.env.BRIX_DEMO_MODE === "true" ? "demo" : "sandbox"} single-use card for ${purpose}, limited to ${money(limit)}?`;
   } else if (name === "practice_trade") {
     const security = findSecurity(args.symbol);
@@ -211,6 +219,9 @@ export async function confirmAction(
           source: card.source,
           state: "OPEN",
           createdAt: new Date().toISOString(),
+          ...(CARD_DESIGNS.includes(pending.args.design as CardDesign)
+            ? { design: pending.args.design as CardDesign }
+            : {}),
         });
         event(
           s,

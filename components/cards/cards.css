@@ -1,0 +1,430 @@
+/* Cards page: two equal "studios" (edit a card in place), then the wallet. */
+.cards-page {
+  display: grid;
+  gap: 20px;
+}
+.cards-studios {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+.studio {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  min-width: 0;
+}
+.studio__head h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+.studio__head p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-ink-soft);
+}
+.studio__templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.studio-chip {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s,
+    color 0.15s;
+}
+.studio-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+.studio-chip[aria-pressed="true"] {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-bg);
+}
+.studio__form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+}
+.studio__form > .vcard,
+.studio__form > .giftface {
+  width: 100%;
+  max-width: 400px;
+  margin-inline: auto;
+}
+.studio__hint {
+  margin: 0;
+  min-height: 2.7em;
+  font-size: 13px;
+  color: var(--color-muted);
+  text-align: center;
+}
+.studio__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+.studio__swatches {
+  display: flex;
+  gap: 2px;
+}
+.studio__note {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* Card colours (shared by the editor, issued cards and the showcase). */
+.vcard--clay .vcard__face {
+  background:
+    linear-gradient(
+      115deg,
+      transparent 30%,
+      #ffffff14 var(--shine-x),
+      transparent 70%
+    ),
+    linear-gradient(125deg, #b4432a, #71301f);
+}
+.vcard--cobalt .vcard__face {
+  background:
+    linear-gradient(
+      115deg,
+      transparent 30%,
+      #ffffff14 var(--shine-x),
+      transparent 70%
+    ),
+    linear-gradient(125deg, #3a54a8, #1c2855);
+}
+.swatch--graphite::after {
+  background: #292924;
+}
+.swatch--clay::after {
+  background: #a33a20;
+}
+.swatch--cobalt::after {
+  background: #344c9e;
+}
+
+/* Typing on the card face. */
+.vcard--editing .vcard__face {
+  transform: none;
+}
+.vcard__edit {
+  display: grid;
+  gap: 0.6cqw;
+  flex: 1;
+  min-width: 0;
+}
+.vcard__edit input,
+.vcard__limit--edit input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.6cqw 0;
+  border: 0;
+  border-bottom: 1px dashed #ffffff66;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 4.4cqw;
+  font-weight: 700;
+  outline: none;
+  caret-color: #f08a62;
+}
+.vcard__edit input::placeholder {
+  color: #ffffff70;
+}
+.vcard__edit input:focus,
+.vcard__limit--edit input:focus {
+  border-bottom-color: #f08a62;
+  border-bottom-style: solid;
+}
+.vcard__limit--edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4cqw;
+  cursor: text;
+}
+.vcard__limit--edit input {
+  width: 13cqw;
+  padding: 0;
+  border-bottom-color: #29292055;
+  font-size: 3.4cqw;
+  color: #292920;
+  caret-color: #c8462a;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.vcard__limit--edit input::-webkit-inner-spin-button,
+.vcard__limit--edit input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.vcard__limit--edit:focus-within {
+  outline: 2px solid #f08a62;
+  outline-offset: 1px;
+}
+
+/* Gift card face. */
+.giftface {
+  --gf-bg: #8e2f4c;
+  --gf-bg2: #5c1d33;
+  --gf-ribbon: #f4c56a;
+  position: relative;
+  aspect-ratio: 85.6 / 54;
+  container-type: inline-size;
+}
+.giftface__face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  padding: 6.5cqw 7cqw;
+  border-radius: 5cqw;
+  color: #fff8ef;
+  background:
+    radial-gradient(circle at 85% 15%, #ffffff22, transparent 40%),
+    linear-gradient(140deg, var(--gf-bg), var(--gf-bg2));
+  box-shadow:
+    0 1.5cqw 3cqw -1cqw #29292040,
+    0 8cqw 14cqw -8cqw #29292066;
+  overflow: hidden;
+}
+.giftface--forest {
+  --gf-bg: #2f6b4f;
+  --gf-bg2: #1c4232;
+}
+.giftface--gold {
+  --gf-bg: #c58a23;
+  --gf-bg2: #8a5a12;
+  --gf-ribbon: #fff1cf;
+}
+.giftface--ink {
+  --gf-bg: #2f3a52;
+  --gf-bg2: #1b2233;
+}
+.giftface--clay {
+  --gf-bg: #c8462a;
+  --gf-bg2: #8d2f1b;
+}
+.giftface__ribbon {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 22%;
+  width: 6cqw;
+  background: var(--gf-ribbon);
+  opacity: 0.9;
+}
+.giftface__bow {
+  position: absolute;
+  top: 6cqw;
+  right: calc(22% - 4.5cqw);
+  width: 15cqw;
+  height: 9cqw;
+  background:
+    radial-gradient(
+      ellipse 45% 50% at 25% 50%,
+      var(--gf-ribbon) 60%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 45% 50% at 75% 50%,
+      var(--gf-ribbon) 60%,
+      transparent 62%
+    );
+}
+.giftface__face > :not(.giftface__ribbon, .giftface__bow) {
+  position: relative;
+  max-width: 64%;
+}
+.giftface__kind {
+  font-size: 3cqw;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.giftface__store {
+  margin-top: 1.5cqw;
+  font-size: 7cqw;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.giftface__balance {
+  align-self: end;
+  font-size: 9cqw;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+.giftface__expiry {
+  font-size: 3.2cqw;
+  font-weight: 650;
+  opacity: 0.85;
+}
+.giftface__edit input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.4cqw 0;
+  border: 0;
+  border-bottom: 1px dashed #ffffff70;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  caret-color: var(--gf-ribbon);
+  color-scheme: dark;
+}
+.giftface__edit input::placeholder {
+  color: #ffffff80;
+}
+.giftface__edit input:focus {
+  border-bottom: 1px solid var(--gf-ribbon);
+}
+.giftface__edit--store input {
+  margin-top: 1.5cqw;
+  font-size: 7cqw;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+.giftface__edit--balance {
+  display: flex;
+  align-items: baseline;
+  align-self: end;
+  gap: 0.6cqw;
+  font-size: 9cqw;
+  font-weight: 850;
+}
+.giftface__edit--balance input {
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.giftface__edit--balance input::-webkit-inner-spin-button,
+.giftface__edit--balance input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.giftface__edit--expiry {
+  display: grid;
+  gap: 0.4cqw;
+}
+.giftface__edit--expiry small {
+  font-size: 2.6cqw;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+.giftface__edit--expiry input {
+  font-size: 3.4cqw;
+  font-weight: 650;
+}
+
+/* Wallet: issued cards and saved gift cards. */
+.wallet {
+  display: grid;
+  gap: 24px;
+  padding: 22px;
+}
+.wallet-group {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.wallet-group + .wallet-group {
+  padding-top: 22px;
+  border-top: 1px solid var(--color-line);
+}
+.wallet-group__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+}
+.wallet-group__head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.wallet-group__head p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-ink-soft);
+}
+.wallet-grid,
+.cards-page .wallet-grid.card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wallet-item {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+}
+.wallet-item .gift-spend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wallet-item .gift-spend input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+.wallet-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px dashed var(--color-line-strong);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--color-muted);
+}
+.wallet-empty svg {
+  flex: none;
+}
+
+@media (max-width: 900px) {
+  .cards-studios {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .studio,
+  .wallet {
+    padding: 18px;
+  }
+  .studio__foot {
+    flex-wrap: wrap;
+  }
+}
+/* Saved cards keep a real-card size instead of filling a wide column. */
+.cards-page .wallet-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 320px));
+}

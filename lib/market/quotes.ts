@@ -60,6 +60,10 @@ const SAMPLE: Record<string, number> = {
   UBER: 96.2,
 };
 
+/** The fixed demo price for a symbol, if it has one. */
+export const samplePrice = (symbol: string): number | undefined =>
+  SAMPLE[symbol];
+
 function sampleMove(symbol: string) {
   let h = 0;
   for (const c of symbol) h = (h * 31 + c.charCodeAt(0)) % 997;

@@ -181,7 +181,7 @@ export default function DevelopersPage() {
           <ol className="dev-steps">
             <li>
               Sign in to Brix and open{" "}
-              <Link href="/settings">Settings → Developer API keys</Link>. Name
+              <Link href="/developer">Developers → API keys</Link>. Name
               the key, pick only the permissions you need, and copy it. It’s
               shown once.
             </li>

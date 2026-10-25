@@ -32,7 +32,11 @@ export interface VirtualCard {
   state: "OPEN" | "CLOSED" | "PAUSED";
   source: "mock" | "lithic";
   createdAt?: string;
+  /** Card colour picked on the Cards page; graphite when absent. */
+  design?: CardDesign;
 }
+export const CARD_DESIGNS = ["graphite", "clay", "cobalt"] as const;
+export type CardDesign = (typeof CARD_DESIGNS)[number];
 export interface ActivityEvent {
   id: string;
   type: string;

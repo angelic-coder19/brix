@@ -24,7 +24,7 @@ const when = (iso?: string) =>
       })
     : "Never";
 
-/** Settings panel for personal API keys. Secrets are shown once, right after creation. */
+/** Developers panel for personal API keys. Secrets are shown once, right after creation. */
 export default function DeveloperKeys({ request }: { request: RequestFn }) {
   const [keys, setKeys] = useState<ApiKey[] | null>(null),
     [scopes, setScopes] = useState<Record<string, string>>({}),

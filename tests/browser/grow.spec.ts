@@ -169,10 +169,10 @@ test("gift cards: see unspent total, add one, log spending, use it up", async ({
   const section = page.getByRole("region", { name: "Gift cards" });
   await expect(section).toContainText("$52.35 unspent across 2 cards");
   await expect(section).toContainText("Expires in 20 days");
-  await section.getByRole("button", { name: "Add a gift card" }).click();
-  await section.getByLabel("Store").fill("Chipotle");
-  await section.getByLabel("Balance (USD)").fill("25");
-  await section.getByRole("button", { name: "Save card" }).click();
+  const studio = page.getByRole("region", { name: "Add a gift card" });
+  await studio.getByLabel("Store", { exact: true }).fill("Chipotle");
+  await studio.getByLabel("Balance (USD)").fill("25");
+  await studio.getByRole("button", { name: "Save card" }).click();
   await expect(section).toContainText("$77.35 unspent across 3 cards");
   await section.getByLabel("Amount spent from Chipotle card").fill("25");
   await section.getByRole("button", { name: "Log spend" }).first().click();

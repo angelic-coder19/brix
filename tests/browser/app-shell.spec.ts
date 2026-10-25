@@ -22,7 +22,7 @@ test.describe("desktop shell", () => {
     // Badges only show real counts: the demo has no free trials yet, and one
     // school refund waiting for a plan.
     await expect(
-      sidebar.getByRole("link", { name: "Your charges", exact: true }),
+      sidebar.getByRole("link", { name: "Charges", exact: true }),
     ).toBeVisible();
     await expect(sidebar.locator(".nav-badge")).toHaveCount(1);
     await expect(
@@ -97,7 +97,7 @@ test.describe("desktop shell", () => {
     await page.getByLabel("Price after trial (USD)").fill("9");
     await page.getByRole("button", { name: "Add to my charges" }).click();
     await expect(
-      sidebar.getByRole("link", { name: /Your charges\s*,\s*1 free trial/ }),
+      sidebar.getByRole("link", { name: /Charges\s*,\s*1 free trial/ }),
     ).toBeVisible();
   });
 
@@ -204,4 +204,59 @@ test.describe("mobile shell", () => {
     await expect(page).toHaveURL(/\/cards$/);
     await expect(sidebar).toBeHidden();
   });
+});
+
+test("sidebar navigation keeps the app shell mounted", async ({ page }) => {
+  await page.goto("/dashboard");
+  await expect(page.getByText(/Across 6 subscriptions/)).toBeVisible();
+  // Tag the live sidebar node; a remount would replace it and lose the tag.
+  await page.evaluate(() => {
+    (document.querySelector("#app-sidebar") as HTMLElement).dataset.probe =
+      "kept";
+  });
+  const nav = page.locator("#app-sidebar, .mobile-nav");
+  const go = async (name: string, path: string) => {
+    if (await page.locator(".topbar__menu").isVisible())
+      await page.locator(".topbar__menu").click();
+    await page
+      .locator("#app-sidebar")
+      .getByRole("link", { name, exact: true })
+      .click();
+    await expect(page).toHaveURL(new RegExp(`${path}$`));
+  };
+  await go("Cards", "/cards");
+  await expect(
+    page.getByRole("heading", { name: "New one-time card" }),
+  ).toBeVisible();
+  await go("Invest", "/practice");
+  await go("Developers", "/developer");
+  await expect(
+    page.getByRole("heading", { name: "Build on Brix" }),
+  ).toBeVisible();
+  await expect(page.locator("#app-sidebar")).toHaveAttribute(
+    "data-probe",
+    "kept",
+  );
+  await expect(nav.first()).toBeVisible();
+  // No breadcrumb or pause control in the header any more.
+  await expect(page.locator(".topbar__crumbs")).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /Pause market ticker/ }),
+  ).toHaveCount(0);
+});
+
+test("invest shows a price line and a leaderboard", async ({ page }) => {
+  await page.goto("/practice");
+  await expect(
+    page.getByRole("img", { name: /VOO closing prices/ }),
+  ).toBeVisible();
+  const board = page.getByRole("region", { name: "Leaderboard" });
+  await expect(board.getByText("Sample").first()).toBeVisible();
+  await page
+    .getByRole("group", { name: "Time range" })
+    .getByRole("button", { name: "6M" })
+    .click();
+  await expect(
+    page.getByRole("img", { name: /VOO closing prices/ }),
+  ).toBeVisible();
 });

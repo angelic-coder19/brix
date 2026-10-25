@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import BrixApp from "@/components/BrixApp";
 export const metadata: Metadata = { title: "Your charges" };
+// The workspace layout renders the app shell; this route only sets the title.
 export default function Page() {
-  return <BrixApp view="subscriptions" />;
+  return null;
 }
