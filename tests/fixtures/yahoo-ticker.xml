@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<rss version="2.0">
+    <channel>
+        <copyright>Copyright (c) 2026 Yahoo Inc. All rights reserved.</copyright>
+        <description>Latest Financial News for VOO</description>
+        <image>
+            <height>45</height>
+            <link>http://finance.yahoo.com/q/h?s=VOO</link>
+            <title>Yahoo! Finance: VOO News</title>
+            <url>https://s.yimg.com/rz/stage/p/yahoo_finance_en-US_h_p_finance_2.png</url>
+            <width>144</width>
+        </image>
+        <item>
+            <description>Owning the S&amp;P 500 index isn't as diversified of a strategy as you might initially assume.</description>
+            <guid isPermaLink="false">781351d6-605f-3f67-908d-504da969c7b2</guid>
+            <link>https://www.fool.com/investing/2026/10/24/before-you-buy-vanguard-sp-500-etf-1-risk/?.tsrc=rss</link>
+            <pubDate>Sat, 24 Oct 2026 21:43:00 +0000</pubDate>
+            <title>Before You Buy the Vanguard S&amp;P 500 ETF, There's 1 Sneaky Risk Investors Should Know</title>
+        </item><item>
+            <description>Chasing high dividends and calmer days sounds like a sensible retirement strategy, but the numbers on a $300,000 SPHD position tell a different story about what that stability actually costs you.</description>
+            <guid isPermaLink="false">f29bc332-2d28-32d2-8356-26378f6588e4</guid>
+            <link>https://247wallst.com/investing/etf/2026/10/23/sphd-holders-left-105300-on-the-table-on-a-300000-position-while-chasing-dividends/?.tsrc=rss</link>
+            <pubDate>Sat, 24 Oct 2026 00:03:10 +0000</pubDate>
+            <title>SPHD Holders Left $105,300 on the Table on a $300,000 Position While Chasing Dividends</title>
+        </item><item>
+            <description>The most common investing strategy is typically to buy the S&amp;P 500.</description>
+            <guid isPermaLink="false">29956e76-2bf6-33e5-a9b3-5b11fa2cf2d8</guid>
+            <link>https://www.fool.com/investing/2026/10/23/should-you-forget-the-vanguard-sp-500-etf-voo-and/?.tsrc=rss</link>
+            <pubDate>Fri, 23 Oct 2026 15:50:00 +0000</pubDate>
+            <title>Should You Forget the Vanguard S&amp;P 500 ETF (VOO) and Buy the Invesco S&amp;P 500 Equal Weight ETF (RSP) Instead?</title>
+        </item></channel></rss>

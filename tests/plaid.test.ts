@@ -68,7 +68,7 @@ test("Plaid restarts pagination from its original cursor and upserts without und
         ],
       });
     };
-    assert.deepEqual(await syncPlaid(uid), { synced: 1 });
+    assert.deepEqual(await syncPlaid(uid), { synced: 1, refunds: 0 });
     assert.deepEqual(cursors, ["original", "intermediate", "original"]);
     assert.equal((await getSecret(uid)).plaidCursors?.item, "final");
     const charges = (await getState(uid)).charges.filter(

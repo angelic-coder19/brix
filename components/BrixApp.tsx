@@ -42,6 +42,8 @@ import {
   Scissors,
   ChevronRight,
   Activity,
+  GraduationCap,
+  TrendingUp,
 } from "lucide-react";
 import BrixBuddy from "./brix/BrixBuddy";
 import MerchantLogo from "./ui/MerchantLogo";
@@ -50,6 +52,9 @@ import DeveloperKeys from "./DeveloperKeys";
 import MerchantNews from "./MerchantNews";
 import GoogleOneTap, { disableGoogleAutoSelect } from "./GoogleOneTap";
 import SmsSignIn from "./SmsSignIn";
+import Refunds from "./refunds/Refunds";
+import Practice from "./practice/Practice";
+import "./refunds/refunds.css";
 import {
   useBrixChat,
   type BrixChatApi,
@@ -70,7 +75,14 @@ import {
 } from "@/components/shell/AppSidebar";
 
 export type View =
-  "dashboard" | "subscriptions" | "cards" | "connect" | "settings" | "admin";
+  | "dashboard"
+  | "subscriptions"
+  | "cards"
+  | "refunds"
+  | "practice"
+  | "connect"
+  | "settings"
+  | "admin";
 
 class ApiError extends Error {
   constructor(
@@ -119,6 +131,14 @@ const titles: Record<View, [string, string]> = {
   cards: [
     "One-time cards",
     "Single-use sandbox cards with a hard spending limit.",
+  ],
+  refunds: [
+    "Refunds",
+    "School refunds, what's borrowed, and a plan before the money disappears.",
+  ],
+  practice: [
+    "Practice investing",
+    "Real prices, virtual money. Learn before you risk anything.",
   ],
   connect: [
     "Connections",
@@ -393,6 +413,9 @@ export default function BrixApp({ view }: { view: View }) {
   const openCards = (state?.cards ?? []).filter(
     (c) => c.state === "OPEN",
   ).length;
+  const newRefunds = (state?.refunds ?? []).filter(
+    (r) => r.status === "new",
+  ).length;
   const navGroups: NavGroup[] = [
     {
       label: "Money",
@@ -412,6 +435,21 @@ export default function BrixApp({ view }: { view: View }) {
             label: `${openCards} open ${openCards === 1 ? "card" : "cards"}`,
           },
         },
+      ],
+    },
+    {
+      label: "Grow",
+      items: [
+        {
+          href: "refunds",
+          label: "Refunds",
+          icon: GraduationCap,
+          badge: {
+            value: newRefunds,
+            label: `${newRefunds} refund${newRefunds === 1 ? "" : "s"} to plan`,
+          },
+        },
+        { href: "practice", label: "Practice investing", icon: TrendingUp },
       ],
     },
     {
@@ -641,6 +679,23 @@ export default function BrixApp({ view }: { view: View }) {
               )}
               {view === "dashboard" && (
                 <>
+                  {newRefunds > 0 && (
+                    <section
+                      className="card refund-banner"
+                      aria-label="School refund"
+                    >
+                      <div>
+                        <strong>Your school refund arrived</strong>
+                        <span>
+                          Part of it may be borrowed money that&apos;s free to
+                          return for 120 days. Make a plan before it disappears.
+                        </span>
+                      </div>
+                      <Link href="/refunds" className="btn btn--primary">
+                        Plan my refund <ArrowRight size={16} />
+                      </Link>
+                    </section>
+                  )}
                   {setupPending && (
                     <section
                       className="card setup-strip"
@@ -993,6 +1048,15 @@ export default function BrixApp({ view }: { view: View }) {
                   </div>
                 </div>
               )}
+              {view === "refunds" && (
+                <Refunds
+                  state={state}
+                  request={request}
+                  action={action}
+                  busy={busy}
+                />
+              )}
+              {view === "practice" && <Practice request={request} />}
               {view === "connect" && (
                 <Connect
                   request={request}

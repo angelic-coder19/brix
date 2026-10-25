@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { adminDb } from "./firebase/admin";
 import { isDemo, HttpError } from "./auth";
 import type { AppState, UserSecret } from "./types";
+import type { Portfolio } from "./practice/engine";
 const folder =
   process.env.BRIX_TEST_STORAGE === "true"
     ? path.join(process.cwd(), ".data", "browser-tests")
@@ -82,6 +83,20 @@ export function demoState(uid = "demo-maya"): AppState {
     cancelUrl: String(cancelUrl),
     usageNote: "Seeded demo data — usage is not tracked.",
   }));
+  // A school refund that is partly borrowed, still inside the 120-day window.
+  state.refunds = [
+    {
+      id: "demo-refund",
+      amount: 1850,
+      receivedOn: date(-10),
+      source: "plaid",
+      descriptor: "PENN STATE BURSAR REFUND",
+      funding: "mixed",
+      loanAmount: 1200,
+      loanType: "unsubsidized",
+      status: "new",
+    },
+  ];
   state.events = [
     {
       id: randomUUID(),
@@ -191,14 +206,56 @@ export async function registerPhone(uid: string, phone: string) {
 export async function deleteData(uid: string) {
   const state = await getState(uid);
   if (isDemo()) {
-    for (const suffix of ["state", "secret"])
+    for (const suffix of ["state", "secret", "portfolio"])
       await unlink(filename(uid, suffix)).catch(() => {});
     return;
   }
   const db = adminDb();
   await db.recursiveDelete(db.doc(`users/${uid}`));
   await db.doc(`secrets/${uid}`).delete();
+  await db.doc(`portfolios/${uid}`).delete();
   if (state.user.phoneE164)
     await db.doc(`phoneIndex/${state.user.phoneE164}`).delete();
 }
 export const getUserIdByPhone = findUserByPhone;
+
+// The practice portfolio lives in its own document so trading history never
+// pushes the account state toward its size limit.
+export async function getPortfolio(uid: string): Promise<Portfolio | null> {
+  if (isDemo()) return localRead<Portfolio>(uid, "portfolio");
+  return (
+    ((await adminDb().doc(`portfolios/${uid}`).get()).data()?.portfolio as
+      Portfolio | undefined) ?? null
+  );
+}
+/** Atomically reads, changes, and writes the portfolio. Return null to delete it. */
+export async function updatePortfolio<T>(
+  uid: string,
+  updater: (p: Portfolio | null) => { portfolio: Portfolio | null; result: T },
+): Promise<T> {
+  if (isDemo())
+    return locked(`${uid}-portfolio`, async () => {
+      const { portfolio, result } = updater(
+        await localRead<Portfolio>(uid, "portfolio"),
+      );
+      if (portfolio) await localWrite(uid, "portfolio", portfolio);
+      else await unlink(filename(uid, "portfolio")).catch(() => {});
+      return result;
+    });
+  const ref = adminDb().doc(`portfolios/${uid}`);
+  return adminDb().runTransaction(async (tx) => {
+    const current =
+      ((await tx.get(ref)).data()?.portfolio as Portfolio | undefined) ?? null;
+    const { portfolio, result } = updater(current);
+    if (portfolio) tx.set(ref, { portfolio });
+    else tx.delete(ref);
+    return result;
+  });
+}
+/** Users who have a practice portfolio, for the daily auto-invest job. */
+export async function listPortfolioOwners(): Promise<string[]> {
+  if (isDemo()) return (await getPortfolio("demo-maya")) ? ["demo-maya"] : [];
+  return (await adminDb().collection("portfolios").select().get()).docs.map(
+    (d) => d.id,
+  );
+}
