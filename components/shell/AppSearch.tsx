@@ -9,16 +9,35 @@ import {
   type ComponentType,
   type ReactNode,
 } from "react";
-import { Activity, ArrowLeft, CornerDownLeft, CreditCard, Layers3, Search, Sparkles, X } from "lucide-react";
+import {
+  Activity,
+  ArrowLeft,
+  CornerDownLeft,
+  CreditCard,
+  Layers3,
+  Search,
+  Sparkles,
+  X,
+} from "lucide-react";
 import type { ActivityEvent, Charge, VirtualCard } from "@/lib/types";
 
 export type SearchResult =
   | { type: "page"; id: string; title: string; sub: string; href: string }
   | { type: "charge"; id: string; title: string; sub: string; charge: Charge }
   | { type: "card"; id: string; title: string; sub: string; card: VirtualCard }
-  | { type: "activity"; id: string; title: string; sub: string; event: ActivityEvent };
+  | {
+      type: "activity";
+      id: string;
+      title: string;
+      sub: string;
+      event: ActivityEvent;
+    };
 
-const GROUPS: { type: SearchResult["type"]; label: string; icon: ComponentType<{ size?: number }> }[] = [
+const GROUPS: {
+  type: SearchResult["type"];
+  label: string;
+  icon: ComponentType<{ size?: number }>;
+}[] = [
   { type: "page", label: "Go to", icon: CornerDownLeft },
   { type: "charge", label: "Charges and trials", icon: Layers3 },
   { type: "card", label: "One-time cards", icon: CreditCard },
@@ -26,9 +45,13 @@ const GROUPS: { type: SearchResult["type"]; label: string; icon: ComponentType<{
 ];
 const PER_GROUP = 5;
 
-const usd = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD" });
+const usd = (n: number) =>
+  n.toLocaleString("en-US", { style: "currency", currency: "USD" });
 const day = (s: string) =>
-  new Date(`${s.slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  new Date(`${s.slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 
 export function highlight(text: string, q: string): ReactNode {
   const query = q.trim();
@@ -84,13 +107,15 @@ export function searchAll(
       sub: `${c.kind === "trial" ? "Free trial · ends" : c.status === "to_cancel" ? "Marked to cancel ·" : "Renews"} ${day(c.nextDate)} · ${usd(c.amount)}`,
       charge: c,
     })),
-    ...rank(data.cards, (c) => `${c.purpose} ${c.last4}`).map<SearchResult>((c) => ({
-      type: "card",
-      id: `card-${c.id}`,
-      title: c.purpose,
-      sub: `•••• ${c.last4} · ${usd(c.spendLimit)} limit · ${c.state === "OPEN" ? "Open" : c.state === "PAUSED" ? "Paused" : "Closed"}`,
-      card: c,
-    })),
+    ...rank(data.cards, (c) => `${c.purpose} ${c.last4}`).map<SearchResult>(
+      (c) => ({
+        type: "card",
+        id: `card-${c.id}`,
+        title: c.purpose,
+        sub: `•••• ${c.last4} · ${usd(c.spendLimit)} limit · ${c.state === "OPEN" ? "Open" : c.state === "PAUSED" ? "Paused" : "Closed"}`,
+        card: c,
+      }),
+    ),
     ...rank(
       data.events.filter((e) => e.type !== "agent_message" && e.text),
       (e) => e.text,
@@ -163,11 +188,23 @@ export function AppSearch({
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       const typing =
-        !!t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
-      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "k") {
+        !!t &&
+        (t.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        !e.altKey &&
+        e.key.toLowerCase() === "k"
+      ) {
         e.preventDefault();
         focusRef.current();
-      } else if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      } else if (
+        e.key === "/" &&
+        !typing &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
         e.preventDefault();
         focusRef.current();
       }
@@ -200,7 +237,9 @@ export function AppSearch({
 
   const showPanel = open && value.trim().length > 0;
   const pending = value.trim() !== query.trim();
-  const activeId = results[active] ? `${listId}-${results[active].id}` : undefined;
+  const activeId = results[active]
+    ? `${listId}-${results[active].id}`
+    : undefined;
 
   return (
     <>
@@ -222,7 +261,12 @@ export function AppSearch({
       >
         <div className="app-search__field">
           {sheet ? (
-            <button type="button" className="icon-btn app-search__back" aria-label="Close search" onClick={closeSheet}>
+            <button
+              type="button"
+              className="icon-btn app-search__back"
+              aria-label="Close search"
+              onClick={closeSheet}
+            >
               <ArrowLeft size={18} />
             </button>
           ) : (
@@ -292,17 +336,19 @@ export function AppSearch({
             )
           )}
         </div>
-        <div
-          className="app-search__panel"
-          hidden={!showPanel && !sheet}
-        >
+        <div className="app-search__panel" hidden={!showPanel && !sheet}>
           <div id={listId} role="listbox" aria-label="Search results">
             {results.length > 0 &&
               GROUPS.map((g) => {
                 const items = results.filter((r) => r.type === g.type);
                 if (!items.length) return null;
                 return (
-                  <div role="group" aria-label={g.label} key={g.type} className="app-search__group">
+                  <div
+                    role="group"
+                    aria-label={g.label}
+                    key={g.type}
+                    className="app-search__group"
+                  >
                     <div className="app-search__label" aria-hidden>
                       {g.label}
                     </div>
@@ -326,7 +372,11 @@ export function AppSearch({
                               <strong>{highlight(r.title, query)}</strong>
                               <small>{r.sub}</small>
                             </span>
-                            <CornerDownLeft size={14} className="app-search__enter" aria-hidden />
+                            <CornerDownLeft
+                              size={14}
+                              className="app-search__enter"
+                              aria-hidden
+                            />
                           </div>
                         </Fragment>
                       );
@@ -337,16 +387,19 @@ export function AppSearch({
           </div>
           {showPanel && !pending && !results.length && (
             <div className="app-search__empty" role="status">
-              <Sparkles size={16} aria-hidden /> Nothing matches “{value.trim()}”. Try a merchant,
-              a card or a page name.
+              <Sparkles size={16} aria-hidden /> Nothing matches “{value.trim()}
+              ”. Try a merchant, a card or a page name.
             </div>
           )}
           {sheet && !value.trim() && (
-            <p className="app-search__hint">Search your charges, free trials, cards and activity.</p>
+            <p className="app-search__hint">
+              Search your charges, free trials, cards and activity.
+            </p>
           )}
           {showPanel && results.length > 0 && (
             <p className="app-search__foot" aria-hidden>
-              <span>↑↓ to move</span> <span>Enter to open</span> <span>Esc to close</span>
+              <span>↑↓ to move</span> <span>Enter to open</span>{" "}
+              <span>Esc to close</span>
             </p>
           )}
         </div>

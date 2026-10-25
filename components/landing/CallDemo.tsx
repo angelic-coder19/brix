@@ -65,7 +65,9 @@ export default function CallDemo() {
       aria-hidden="true"
     >
       <div className="call__screen">
-        <span className="call__status">{live ? "On call" : "Incoming call…"}</span>
+        <span className="call__status">
+          {live ? "On call" : "Incoming call…"}
+        </span>
         <span className="call__face">
           <span className="call__rings">
             <i />
@@ -75,7 +77,9 @@ export default function CallDemo() {
         </span>
         <span className="call__name">Brix</span>
         {live ? (
-          <span className={`call__wave${phase === "answering" || phase === "giggle" ? " is-speaking" : ""}`}>
+          <span
+            className={`call__wave${phase === "answering" || phase === "giggle" ? " is-speaking" : ""}`}
+          >
             {Array.from({ length: 13 }, (_, i) => (
               <i key={i} style={{ animationDelay: `${(i % 5) * -0.13}s` }} />
             ))}
@@ -95,7 +99,9 @@ export default function CallDemo() {
         <p className={`call__line call__line--you${step >= 1 ? " is-in" : ""}`}>
           <b>You</b> What’s due this week?
         </p>
-        <p className={`call__line call__line--brix${step >= 3 ? " is-in" : ""}`}>
+        <p
+          className={`call__line call__line--brix${step >= 3 ? " is-in" : ""}`}
+        >
           <b>Brix</b> Netflix on Thursday, $15.49.
         </p>
       </div>

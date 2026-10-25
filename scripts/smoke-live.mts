@@ -458,6 +458,33 @@ async function main() {
     short(turn.reply),
   );
 
+  // Gift cards and where-it-came-from labels.
+  r = await call("/api/gift-cards", {
+    body: {
+      merchant: "Target",
+      balance: 40,
+      expiresOn: new Date(Date.now() + 10 * 86400000)
+        .toISOString()
+        .slice(0, 10),
+    },
+  });
+  const g = (await call("/api/gift-cards")).data;
+  check(
+    "Gift card tracked, expiring soon flagged",
+    r.status === 201 && g.total === 40 && g.expiringSoon?.length === 1,
+    `total $${g.total}`,
+  );
+  turn = await chat("Do I have any gift cards I should use soon?");
+  const lastReply = (await call("/api/state")).data.events.find(
+    (e: any) => e.role === "assistant",
+  );
+  check(
+    "Reply cites its sources",
+    /gift/i.test(turn.reply ?? "") &&
+      (lastReply?.sources ?? []).includes("Your gift cards"),
+    short(lastReply?.sources),
+  );
+
   // Practice portfolio at live prices.
   r = await call("/api/practice", { body: { refundId: refund?.id } });
   check(

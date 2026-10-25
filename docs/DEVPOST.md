@@ -10,7 +10,7 @@ Brix
 
 ## Tagline (Elevator pitch, 200 characters max)
 
-Catch the charge before it catches you. An AI money assistant that spots trials and subscriptions before they bill, and lets students act by web, WhatsApp, or a phone call.
+Catch money moments before they pass. Brix flags trials before they bill, borrowed money hiding in aid refunds, and gift cards about to expire, then helps students act by app, WhatsApp or call.
 
 ## Links
 
@@ -39,24 +39,35 @@ FNB asked how technology can turn information into understanding, understanding 
 
 ### What it does
 
-- **Finds every recurring charge.** Students link a bank through Plaid (sandbox). Brix reads recurring transactions, normalizes them, and predicts the next charge date for each subscription. Free trials can be added by hand.
-- **Reaches out before the money moves.** A daily job checks every account and sends a reminder 7 days and 2 days before each charge, in the app or on WhatsApp.
-- **Lets students act from anywhere.**
-  - **Web chat:** a Claude-powered assistant that reads their real charges and can mark one to cancel, set a reminder, or make a one-time card.
-  - **WhatsApp:** the same assistant over text.
-  - **Phone call:** call the Brix number and ask "what's coming up?" A Vapi voice agent answers using the same tools, recognising the caller by their verified phone number.
-- **Protects trials with single-use cards.** Brix can create a single-use card with a hard spending limit (Lithic sandbox), so a trial can't silently turn into a recurring charge. Cards can be closed at any time.
-- **Explains, never decides.** For each charge it shows the amount, the date, and a direct cancel link. It surfaces merchant pricing and renewal news, labelled as news rather than a confirmed change to your plan.
-- **Catches the refund moment.** When a school refund lands (leftover financial aid), Brix spots the deposit and builds a plan: essentials until the next disbursement, a starter emergency fund, and returning unused *borrowed* money while federal loans can still be cancelled with no interest (120 days). It flags when scholarship money spent on rent may be taxable.
-- **Lets students learn investing safely.** A practice portfolio sized to their refund uses virtual money at real market prices: buy and sell index funds and large companies, set auto-invest rules (dollar-cost averaging), stop-losses and take-profits, follow news on their holdings, and compare against the S&P 500. No real money ever moves.
-- **Opens up to other tools.** A public, documented REST API with personal, scoped keys lets students pull their charges into a spreadsheet, a Discord bot, or a phone shortcut.
+Brix shows up at the moments students most often get money wrong, and turns each one into a single, clear next step.
+
+**Moment 1: before a charge hits.**
+- Links a bank through Plaid (sandbox), finds every recurring charge, and predicts the next date for each.
+- Free trials can be added by hand.
+- Reaches out 7 days and 2 days before each charge: in the app, on WhatsApp, or with a phone call for students who opt in.
+- The student can keep it, mark it to cancel (with the merchant's cancel link), set a reminder, or use a single-use card with a hard limit (Lithic sandbox) so a trial can't quietly become a subscription.
+
+**Moment 2: when a school refund lands.**
+- Brix spots the aid refund deposit and points out what most students miss: part of it may be **borrowed**.
+- Federal loan money returned within 120 days is cancelled with no interest or fees, so Brix shows the exact return-by date, the interest the money would otherwise build, and a plan: essentials until the next disbursement, a starter emergency fund, then saving.
+- It flags that scholarship or grant money spent on rent can be taxable.
+- Students who want to invest first try a **practice portfolio**: virtual money at real prices, auto-invest rules and a comparison with the S&P 500. No real money ever moves.
+
+**Moment 3: before a gift card expires.**
+- Unspent gift card balances ("breakage") are money students already have.
+- Brix tracks balances and expiry dates, reminds students 14 and 3 days before a card expires, and when they ask about a store they pay, reminds them to use the card first.
+
+**One decision at a time.** The dashboard opens with the single most important decision right now (for example, "$1,200 of your refund is borrowed, return by Feb 12"), not a wall of numbers.
+
+**The same assistant everywhere.** The web chat, WhatsApp and a phone call (Vapi) all use the same 12 tools on the student's own data. Merchant and stock news (Google News and Yahoo Finance) is filtered to real pricing stories and labelled as news, not a confirmed change. A public, scoped REST API lets students pull their data into their own tools.
 
 ### The trust design (what makes this an FNB answer, not an API wrapper)
 
 - **Brix never moves money.** Bank access is read-only, and Brix never cancels at a merchant. It records the decision and hands you the cancel link.
 - **Confirm before acting, on every channel.** The AI can only *propose* a change. Nothing happens until the user says yes. Each proposal is stored per channel, expires after 10 minutes, and can be confirmed only once, even if two confirmations arrive at the same moment.
 - **Voice can't spend.** A spoken "yes" never applies a change. The user confirms in the signed-in app, and creating a card from a call also needs a 4-digit PIN (hashed, locked after 5 wrong tries).
-- **No invented numbers, no advice.** The assistant answers only from tool results, and its prompt rules out investment advice.
+- **No invented numbers, no advice.** Every amount and date is calculated by code from the student's data; the AI explains and never makes up figures. It won't tell anyone what to buy with real money.
+- **Every answer shows where it came from.** Each chat reply is labelled with its sources, for example "Your charges", "Brix's math (estimate)", "News: Google News", or "General info, not your data", so students can tell their own data from estimates and general advice. Refund plans link to studentaid.gov, IRS Publication 970 and the CFPB.
 - **Every request is verified.** Twilio signatures on WhatsApp, a shared secret on Vapi calls, a secret on the cron job, Firebase ID tokens in the app, and hashed, scoped keys for the API.
 - **The user stays in control.** There's an activity log of every action, a bank-disconnect button, and a full "delete my data" option.
 
@@ -64,13 +75,13 @@ FNB asked how technology can turn information into understanding, understanding 
 
 - **App:** Next.js 16 (App Router) with React 19 and TypeScript, deployed on Vercel. A Vercel cron job runs the daily reminder check.
 - **Identity and data:** Firebase Authentication (Google and phone sign-in) and Firestore. All writes go through server routes. Firestore rules deny every client write and every read of secrets.
-- **AI:** Claude (`claude-opus-5-5`) through the Anthropic SDK, with a manual tool-use loop. Seven tools share one tool layer across web, WhatsApp, and voice. The loop has a 10-second budget, and a server-side fallback model handles any refused request.
+- **AI:** Claude (`claude-opus-5-5`) through the Anthropic SDK, with a manual tool-use loop. Twelve tools share one tool layer across web, WhatsApp, and voice. The loop has a 10-second budget, and a server-side fallback model handles any refused request.
 - **Voice:** a Vapi assistant on a Twilio number. Its tool calls hit `/api/vapi/tools`, which finds the caller by verified phone number and runs the same tools as the web chat.
 - **Messaging:** Twilio WhatsApp, with signature validation on inbound messages.
 - **Money data:** Plaid sandbox (`/transactions/sync` and recurring streams) for charges, and Lithic sandbox for single-use cards. Card creation uses idempotency keys, and an uncertain failure is never retried automatically.
-- **News:** NewsAPI, filtered to the user's top merchants and to pricing and renewal stories.
+- **News and prices:** Google News RSS for merchant pricing stories and Yahoo Finance for stocks, cached in Firestore with a stale-data fallback; live Yahoo prices for the practice portfolio, and orders never fill without a real price.
 - **Developer platform:** a versioned `/api/v1` with SHA-256-hashed personal keys, six scopes, per-key rate limits, idempotent trial creation, an OpenAPI 3.1 spec, and a docs page generated from that same spec.
-- **Quality:** 37 unit tests and 67 Playwright browser tests (desktop and mobile). They cover confirmation races, malformed requests, concurrent API load, the cron secret, and WCAG AA accessibility checks with axe.
+- **Quality:** 66 unit tests, 130 Playwright browser tests (desktop and mobile, including WCAG AA accessibility checks), and a 40-step live test that runs against production with a throwaway account: real Plaid sandbox sync, Claude, Lithic, signed WhatsApp and voice webhooks, refund detection, live-price trades and news.
 
 ### Challenges we ran into
 
@@ -135,17 +146,16 @@ All Brix code was written during HackPSU Fall 2026. Open-source packages and ser
 
 Rules: who you are, why you built it, how you implemented it, and future plans.
 
-1. **0:00–0:30 · Who and why.** Introduce yourself. The problem: small charges students never decided on. Give your hallway-interview number.
-2. **0:30–1:15 · The dashboard.** Link the Plaid sandbox bank. Recurring charges appear with their next dates and cancel links. Add a free trial.
-3. **1:15–2:00 · Web chat.** Ask "what's coming up this week?" Then "cancel Netflix": Brix proposes, you confirm, the activity log updates, and the cancel link appears.
-4. **2:00–2:45 · Phone call.** Call the Brix number on speaker and ask what's due. Ask it to remind you about Spotify, then show the proposal waiting in the app. Explain that voice can't spend money.
-5. **2:45–3:15 · One-time card.** Create a $10 single-use card for a trial, confirm it, then close it.
-6. **3:15–3:40 · How it's built.** Show the architecture slide: one tool layer, three channels, confirm-before-act. Show `/developers` for the public API.
-7. **3:40–4:00 · What's next.** A real-investing hand-off after practice, a sponsor bank for real cards, and the bank white-label.
+1. **0:00–0:25 · Who and why.** Students lose money at moments they don't notice: a trial that bills, an aid refund that's secretly a loan, a gift card that expires. Give your "X of Y students" number.
+2. **0:25–1:20 · The refund moment.** Open the dashboard: "Your next decision: $1,200 of your refund is borrowed." Open the plan: essentials, emergency fund, return $1,200 by Feb 12 (no interest), and the taxable-scholarship note with its sources.
+3. **1:20–2:05 · Call Brix.** On speaker: "I just got money back from school, what should I do?" Brix explains the borrowed part. Then "remind me before Spotify renews": it prepares the request, and you confirm it in the app (voice can't spend).
+4. **2:05–2:35 · Before a charge.** Show a trial billing soon, ask the chat "should I keep it?", and point to the source labels under the answer. Mark it to cancel, and show the cancel link.
+5. **2:35–2:55 · Gift cards.** Show "$52.35 unspent across 2 cards," the Target card expiring in 20 days, then log a spend.
+6. **2:55–3:15 · Practice, not gambling.** Start a practice portfolio with the refund amount (virtual money), buy VOO at the live price, and add a $25 weekly rule.
+7. **3:15–3:40 · How it's built and why trust it.** Read-only bank access, confirm before any action, numbers calculated by code, sources on every answer, 40-step live test.
+8. **3:40–4:00 · What's next.** A bank or credit-union white-label, a sponsor bank for real cards, and outbound check-ins at key aid dates.
 
 Record the call segment ahead of time as a backup.
-
----
 
 ## Before you hit submit
 

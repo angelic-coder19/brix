@@ -28,7 +28,9 @@ export function initials(name: string, email: string) {
   const source = name.trim() || email.split("@")[0] || "";
   const parts = source.split(/[\s._-]+/).filter(Boolean);
   const letters =
-    parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : source.slice(0, 1);
+    parts.length > 1
+      ? parts[0][0] + parts[parts.length - 1][0]
+      : source.slice(0, 1);
   return (letters || "Y").toUpperCase();
 }
 
@@ -61,9 +63,13 @@ export function useSidebarState() {
       const t = e.target as HTMLElement | null;
       const typing =
         !!t &&
-        (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
+        (t.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName));
       const mod = (e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey;
-      if ((mod && e.key.toLowerCase() === "b") || (!typing && !mod && !e.altKey && e.key === "[")) {
+      if (
+        (mod && e.key.toLowerCase() === "b") ||
+        (!typing && !mod && !e.altKey && e.key === "[")
+      ) {
         if (typing && !mod) return;
         e.preventDefault();
         toggleRef.current();
@@ -105,7 +111,8 @@ export function AppSidebar({
   const [peek, setPeek] = useState(false);
   const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canPeek = () =>
-    collapsed && window.matchMedia("(min-width: 761px) and (hover: hover)").matches;
+    collapsed &&
+    window.matchMedia("(min-width: 761px) and (hover: hover)").matches;
   const clearTimer = () => {
     if (peekTimer.current) clearTimeout(peekTimer.current);
     peekTimer.current = null;
@@ -146,7 +153,9 @@ export function AppSidebar({
 
   return (
     <>
-      {drawerOpen && <div className="sidebar-scrim" onClick={onCloseDrawer} aria-hidden />}
+      {drawerOpen && (
+        <div className="sidebar-scrim" onClick={onCloseDrawer} aria-hidden />
+      )}
       <aside
         ref={ref}
         id="app-sidebar"
@@ -163,18 +172,27 @@ export function AppSidebar({
         onPointerLeave={(e) => {
           if (e.pointerType !== "mouse") return;
           clearTimer();
-          if (!ref.current?.contains(document.activeElement) || !document.activeElement?.matches(":focus-visible"))
+          if (
+            !ref.current?.contains(document.activeElement) ||
+            !document.activeElement?.matches(":focus-visible")
+          )
             setPeek(false);
         }}
         onFocus={(e) => {
-          if (canPeek() && (e.target as HTMLElement).matches(":focus-visible")) setPeek(true);
+          if (canPeek() && (e.target as HTMLElement).matches(":focus-visible"))
+            setPeek(true);
         }}
         onBlur={(e) => {
-          if (!ref.current?.contains(e.relatedTarget as Node | null)) setPeek(false);
+          if (!ref.current?.contains(e.relatedTarget as Node | null))
+            setPeek(false);
         }}
       >
         <div className="sidebar-head">
-          <Link href="/" className="wordmark sidebar-brand" aria-label="Brix home">
+          <Link
+            href="/"
+            className="wordmark sidebar-brand"
+            aria-label="Brix home"
+          >
             <span className="sidebar-brand__full">
               <Wordmark />
             </span>
@@ -195,7 +213,11 @@ export function AppSidebar({
             aria-expanded={!collapsed}
             data-tip={collapsed ? "Expand  [" : "Collapse  ["}
           >
-            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            {collapsed ? (
+              <PanelLeftOpen size={18} />
+            ) : (
+              <PanelLeftClose size={18} />
+            )}
           </button>
           <button
             type="button"
@@ -208,7 +230,12 @@ export function AppSidebar({
         </div>
         <nav className="sidebar-nav">
           {groups.map((g) => (
-            <div className="nav-group" key={g.label} role="group" aria-label={g.label}>
+            <div
+              className="nav-group"
+              key={g.label}
+              role="group"
+              aria-label={g.label}
+            >
               <span className="nav-group__label" aria-hidden>
                 {g.label}
               </span>
@@ -220,8 +247,8 @@ export function AppSidebar({
           <div className="sidebar-trust">
             <ShieldCheck size={16} aria-hidden />
             <p>
-              <strong>Read-only.</strong> Brix sees charges through Plaid. It can’t pay or
-              cancel without your yes.
+              <strong>Read-only.</strong> Brix sees charges through Plaid. It
+              can’t pay or cancel without your yes.
             </p>
           </div>
           <AccountMenu
@@ -281,7 +308,10 @@ function AccountMenu({
     return () => document.removeEventListener("pointerdown", onDown);
   }, [open]);
   useEffect(() => {
-    if (confirming) menu.current?.querySelector<HTMLElement>(".account-confirm button")?.focus();
+    if (confirming)
+      menu.current
+        ?.querySelector<HTMLElement>(".account-confirm button")
+        ?.focus();
   }, [confirming]);
 
   const onMenuKey = (e: React.KeyboardEvent) => {
@@ -308,7 +338,8 @@ function AccountMenu({
         ? 0
         : e.key === "End"
           ? items.length - 1
-          : (i + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+          : (i + (e.key === "ArrowDown" ? 1 : -1) + items.length) %
+            items.length;
     items[next].focus();
   };
 
@@ -332,7 +363,11 @@ function AccountMenu({
           <strong>{display}</strong>
           <small>{secondary}</small>
         </span>
-        <ChevronsUpDown size={16} className="account-trigger__icon" aria-hidden />
+        <ChevronsUpDown
+          size={16}
+          className="account-trigger__icon"
+          aria-hidden
+        />
       </button>
       {open && (
         <div
@@ -372,10 +407,18 @@ function AccountMenu({
           <div className="account-menu__sep" role="separator" />
           {canSignOut ? (
             confirming ? (
-              <div className="account-confirm" role="group" aria-label="Log out of Brix?">
+              <div
+                className="account-confirm"
+                role="group"
+                aria-label="Log out of Brix?"
+              >
                 <span>Log out of Brix? Your data stays saved.</span>
                 <div>
-                  <button type="button" className="btn btn--sm btn--ghost" onClick={() => setConfirming(false)}>
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    onClick={() => setConfirming(false)}
+                  >
                     Stay
                   </button>
                   <button
@@ -402,7 +445,9 @@ function AccountMenu({
             )
           ) : (
             <p className="account-menu__note">
-              {demo ? "Demo account. No sign-in, nothing to log out of." : "You’re not signed in."}
+              {demo
+                ? "Demo account. No sign-in, nothing to log out of."
+                : "You’re not signed in."}
             </p>
           )}
         </div>

@@ -48,7 +48,10 @@ test("bot reacts to confirmations and tone", () => {
 });
 
 test("mood tracks outcome and upcoming money", () => {
-  assert.equal(moodFor("confirmed", "mark_to_cancel", charges, NOW), "celebrate");
+  assert.equal(
+    moodFor("confirmed", "mark_to_cancel", charges, NOW),
+    "celebrate",
+  );
   assert.equal(moodFor("proposed", undefined, charges, NOW), "listening");
   assert.equal(moodFor("answered", undefined, charges, NOW), "concerned");
   assert.equal(moodFor("answered", undefined, [], NOW), "happy");
@@ -73,8 +76,13 @@ test("buildMeta celebrates a confirmed cancellation only", () => {
   assert.equal(meta.celebrate, true);
   assert.equal(meta.reaction, "🎉");
   assert.equal(
-    buildMeta({ message: "hi", outcome: "answered", charges, hasPending: false, now: NOW })
-      .celebrate,
+    buildMeta({
+      message: "hi",
+      outcome: "answered",
+      charges,
+      hasPending: false,
+      now: NOW,
+    }).celebrate,
     false,
   );
 });

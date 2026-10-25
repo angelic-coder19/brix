@@ -11,6 +11,7 @@ async function sendReminders() {
     sent: results.reduce((s, r) => s + r.sent, 0),
     inApp: results.reduce((s, r) => s + r.inApp, 0),
     failed: results.reduce((s, r) => s + r.failed, 0),
+    giftCards: results.reduce((s, r) => s + r.giftCards, 0),
   });
 }
 // Vercel Cron calls GET with `Authorization: Bearer $CRON_SECRET`.

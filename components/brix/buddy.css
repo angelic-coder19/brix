@@ -41,10 +41,7 @@
 .buddy-eyes {
   position: absolute;
   inset: 0;
-  transform: translate(
-    calc(var(--look-x) * 9px),
-    calc(var(--look-y) * 6px)
-  );
+  transform: translate(calc(var(--look-x) * 9px), calc(var(--look-y) * 6px));
   transition: transform 0.12s linear;
 }
 .buddy-eye {
@@ -354,20 +351,55 @@
   width: 9px;
   height: 9px;
 }
-.buddy-confetti i:nth-child(1) { --angle: 0deg; }
-.buddy-confetti i:nth-child(2) { --angle: 26deg; animation-delay: 0.05s; }
-.buddy-confetti i:nth-child(3) { --angle: 52deg; }
-.buddy-confetti i:nth-child(4) { --angle: 78deg; animation-delay: 0.1s; }
-.buddy-confetti i:nth-child(5) { --angle: 104deg; }
-.buddy-confetti i:nth-child(6) { --angle: 130deg; animation-delay: 0.05s; }
-.buddy-confetti i:nth-child(7) { --angle: 156deg; }
-.buddy-confetti i:nth-child(8) { --angle: 182deg; animation-delay: 0.12s; }
-.buddy-confetti i:nth-child(9) { --angle: 208deg; }
-.buddy-confetti i:nth-child(10) { --angle: 234deg; animation-delay: 0.05s; }
-.buddy-confetti i:nth-child(11) { --angle: 260deg; }
-.buddy-confetti i:nth-child(12) { --angle: 286deg; animation-delay: 0.1s; }
-.buddy-confetti i:nth-child(13) { --angle: 312deg; }
-.buddy-confetti i:nth-child(14) { --angle: 338deg; animation-delay: 0.08s; }
+.buddy-confetti i:nth-child(1) {
+  --angle: 0deg;
+}
+.buddy-confetti i:nth-child(2) {
+  --angle: 26deg;
+  animation-delay: 0.05s;
+}
+.buddy-confetti i:nth-child(3) {
+  --angle: 52deg;
+}
+.buddy-confetti i:nth-child(4) {
+  --angle: 78deg;
+  animation-delay: 0.1s;
+}
+.buddy-confetti i:nth-child(5) {
+  --angle: 104deg;
+}
+.buddy-confetti i:nth-child(6) {
+  --angle: 130deg;
+  animation-delay: 0.05s;
+}
+.buddy-confetti i:nth-child(7) {
+  --angle: 156deg;
+}
+.buddy-confetti i:nth-child(8) {
+  --angle: 182deg;
+  animation-delay: 0.12s;
+}
+.buddy-confetti i:nth-child(9) {
+  --angle: 208deg;
+}
+.buddy-confetti i:nth-child(10) {
+  --angle: 234deg;
+  animation-delay: 0.05s;
+}
+.buddy-confetti i:nth-child(11) {
+  --angle: 260deg;
+}
+.buddy-confetti i:nth-child(12) {
+  --angle: 286deg;
+  animation-delay: 0.1s;
+}
+.buddy-confetti i:nth-child(13) {
+  --angle: 312deg;
+}
+.buddy-confetti i:nth-child(14) {
+  --angle: 338deg;
+  animation-delay: 0.08s;
+}
 
 /* concerned: worried brows, sweat, alert badge */
 .buddy--concerned .buddy-brow {

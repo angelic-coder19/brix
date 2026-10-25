@@ -201,3 +201,15 @@
     flex-direction: column;
   }
 }
+.refund-more {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+.refund-more summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.refund-more[open] summary {
+  margin-bottom: var(--space-3);
+}

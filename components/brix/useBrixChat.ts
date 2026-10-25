@@ -23,6 +23,8 @@ export interface ChatMessage {
   role: "user" | "assistant";
   text: string;
   reaction?: string;
+  /** Where the reply's facts came from. */
+  sources?: string[];
   /** Persisted on the server, so it can receive a tapback. */
   persisted: boolean;
   pending?: boolean;
@@ -71,7 +73,8 @@ export function useBrixChat({
   const flash = useCallback((mood: BuddyMood | null, ms = 3500) => {
     clearTimeout(timer.current);
     setTransient(mood);
-    if (mood && ms > 0) timer.current = setTimeout(() => setTransient(null), ms);
+    if (mood && ms > 0)
+      timer.current = setTimeout(() => setTransient(null), ms);
   }, []);
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -95,6 +98,7 @@ export function useBrixChat({
           text: e.text,
           persisted: true,
           ...(reaction ? { reaction } : {}),
+          ...(e.sources?.length ? { sources: e.sources } : {}),
         };
       });
   }, [state, reactionOverrides]);

@@ -1,5 +1,11 @@
 "use client";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { Send } from "lucide-react";
 import BrixBuddy from "@/components/brix/BrixBuddy";
 import StreamingText from "@/components/brix/StreamingText";
@@ -214,7 +220,9 @@ export default function BotDemo({
       ),
     );
     if (emoji) {
-      setMood(emoji === "👎" ? "concerned" : emoji === "😮" ? "listening" : "happy");
+      setMood(
+        emoji === "👎" ? "concerned" : emoji === "😮" ? "listening" : "happy",
+      );
       later(() => setMood("idle"), 2200);
     }
   }
@@ -224,7 +232,12 @@ export default function BotDemo({
   }
   const chips = pending
     ? ["Yes", "No"]
-    : ["What's coming up?", "Mark Netflix to cancel", "Remind me about Spotify", "How much have I saved?"];
+    : [
+        "What's coming up?",
+        "Mark Netflix to cancel",
+        "Remind me about Spotify",
+        "How much have I saved?",
+      ];
 
   return (
     <div className={`bot-demo bot-demo--${variant}`}>
@@ -247,7 +260,12 @@ export default function BotDemo({
           </div>
           <span className="badge badge--green">Live</span>
         </header>
-        <div className="chat__messages" ref={list} role="log" aria-live="polite">
+        <div
+          className="chat__messages"
+          ref={list}
+          role="log"
+          aria-live="polite"
+        >
           <div className="msg msg--assistant">
             <div className="msg__bubble">
               Hi, I’m Brix! Tap a suggestion or ask me anything. I’ll always
@@ -296,7 +314,11 @@ export default function BotDemo({
           )}
         </div>
         {!busy && streaming === null && (
-          <div className="chat__chips" role="group" aria-label="Suggested replies">
+          <div
+            className="chat__chips"
+            role="group"
+            aria-label="Suggested replies"
+          >
             {chips.map((c) => (
               <button
                 key={c}

@@ -40,7 +40,8 @@ export default function HelpLauncher() {
       const under = document
         .elementsFromPoint(x, y)
         .find((el) => !btn.contains(el) && el !== btn);
-      const value = under?.closest<HTMLElement>("[data-surface]")?.dataset.surface;
+      const value =
+        under?.closest<HTMLElement>("[data-surface]")?.dataset.surface;
       setSurface(value === "dark" || value === "accent" ? value : "light");
     };
     const onScroll = () => {
@@ -72,9 +73,9 @@ export default function HelpLauncher() {
         setState("minimized");
       }
       if (e.key !== "Tab" || !node) return;
-      const items = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-        (el) => el.offsetParent !== null,
-      );
+      const items = Array.from(
+        node.querySelectorAll<HTMLElement>(FOCUSABLE),
+      ).filter((el) => el.offsetParent !== null);
       if (!items.length) return;
       const first = items[0];
       const last = items[items.length - 1];
@@ -152,7 +153,9 @@ export default function HelpLauncher() {
             <BrixMark className="chat-launcher__mark" mood={mood} decorative />
           </span>
           <span className="chat-launcher__label">Questions?</span>
-          {state === "minimized" && <span className="chat-launcher__dot" aria-hidden="true" />}
+          {state === "minimized" && (
+            <span className="chat-launcher__dot" aria-hidden="true" />
+          )}
         </button>
       )}
     </>

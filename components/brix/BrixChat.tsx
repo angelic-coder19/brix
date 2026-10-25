@@ -111,7 +111,9 @@ export default function BrixChat({
         <div className="chat__title">
           <strong>Brix</strong>
           <small aria-live="polite">
-            {mood === "concerned" && headsUp ? `Heads up: ${headsUp}` : STATUS[mood]}
+            {mood === "concerned" && headsUp
+              ? `Heads up: ${headsUp}`
+              : STATUS[mood]}
           </small>
         </div>
         <button
@@ -159,8 +161,18 @@ export default function BrixChat({
                 {m.reaction}
               </span>
             )}
+            {m.role === "assistant" && m.sources && m.id !== streamingId && (
+              <ul className="msg__sources" aria-label="Where this came from">
+                {m.sources.map((source) => (
+                  <li key={source}>{source}</li>
+                ))}
+              </ul>
+            )}
             {m.role === "assistant" && m.persisted && m.id !== streamingId && (
-              <Tapbacks message={m} onReact={(emoji) => void react(m.id, emoji)} />
+              <Tapbacks
+                message={m}
+                onReact={(emoji) => void react(m.id, emoji)}
+              />
             )}
           </div>
         ))}
@@ -176,7 +188,11 @@ export default function BrixChat({
         )}
       </div>
       {!busy && !streamingId && suggestions.length > 0 && (
-        <div className="chat__chips" role="group" aria-label="Suggested replies">
+        <div
+          className="chat__chips"
+          role="group"
+          aria-label="Suggested replies"
+        >
           {suggestions.map((s) => (
             <button
               type="button"

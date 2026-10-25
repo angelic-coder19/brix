@@ -59,7 +59,10 @@ test("pricing stories match; TV renewals and publisher names don't", () => {
     !isPricingStory("Netflix drops the trailer for its new season", "Netflix"),
   );
   assert.ok(
-    !isPricingStory("Spotify Price Target Raised to $650/Share by Barclays", "Spotify"),
+    !isPricingStory(
+      "Spotify Price Target Raised to $650/Share by Barclays",
+      "Spotify",
+    ),
     "stock coverage is not subscription pricing",
   );
   assert.ok(

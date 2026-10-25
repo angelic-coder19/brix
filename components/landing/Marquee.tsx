@@ -1,7 +1,13 @@
 import type { ReactNode } from "react";
 
 /** Seamless loop: the list renders twice and slides by exactly one copy. */
-export default function Marquee({ items, label }: { items: { key: string; node: ReactNode }[]; label: string }) {
+export default function Marquee({
+  items,
+  label,
+}: {
+  items: { key: string; node: ReactNode }[];
+  label: string;
+}) {
   return (
     <div className="marquee" role="region" aria-label={label}>
       <div className="marquee__track">

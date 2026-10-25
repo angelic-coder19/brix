@@ -328,24 +328,78 @@
 .chat__confetti i:nth-child(odd) {
   animation-duration: 1.7s;
 }
-.chat__confetti i:nth-child(1) { --x: -150px; --y: -220px; }
-.chat__confetti i:nth-child(2) { --x: -110px; --y: -260px; }
-.chat__confetti i:nth-child(3) { --x: -70px; --y: -200px; }
-.chat__confetti i:nth-child(4) { --x: -30px; --y: -280px; }
-.chat__confetti i:nth-child(5) { --x: 10px; --y: -240px; }
-.chat__confetti i:nth-child(6) { --x: 50px; --y: -290px; }
-.chat__confetti i:nth-child(7) { --x: 90px; --y: -210px; }
-.chat__confetti i:nth-child(8) { --x: 130px; --y: -250px; }
-.chat__confetti i:nth-child(9) { --x: 160px; --y: -180px; }
-.chat__confetti i:nth-child(10) { --x: -160px; --y: -140px; }
-.chat__confetti i:nth-child(11) { --x: -120px; --y: -170px; }
-.chat__confetti i:nth-child(12) { --x: -50px; --y: -150px; }
-.chat__confetti i:nth-child(13) { --x: 30px; --y: -170px; }
-.chat__confetti i:nth-child(14) { --x: 110px; --y: -150px; }
-.chat__confetti i:nth-child(15) { --x: 150px; --y: -120px; }
-.chat__confetti i:nth-child(16) { --x: -90px; --y: -110px; }
-.chat__confetti i:nth-child(17) { --x: 70px; --y: -120px; }
-.chat__confetti i:nth-child(18) { --x: 0px; --y: -320px; }
+.chat__confetti i:nth-child(1) {
+  --x: -150px;
+  --y: -220px;
+}
+.chat__confetti i:nth-child(2) {
+  --x: -110px;
+  --y: -260px;
+}
+.chat__confetti i:nth-child(3) {
+  --x: -70px;
+  --y: -200px;
+}
+.chat__confetti i:nth-child(4) {
+  --x: -30px;
+  --y: -280px;
+}
+.chat__confetti i:nth-child(5) {
+  --x: 10px;
+  --y: -240px;
+}
+.chat__confetti i:nth-child(6) {
+  --x: 50px;
+  --y: -290px;
+}
+.chat__confetti i:nth-child(7) {
+  --x: 90px;
+  --y: -210px;
+}
+.chat__confetti i:nth-child(8) {
+  --x: 130px;
+  --y: -250px;
+}
+.chat__confetti i:nth-child(9) {
+  --x: 160px;
+  --y: -180px;
+}
+.chat__confetti i:nth-child(10) {
+  --x: -160px;
+  --y: -140px;
+}
+.chat__confetti i:nth-child(11) {
+  --x: -120px;
+  --y: -170px;
+}
+.chat__confetti i:nth-child(12) {
+  --x: -50px;
+  --y: -150px;
+}
+.chat__confetti i:nth-child(13) {
+  --x: 30px;
+  --y: -170px;
+}
+.chat__confetti i:nth-child(14) {
+  --x: 110px;
+  --y: -150px;
+}
+.chat__confetti i:nth-child(15) {
+  --x: 150px;
+  --y: -120px;
+}
+.chat__confetti i:nth-child(16) {
+  --x: -90px;
+  --y: -110px;
+}
+.chat__confetti i:nth-child(17) {
+  --x: 70px;
+  --y: -120px;
+}
+.chat__confetti i:nth-child(18) {
+  --x: 0px;
+  --y: -320px;
+}
 @keyframes chat-confetti {
   0% {
     opacity: 1;
@@ -464,4 +518,23 @@
   .chat-launcher {
     padding: 5px;
   }
+}
+
+/* Where a reply's facts came from */
+.msg__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.msg__sources li {
+  padding: 2px 8px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 600;
 }
