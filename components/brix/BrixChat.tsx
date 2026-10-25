@@ -9,12 +9,12 @@ import type { BuddyMood } from "@/lib/agent/persona";
 import type { BrixChatApi } from "./useBrixChat";
 
 const STATUS: Record<BuddyMood, string> = {
-  idle: "Here for the little things",
+  idle: "Online",
   listening: "Listening…",
   thinking: "Checking your charges…",
   talking: "Typing…",
   happy: "Glad to help",
-  celebrate: "Nice move! 🎉",
+  celebrate: "One less charge",
   concerned: "Keeping an eye on something",
   error: "Hmm, that didn't work",
 };

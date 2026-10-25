@@ -383,7 +383,7 @@ export default function BrixApp({ view }: { view: View }) {
           <span className="brand-block" />
           brix<span className="brand-period">.</span>
         </Link>
-        <div className="sidebar-caption">YOUR MONEY, BRICK BY BRICK</div>
+        <div className="sidebar-caption">Subscriptions &amp; trials</div>
         <nav>
           {nav.map((n) => (
             <Link
@@ -401,8 +401,8 @@ export default function BrixApp({ view }: { view: View }) {
         <div className="sidebar-bottom">
           <div className="sidebar-trust">
             <ShieldCheck size={20} />
-            <strong>Here to help. Never to move your money.</strong>
-            <p>Your bank connection is read-only. You’re always in control.</p>
+            <strong>Read-only access</strong>
+            <p>Brix can see charges through Plaid. It can’t pay, transfer or cancel without your yes.</p>
           </div>
           <Link
             href="/settings"
@@ -506,7 +506,7 @@ export default function BrixApp({ view }: { view: View }) {
           {needsSignIn ? (
             <section className="card sign-in">
               <BrixBuddy scale={0.6} mood="happy" />
-              <h2>Your money story starts here.</h2>
+              <h2>Sign in to see your charges</h2>
               <p>
                 Sign in to securely connect your bank and keep track of your
                 charges.
@@ -835,8 +835,8 @@ export default function BrixApp({ view }: { view: View }) {
                     ) : (
                       <div className="card empty-state">
                         <CreditCard size={30} />
-                        <h3>A fresh start.</h3>
-                        <p>Your one-time cards will appear here.</p>
+                        <h3>No cards yet</h3>
+                        <p>Cards you create show up here with their limit and the last four digits.</p>
                       </div>
                     )}
                   </div>
@@ -913,7 +913,7 @@ export default function BrixApp({ view }: { view: View }) {
                     Save preferences <Check size={17} />
                   </button>
                   <hr className="divider" />
-                  <h2>Your data, your choice.</h2>
+                  <h2>Your data</h2>
                   <p>
                     Disconnecting removes linked bank access. Deleting your
                     account removes your Brix profile and stored data.
@@ -1017,7 +1017,7 @@ export default function BrixApp({ view }: { view: View }) {
           <footer className="app-footer">
             <span>Brix reads your charges. It never moves money.</span>
             <span>
-              <ShieldCheck size={14} /> Your money stays yours.
+              <ShieldCheck size={14} /> Read-only by design.
             </span>
           </footer>
         </main>
@@ -1213,7 +1213,7 @@ function Connect({
       <section className="card form-card">
         <span className="step-number">01</span>
         <Phone size={26} />
-        <h2>Your phone, verified.</h2>
+        <h2>Phone number</h2>
         <p>
           Link a phone number so Brix recognizes you across WhatsApp and voice.
         </p>
@@ -1295,7 +1295,7 @@ function Connect({
       <section className="card form-card">
         <span className="step-number">02</span>
         <MessageCircle size={26} />
-        <h2>Say hi on WhatsApp.</h2>
+        <h2>WhatsApp</h2>
         <p>
           Join the Twilio sandbox, then turn on WhatsApp reminders in Settings.
         </p>
@@ -1330,7 +1330,7 @@ function Connect({
       <section className="card form-card">
         <span className="step-number">03</span>
         <Landmark size={26} />
-        <h2>Connect the dots.</h2>
+        <h2>Bank account</h2>
         <p>
           Link a sandbox bank through Plaid. Brix can read your charges, never
           move your money.

@@ -19,12 +19,12 @@ const siteUrl = process.env.APP_URL?.startsWith("http")
   ? process.env.APP_URL
   : "https://www.usebrix.app";
 const description =
-  "Brix is a friendly money assistant for college students. It spots recurring charges, flags free trials before they bill, and reminds you on the web, WhatsApp, or a quick call. It never moves your money.";
+  "Brix tracks subscriptions and free trials for college students. It finds recurring charges through Plaid, reminds you 7 and 2 days before they bill, and lets you cancel by chat after you say yes. It never moves money.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Brix · Your money, brick by brick",
+    default: "Brix · Subscription and free-trial tracker",
     template: "%s · Brix",
   },
   description,

@@ -61,7 +61,7 @@ function respond(
     const charge = SAMPLE.find((c) => c.merchant === pending.merchant)!;
     if (pending.kind === "cancel")
       return {
-        reply: `${charge.merchant} is marked to cancel. 🎉 Finish on their site and you'll skip ${"$" + charge.amount.toFixed(2)} this month.`,
+        reply: `${charge.merchant} is marked to cancel. Finish on their site and you'll skip ${"$" + charge.amount.toFixed(2)} this month.`,
         outcome: "confirmed",
         action: "mark_to_cancel",
         mood: "celebrate",
