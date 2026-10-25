@@ -1,71 +1,177 @@
-# Brix demo video: recording script (5 minutes)
+# Brix demo video: recording guide (under 5 minutes)
 
-Deck: https://claude.ai/artifact/2XDUSkAowBZCmjDaKxhjKy (10 slides). Deck time ≈ 1:45, live app ≈ 2:15.
+Devpost asks for: **who you are, why you built it, how you built it, and what's next.** This script covers all four, in that order, as a story.
 
-## Set up before you hit record (10 minutes)
+**Deck:** https://claude.ai/artifact/2XDUSkAowBZCmjDaKxhjKy (10 slides)
+**App:** https://www.usebrix.app, signed in to your own account
 
-**Two full-screen spaces on the Mac**
-- **Space 1:** the deck in Present mode, full screen.
-- **Space 2:** Chrome, full screen, at `www.usebrix.app/dashboard`, signed in to your own account.
-- Swipe between them with three fingers, or Control + Left / Right arrow.
+> The lines below are written the way people talk. You don't have to say them word for word. If a sentence comes out differently, that's fine. Keep the idea and keep moving.
 
-**Recording**
-- Press ⌘⇧5, choose **Record Entire Screen**, and set Options → Microphone to your mic. Recording the whole screen captures both spaces as you swipe.
+---
 
-**Prepare your account so every screen has something to show**
-1. On Connections, link the Plaid sandbox bank (`user_good` / `pass_good`).
-2. Verify your phone number.
-3. On Refunds, add a refund of $1,850 received about 10 days ago: "A mix", with $1,200 borrowed.
-4. On Cards, add a $40 Target gift card that expires in about 20 days.
-5. On Practice investing, start a portfolio with your refund amount, buy $400 of VOO, and add a $25 weekly VTI rule.
-6. Add a free trial that ends in about 5 days.
-7. Open the chat once and ask "What's coming up?" so the source labels show.
+## Part 1 · Set up your account (15 minutes, before recording)
 
-**Phone**
-- Have your phone ready on speaker, close to the Mac's microphone. Or pre-record the call and play the clip.
+Your account right now has the Plaid sandbox test charges (United Airlines, a bike shop and so on) **listed twice**, no refund and no gift cards. Those charges don't look like a student's, so clear them and add the story's data.
 
-**Before the take**
-- Do one dry run, then record. Keep your voice calm and steady. The timings below have about 15 seconds of slack.
+1. **Settings → Disconnect bank.** This removes the sandbox charges. (Don't re-link for the video; you'll mention bank linking instead.)
+2. **Overview → Add a free trial**, three times:
 
-## The run
+   | Trial name | Trial ends | Price after trial |
+   |---|---|---|
+   | LinkedIn Premium | 5 days from today | 39.99 |
+   | Spotify Premium | 12 days from today | 11.99 |
+   | Notion AI | 20 days from today | 10.00 |
 
-| Time | Where | Do | Say |
-|---|---|---|---|
-| 0:00–0:08 | **Deck · 1 Cover** | Start on the cover. | “Hi, I’m David, and this is Brix. Students don’t lose money in one big mistake. They lose it at small moments nobody warns them about.” |
-| 0:08–0:33 | **Deck · 2 Problem** | Point to each quadrant in turn. | “Four moments. Almost half of Americans, and 59% of Gen Z, have paid for a trial they forgot. 27 billion dollars sits on unused gift cards. Aid refunds often carry loan money: 28% of first-year students with federal loans said they had none. And Gen Z learns investing from social media far more than from professionals.” |
-| 0:33–0:40 | **Deck · 3 Solution** | Pause on the four cards, then **swipe right** to the app. | “Brix shows up at each of those moments with one next step. Let me show you.” |
-| 0:40–1:00 | **App · Overview** | Point to “Your next decision”, the stat row and the ticker. | “This is my real dashboard. Brix leads with one decision: $1,200 of my refund is borrowed, and I can return it by February with no interest. Everything else is below it.” |
-| 1:00–1:25 | **App · Refunds** | Click **Plan my refund**, answer the three questions, click **Make my plan**, then scroll the plan. | “Three plain questions. Brix covers my essentials, builds an emergency fund, and tells me to return the borrowed part before the 120-day window closes, with the interest that saves. It even warns that scholarship money spent on rent can be taxable, with the IRS source.” |
-| 1:25–2:00 | **Phone call** | Call +1 (870) 395-8999 on speaker. Ask: “I just got money back from school, what should I do?” Then: “Remind me before Spotify renews.” | Let Brix answer, then: “Same brain on the phone. It knew my refund, and it prepared the reminder but didn’t apply it. Voice can never spend: I confirm in the app.” |
-| 2:00–2:20 | **App · Chat** | Open **Ask Brix**. Type “Should I keep my [trial] trial?”, then point to the source labels under the answer. Type “yes” to confirm the voice request if prompted. | “Before a charge, Brix answers from my own data, and every answer says where its facts came from: my charges, Brix’s math, or the news.” |
-| 2:20–2:35 | **App · Cards** | Point to the gift cards and the Target countdown, then log a $10 spend. | “Gift cards are money too. Brix tracks balances and expiry, and reminds me to use my Target card before I pay with my own money.” |
-| 2:35–2:55 | **App · Practice investing** | Show portfolio value, “Compared with the S&P 500”, and the allocation chart. | “And before I risk real money, I practice. Virtual money sized to my refund, live prices, auto-invest every week, compared with the S&P 500. Brix never tells me what to buy with real money.” |
-| 2:55 | **Swipe left** to the deck. | | |
-| 2:55–3:12 | **Deck · 4 Competition** | Point to the Brix column. | “All of this is live, read-only, and every action waits for my yes. Rocket Money and YNAB are built for general adults and charge for the useful parts. Brix is the only one built around student decision moments, and the only one that turns an aid refund into a plan.” |
-| 3:12–3:22 | **Deck · 5 Market** | | “19.4 million U.S. college students, about a 930 million dollar consumer opportunity. We start at Penn State.” |
-| 3:22–3:37 | **Deck · 6 Model** | | “We earn four ways: a free core with Brix Plus, white-label licensing for banks like FNB, a usage-based developer API, and later, card interchange.” |
-| 3:37–3:47 | **Deck · 7 Plan** | | “25 campuses and two bank partners in two years, about 720 thousand dollars in year two.” |
-| 3:47–4:00 | **Deck · 8 Ask** | | “Whatever we win goes straight into Brix, and every dollar has a job: 35 percent product and security, a quarter compliance and a bank pilot like FNB, a quarter a Penn State launch, the rest infrastructure.” |
-| 4:00–4:08 | **Deck · 9 Impact** | | “At 50,000 students, that’s millions kept: trials skipped, loan interest avoided, gift cards spent.” |
-| 4:08–4:14 | **Deck · 10 Close** | Hold the slide; the QR code opens usebrix.app. | “Brix: your money, brick by brick. Scan to try it. I’m David Adedeji from Team Brix. Thank you.” |
+3. **Refunds → Add a refund:**
+   - Amount: **1850**
+   - Date it arrived: **October 15, 2026**
+   - Where it came from: **A mix**
+   - Borrowed part: **1200**
 
-Total ≈ 4:14, which leaves about 45 seconds of buffer under the 5-minute limit.
+   Your Overview will then say: **"$1,200.00 of your refund is borrowed. Federal loan money you return by Fri, Feb 12 is cancelled with no interest or fees."** That's the line you'll read on camera. If you use different numbers, say yours.
+4. **Cards → Add a gift card**, four times (small leftovers, like your friend's):
+
+   | Store | Balance | Expires |
+   |---|---|---|
+   | Target | 9.40 | leave blank |
+   | Amazon | 7.15 | leave blank |
+   | Starbucks | 10.00 | 10 days from today |
+   | Campus store | 12.60 | leave blank |
+
+5. **Invest:** you already have $1,000 of virtual money. Buy **$300 of VOO**, then add an auto-invest rule: **VTI, $25, every week.**
+6. **Overview:** click the **×** on the "Setup" pill so the top of the page is clean.
+7. **Phone (optional):** call **+1 (870) 395-8999** once to test it. Ask: *"I just got money back from school. What should I do?"*
+
+---
+
+## Part 2 · Set up the Mac
+
+- **Space 1:** the deck, in **Present** mode, full screen. Use **→** or the space bar for the next slide.
+- **Space 2:** Chrome, full screen, at `www.usebrix.app/dashboard`.
+- **Switch between them:** three-finger swipe, or **Control + ←/→**.
+- **Record:** press **⌘ ⇧ 5**, choose **Record Entire Screen**, and set **Options → Microphone** to your mic. Recording the whole screen captures both Spaces as you switch.
+- Do one practice run first. Speak slower than feels natural.
+
+---
+
+## Part 3 · The script
+
+Times are approximate. The whole run is about **4:40**. If you're running long, see "If you're running long" at the end.
+
+### 1 · Who I am and why I built it · Deck, slide 1 (Cover) · 0:00–1:00
+
+> Hey, I'm David, and this is Brix, an AI money assistant for college students.
+>
+> I built it because of two things I watched happen to people around me.
+>
+> The first was my roommate. The only money left on his card was what he'd saved for his health insurance. He signed up for a one-month free trial of LinkedIn Premium, forgot about it, and it charged him. LinkedIn did refund him, but it took two months of emails and follow-ups. Two months, with his health insurance money stuck.
+>
+> The second was a friend who showed me about ten gift cards with around ten dollars left on each. He couldn't use any of them. Tax would push the price just past the balance, or the checkout wouldn't let him use a gift card for such a small amount. That's about a hundred dollars just sitting in a drawer.
+
+### 2 · The problem is bigger than my friends · Press → to slide 2 (Problem) · 1:00–1:25
+
+> And it's not just them. Almost half of Americans, and 59% of Gen Z, have paid for a trial they forgot about. There's 27 billion dollars sitting on unused gift cards. A lot of students don't even realize part of their school refund is a loan. And most of us learn investing from social media.
+>
+> The information is already out there. Nobody warns you at the moment it actually matters.
+
+### 3 · The idea · Press → to slide 3 (Solution) · 1:25–1:35
+
+> So that's what Brix does. It shows up at those moments and gives you one clear next step. Let me show you.
+
+**→ Switch to Chrome (Control + →).**
+
+### 4 · The live demo · App · 1:35–3:20
+
+**Overview.** Point at "Your next decision".
+
+> This is my dashboard. Up top, Brix shows the one thing I should deal with right now: twelve hundred dollars of my school refund is actually borrowed. If I give it back by February 12th, it's cancelled. No interest, no fees.
+
+**Click "Plan my refund".** On the Refunds page, type **600** in "Rent, food and bills per month", then click **Make my plan**. Scroll the plan slowly.
+
+> Three quick questions, and Brix makes me a plan: cover my essentials first, keep a small emergency fund, and return the borrowed part before the deadline. And it links to studentaid.gov and the IRS, so I can check where every number comes from.
+
+**Click "Charges" in the sidebar.** Point at LinkedIn Premium.
+
+> Now, my roommate's problem. Here's a LinkedIn Premium trial that ends in five days. Brix reminds me a week before and two days before, in the app, on WhatsApp, or it'll actually call my phone.
+
+**Click "Cards".** Click the **Free trial** template, then **Review card**. When the chat opens, type **yes** and press Enter.
+
+> And next time I sign up for a trial, I don't use my real card. I pick "Free trial", which gives the card a one-dollar limit. Brix asks me to confirm first; it never does anything without my yes. Done. That trial can't charge me anymore.
+
+Scroll down to the gift cards.
+
+> And here's my friend's problem: little balances on Target, Amazon and Starbucks, all in one place. Brix reminds me before one expires, so I spend it instead of my own money.
+
+**Click "Invest".** Point at the chart, then the leaderboard.
+
+> And before I risk real money, I can practice: virtual money, real prices, auto-invest every week, and a leaderboard where you earn coins for good habits, not lucky bets.
+
+**Optional, about 20 seconds: the phone call.** Put your phone on speaker near the mic and call **+1 (870) 395-8999**. Ask: *"I just got money back from school. What should I do?"* Let it answer, then hang up.
+
+> Same assistant, on a phone call. It knows my refund, and it can't spend anything. I confirm in the app.
+
+### 5 · How I built it · Stay in the app · 3:20–3:45
+
+> Real quick on how it's built. It's a Next.js app on Vercel. Claude is the brain, and it uses the same set of tools whether you're on the website, on WhatsApp through Twilio, or on a phone call through Vapi. Plaid reads your bank data, read-only, so Brix can never move your money. Lithic makes the one-time cards. And there's a public API, so other student apps can build on top of Brix.
+
+**← Switch back to the deck (Control + ←).** Press → until you're on slide 4.
+
+### 6 · Why Brix is different · Slide 4 (Competition) · 3:45–4:00
+
+> Apps like Rocket Money and YNAB exist, but they're built for adults in general, and you pay for the useful parts. None of them catch the refund moment, track your gift cards or let you practice investing.
+
+### 7 · How it makes money · Slides 5 and 6 (Market, Model) · 4:00–4:20
+
+On **Market**:
+
+> There are 19.4 million college students in the US, so the market is big, but we're starting right here at Penn State.
+
+Press → to **Model**:
+
+> The basics are free. Brix Plus is $3.99 a month for WhatsApp, calls and the extras. Banks and credit unions, like FNB, can put Brix inside their own app for about a dollar per member a month. Developers pay for the API. And later, real cards earn a small fee on each purchase.
+
+### 8 · What's next · Slide 7 (Plan) · 4:20–4:40
+
+> Next: a pilot at Penn State, then ten campuses, then twenty-five with two bank partners.
+>
+> And one thing I really want to build is for my friend with the ten gift cards: letting you combine those small leftover balances, or split one purchase across a gift card and your own card. So ten cards with ten dollars each turns into a hundred dollars you can actually spend.
+
+### 9 · Close · Press → through slides 8 and 9 to slide 10 (Close) · 4:40–4:50
+
+You can click past Ask and Impact without speaking, or say one line on each (see below).
+
+> Brix: your money, brick by brick. Scan the code to try it at usebrix.app. I'm David Adedeji. Thanks for watching.
+
+**Stop the recording:** click the stop button in the menu bar, or press **⌘ ⌃ Esc**.
+
+---
+
+## Optional lines if you have time
+
+- **Slide 8 · Ask:** "Whatever we win goes straight into Brix: product and security first, then a bank pilot, then a campus launch."
+- **Slide 9 · Impact:** "At fifty thousand students, that's millions of dollars kept: trials not charged, loan interest not paid, gift cards actually spent."
+
+## If you're running long
+
+Cut in this order:
+
+1. The phone call (say "it also works over a phone call" instead)
+2. The Market slide line
+3. The Invest stop in the demo
+
+**Never cut:** your two stories, the refund decision, the $1 trial card, the gift cards, and the future plan.
 
 ## If something goes wrong on camera
 
-- **The call is slow or drops:** say “I’ll show the same thing in the chat”, then ask the chat the refund question.
-- **A page loads slowly:** keep talking over the slide you're on; don't wait in silence.
-- **The assistant gives a long answer:** cut it off with “and it goes on to explain…”, then move on.
+- **The call is slow or drops:** "I'll skip the call. It's the same assistant you just saw in the chat," and move on.
+- **A page loads slowly:** keep talking about what's coming; don't wait in silence.
+- **The card confirmation doesn't appear:** say "Brix asks me to confirm before it creates anything," and move to gift cards.
 
-## Placeholders to fill in before recording
+## Sources for the numbers you say
 
-- If you ran hallway interviews, add your real “X of Y” count when you speak over the problem slide.
-
-## Sources quoted
-
-- Forgotten trials: 2024 U.S. survey reported by 9to5Mac (Oct 2024): 48% overall, 59% Gen Z, 65% millennials.
-- Gift cards: Bankrate surveys, 2023 ($187 average) and 2024 (43% hold one, $244 average, about $27B total).
-- Hidden loans: Akers and Chingos, Brookings (2014): 28% of first-year students with federal loans reported none; 14% reported no student debt.
-- Investing: FINRA Investor Education Foundation and CFA Institute (2023): 48% social media, 45% family, 30% financial professional.
-- Enrollment: National Student Clearinghouse Research Center, fall 2025: 19.4 million.
-- Competitors: public pricing pages and reviews, October 2026 (Rocket Money Premium $7–14/month plus 35–60% fee on negotiated bills; YNAB $109/year).
+- Forgotten trials: 2024 U.S. survey reported by 9to5Mac (48% overall, 59% Gen Z).
+- Gift cards: Bankrate, 2024 (about $27B unspent; 43% of adults hold one).
+- Hidden loans: Akers and Chingos, Brookings (28% of first-year borrowers said they had no federal loans).
+- Investing: FINRA Foundation and CFA Institute, 2023 (48% of Gen Z investors learned from social media).
+- Enrollment: National Student Clearinghouse Research Center, fall 2025 (19.4 million).
+- Competitors: public pricing pages, October 2026.
