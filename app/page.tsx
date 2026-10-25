@@ -223,12 +223,14 @@ export default function Home() {
             <div className="hero__ctas">
               <PeekCta>
                 <Link href="/dashboard" className="btn btn--primary btn--lg" data-buddy-mood="celebrate">
-                  Open the demo <ArrowRight size={18} />
+                  Try the demo <ArrowRight size={18} />
                 </Link>
               </PeekCta>
+              <PeekCta>
               <a href="#how" className="btn btn--lg btn--ghost hero__how">
                 How it works
               </a>
+              </PeekCta>
             </div>
             <p className="hero__note">
               <ShieldCheck size={16} /> Read-only bank access. Brix never moves money.
@@ -384,7 +386,7 @@ export default function Home() {
               </p>
               <PeekCta>
                 <Link href="/dashboard" className="btn btn--primary">
-                  Open the full demo <ArrowRight size={17} />
+                  Try the full demo <ArrowRight size={17} />
                 </Link>
               </PeekCta>
             </div>
@@ -471,7 +473,7 @@ export default function Home() {
           <div className="section-head" data-reveal>
             <h2 id="faq-title">Questions</h2>
             <p>
-              Anything else? <Link href="/dashboard" className="text-link">Open the demo</Link> and
+              Anything else? <Link href="/dashboard" className="text-link">Try the demo</Link> and
               ask Brix.
             </p>
           </div>
@@ -498,7 +500,7 @@ export default function Home() {
               <div className="hero__ctas">
                 <PeekCta>
                   <Link href="/dashboard" className="btn btn--primary btn--lg">
-                    Open the demo <ArrowRight size={18} />
+                    Try the demo <ArrowRight size={18} />
                   </Link>
                 </PeekCta>
                 <a href="#product" className="final-cta__link">
