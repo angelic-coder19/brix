@@ -6,5 +6,6 @@ service cloud.firestore {
   match /secrets/{document=**} { allow read, write: if false; }
   match /phoneIndex/{document=**} { allow read, write: if false; }
   match /apiKeys/{document=**} { allow read, write: if false; }
+  match /smsLimits/{document=**} { allow read, write: if false; }
  }
 }

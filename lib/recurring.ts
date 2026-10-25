@@ -56,7 +56,10 @@ export function normalizeRecurring(
         id: `plaid-${s.stream_id}`,
         plaidStreamId: s.stream_id,
         kind: "subscription",
-        merchant: s.merchant_name || s.description || "Recurring charge",
+        merchant:
+          s.merchant_name ||
+          cleanDescriptor(s.description) ||
+          "Recurring charge",
         amount: Math.round(s.average_amount.amount * 100) / 100,
         frequency,
         lastDate: s.last_date,
@@ -70,4 +73,48 @@ export function normalizeRecurring(
             : "Detected from bank transaction history.",
       };
     });
+}
+
+const BRANDS: Record<string, string> = {
+  chatgpt: "ChatGPT",
+  openai: "OpenAI",
+  netflix: "Netflix",
+  spotify: "Spotify",
+  youtube: "YouTube",
+  icloud: "iCloud+",
+  apple: "Apple",
+  hulu: "Hulu",
+  disney: "Disney+",
+  adobe: "Adobe",
+  amazon: "Amazon",
+  prime: "Amazon Prime",
+  duolingo: "Duolingo",
+  notion: "Notion",
+  github: "GitHub",
+};
+const NOISE =
+  /\b(subscr\w*|recurring|payment|pmt|purchase|debit|pos|ach|autopay|monthly|annual|bill|www|com|inc|llc)\b/gi;
+
+/** Turns a bank descriptor like "OPENAI *CHATGPT SUBSCR" into "ChatGPT". */
+export function cleanDescriptor(description?: string) {
+  if (!description) return "";
+  // Card processors put the product after "*", e.g. "SQ *COFFEE", "OPENAI *CHATGPT".
+  const part = description.includes("*")
+    ? description.split("*").pop()!
+    : description;
+  const words = part
+    .replace(NOISE, " ")
+    .replace(/[^\p{L}\p{N}+&' ]/gu, " ")
+    .replace(/\b\d+\b/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length) return description.trim().slice(0, 60);
+  const brand = BRANDS[words[0].toLowerCase()];
+  if (brand) return brand;
+  return words
+    .slice(0, 4)
+    .map((w) => w[0].toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ")
+    .slice(0, 60);
 }

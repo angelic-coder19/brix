@@ -15,6 +15,7 @@ import HeroBuddy from "@/components/landing/HeroBuddy";
 import HelpLauncher from "@/components/landing/HelpLauncher";
 import HeroNotice from "@/components/landing/HeroNotice";
 import LandingHeader from "@/components/landing/LandingHeader";
+import GoogleOneTap from "@/components/GoogleOneTap";
 import Marquee from "@/components/landing/Marquee";
 import CallDemo from "@/components/landing/CallDemo";
 import LeavePreview from "@/components/landing/LeavePreview";
@@ -208,6 +209,7 @@ export default function Home() {
         Skip to content
       </a>
       <LandingHeader links={links} />
+      <GoogleOneTap redirectTo="/dashboard" />
 
       <main id="main">
         <section className="hero container">

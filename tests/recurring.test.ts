@@ -31,3 +31,12 @@ test("normalizes only active positive outflow streams and preserves provenance",
   assert.equal(charges[0].source, "plaid");
   assert.equal(charges[0].nextDate, "2026-11-01");
 });
+
+test("bank descriptors become readable merchant names", async () => {
+  const { cleanDescriptor } = await import("../lib/recurring");
+  assert.equal(cleanDescriptor("OPENAI *CHATGPT SUBSCR"), "ChatGPT");
+  assert.equal(cleanDescriptor("NETFLIX.COM 866-579-7172"), "Netflix");
+  assert.equal(cleanDescriptor("SQ *BLUE BOTTLE COFFEE"), "Blue Bottle Coffee");
+  assert.equal(cleanDescriptor("GYM MEMBERSHIP PMT 0423"), "Gym Membership");
+  assert.equal(cleanDescriptor(""), "");
+});

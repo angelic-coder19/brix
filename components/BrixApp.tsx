@@ -47,6 +47,9 @@ import BrixBuddy from "./brix/BrixBuddy";
 import MerchantLogo from "./ui/MerchantLogo";
 import BrixChat from "./brix/BrixChat";
 import DeveloperKeys from "./DeveloperKeys";
+import MerchantNews from "./MerchantNews";
+import GoogleOneTap, { disableGoogleAutoSelect } from "./GoogleOneTap";
+import SmsSignIn from "./SmsSignIn";
 import {
   useBrixChat,
   type BrixChatApi,
@@ -387,7 +390,9 @@ export default function BrixApp({ view }: { view: View }) {
       c.merchant.toLowerCase().includes(search.trim().toLowerCase()),
   );
   const name = state?.user.displayName || user?.displayName || "";
-  const openCards = (state?.cards ?? []).filter((c) => c.state === "OPEN").length;
+  const openCards = (state?.cards ?? []).filter(
+    (c) => c.state === "OPEN",
+  ).length;
   const navGroups: NavGroup[] = [
     {
       label: "Money",
@@ -439,6 +444,7 @@ export default function BrixApp({ view }: { view: View }) {
         canSignOut={!!user}
         onSignOut={() => {
           const auth = getClientAuth();
+          disableGoogleAutoSelect();
           if (auth) void signOut(auth);
         }}
       />
@@ -455,7 +461,7 @@ export default function BrixApp({ view }: { view: View }) {
             <Menu size={20} />
           </button>
           <Link href="/" className="wordmark wordmark--sm topbar__brand">
-          <Wordmark />
+            <Wordmark />
           </Link>
           <span className="topbar__crumbs">
             Your space <ChevronRight size={14} />
@@ -521,6 +527,7 @@ export default function BrixApp({ view }: { view: View }) {
           )}
           {needsSignIn ? (
             <section className="card sign-in">
+              <GoogleOneTap />
               <BrixBuddy scale={0.6} mood="happy" />
               <h2>Sign in to see your charges</h2>
               <p>
@@ -534,6 +541,7 @@ export default function BrixApp({ view }: { view: View }) {
               >
                 Continue with Google <ArrowRight size={18} />
               </button>
+              <SmsSignIn />
               <Link href="/onboarding" className="sign-in__alt">
                 New here? Set up Brix step by step
               </Link>
@@ -553,17 +561,36 @@ export default function BrixApp({ view }: { view: View }) {
               </button>
             </section>
           ) : !state ? (
-            <div className="loading-skel" role="status" aria-label="Loading your charges">
+            <div
+              className="loading-skel"
+              role="status"
+              aria-label="Loading your charges"
+            >
               <div className="summary-grid">
-                <div className="card skel-card"><span className="skeleton" style={{ width: "40%" }} /><span className="skeleton skeleton--xl" /><span className="skeleton" style={{ width: "70%" }} /></div>
-                <div className="card skel-card"><span className="skeleton" style={{ width: "50%" }} /><span className="skeleton skeleton--xl" /><span className="skeleton" style={{ width: "60%" }} /></div>
-                <div className="card skel-card"><span className="skeleton" style={{ width: "30%" }} /><span className="skeleton skeleton--xl" /><span className="skeleton" style={{ width: "80%" }} /></div>
+                <div className="card skel-card">
+                  <span className="skeleton" style={{ width: "40%" }} />
+                  <span className="skeleton skeleton--xl" />
+                  <span className="skeleton" style={{ width: "70%" }} />
+                </div>
+                <div className="card skel-card">
+                  <span className="skeleton" style={{ width: "50%" }} />
+                  <span className="skeleton skeleton--xl" />
+                  <span className="skeleton" style={{ width: "60%" }} />
+                </div>
+                <div className="card skel-card">
+                  <span className="skeleton" style={{ width: "30%" }} />
+                  <span className="skeleton skeleton--xl" />
+                  <span className="skeleton" style={{ width: "80%" }} />
+                </div>
               </div>
               <div className="card skel-list">
                 {[0, 1, 2, 3].map((i) => (
                   <div className="skel-row" key={i}>
                     <span className="skeleton skeleton--tile" />
-                    <span className="skel-row__text"><span className="skeleton" style={{ width: "34%" }} /><span className="skeleton" style={{ width: "22%" }} /></span>
+                    <span className="skel-row__text">
+                      <span className="skeleton" style={{ width: "34%" }} />
+                      <span className="skeleton" style={{ width: "22%" }} />
+                    </span>
                     <span className="skeleton" style={{ width: 64 }} />
                   </div>
                 ))}
@@ -615,7 +642,10 @@ export default function BrixApp({ view }: { view: View }) {
               {view === "dashboard" && (
                 <>
                   {setupPending && (
-                    <section className="card setup-strip" aria-label="Finish setting up">
+                    <section
+                      className="card setup-strip"
+                      aria-label="Finish setting up"
+                    >
                       <div>
                         <strong>Finish setting up Brix</strong>
                         <span>
@@ -651,8 +681,7 @@ export default function BrixApp({ view }: { view: View }) {
                         <small>/ mo</small>
                       </div>
                       <p>
-                        Across{" "}
-                        {subscriptionCount}{" "}
+                        Across {subscriptionCount}{" "}
                         {subscriptionCount === 1
                           ? "subscription"
                           : "subscriptions"}
@@ -684,7 +713,11 @@ export default function BrixApp({ view }: { view: View }) {
                       </p>
                       <div className="stat-card__footer">
                         <span>
-                          {state.charges.filter((c) => c.status === "to_cancel").length}{" "}
+                          {
+                            state.charges.filter(
+                              (c) => c.status === "to_cancel",
+                            ).length
+                          }{" "}
                           marked to cancel
                         </span>
                         <Link
@@ -718,8 +751,8 @@ export default function BrixApp({ view }: { view: View }) {
                           <Bell size={28} />
                           <h3>Nothing bills in the next 14 days.</h3>
                           <p>
-                            Add a free trial you just started, or connect a
-                            bank so Brix can find recurring charges.
+                            Add a free trial you just started, or connect a bank
+                            so Brix can find recurring charges.
                           </p>
                           <Link href="/connect" className="text-link">
                             Connect a bank <ArrowRight size={16} />
@@ -746,6 +779,7 @@ export default function BrixApp({ view }: { view: View }) {
                           Open chat <ArrowUpRight size={17} />
                         </button>
                       </div>
+                      <MerchantNews request={request} />
                       <section
                         className="card activity"
                         aria-labelledby="activity-title"
@@ -822,7 +856,11 @@ export default function BrixApp({ view }: { view: View }) {
                     {!visible.length && (
                       <div className="empty-state">
                         <Layers3 size={28} />
-                        <h3>{search ? `Nothing matches “${search}”.` : "No charges in this view."}</h3>
+                        <h3>
+                          {search
+                            ? `Nothing matches “${search}”.`
+                            : "No charges in this view."}
+                        </h3>
                         <p>
                           {search
                             ? "Check the spelling, or switch to All charges."
@@ -946,7 +984,10 @@ export default function BrixApp({ view }: { view: View }) {
                       <div className="card empty-state">
                         <CreditCard size={30} />
                         <h3>No cards yet</h3>
-                        <p>Cards you create show up here with their limit and the last four digits.</p>
+                        <p>
+                          Cards you create show up here with their limit and the
+                          last four digits.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -995,7 +1036,7 @@ export default function BrixApp({ view }: { view: View }) {
                     <label className="toggle-row">
                       <div>
                         <strong>Phone calls</strong>
-                        <span>Allow Brix to reach out by voice.</span>
+                        <span>Brix calls you 2 days before a charge.</span>
                       </div>
                       <input
                         className="switch"
@@ -1017,8 +1058,10 @@ export default function BrixApp({ view }: { view: View }) {
                       />
                     </label>
                     <p className="muted">
-                      Reminder checks run at 7 days and 2 days before a charge.
-                      Channel permissions stay in your control.
+                      Reminders go out 7 days and 2 days before a charge: by
+                      call if you allow it (2-day reminder only), otherwise
+                      WhatsApp, otherwise in the app. Channel permissions stay
+                      in your control.
                     </p>
                     <button className="btn btn--primary" disabled={busy}>
                       Save preferences <Check size={17} />
@@ -1342,18 +1385,34 @@ function Connect({
                     "Sign in with Google to verify a phone number.",
                   );
                 if (!verificationId) {
-                  captcha.current ??= new RecaptchaVerifier(
-                    auth,
-                    "phone-captcha",
-                    { size: "invisible" },
-                  );
-                  setVerificationId(
-                    await new PhoneAuthProvider(auth).verifyPhoneNumber(
-                      phone,
-                      captcha.current,
-                    ),
-                  );
-                  setNotice("Verification code sent to your phone.");
+                  try {
+                    captcha.current ??= new RecaptchaVerifier(
+                      auth,
+                      "phone-captcha",
+                      { size: "invisible" },
+                    );
+                    setVerificationId(
+                      await new PhoneAuthProvider(auth).verifyPhoneNumber(
+                        phone,
+                        captcha.current,
+                      ),
+                    );
+                    setNotice("Verification code sent to your phone.");
+                  } catch {
+                    // Firebase SMS unavailable (quota, billing, captcha): use Twilio Verify.
+                    captcha.current?.clear();
+                    captcha.current = null;
+                    await request("/api/auth/sms/start", "POST", { phone });
+                    setVerificationId("twilio");
+                    setNotice("We texted your code from Brix.");
+                  }
+                } else if (verificationId === "twilio") {
+                  await request("/api/auth/sms/verify", "POST", {
+                    phone,
+                    code,
+                  });
+                  await auth.currentUser.getIdToken(true);
+                  setNotice("Your phone number is verified.");
                 } else {
                   await linkWithCredential(
                     auth.currentUser,

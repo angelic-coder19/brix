@@ -101,3 +101,16 @@ test("provider failures expose no provider secrets and refusals execute no tools
     /can't help/,
   );
 });
+
+test("assistant replies are plain text; WhatsApp keeps its bold", async () => {
+  const { plainText } = await import("../lib/agent/anthropic");
+  const raw = "## Coming up\n**Netflix** is $15.49\n- Spotify on Fri";
+  assert.equal(
+    plainText(raw, "web"),
+    "Coming up\nNetflix is $15.49\n- Spotify on Fri",
+  );
+  assert.equal(
+    plainText(raw, "whatsapp"),
+    "Coming up\n*Netflix* is $15.49\n• Spotify on Fri",
+  );
+});

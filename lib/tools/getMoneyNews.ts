@@ -9,7 +9,27 @@ type Article = {
   source?: { name?: string };
 };
 
-export async function getMoneyNews(charges: Charge[], fetcher = fetch) {
+// NewsAPI's free plan allows 100 requests a day, so identical merchant sets
+// share one result per hour on each server instance.
+const CACHE_MS = 60 * 60 * 1000;
+export interface NewsHeadline {
+  title: string;
+  url: string;
+  publishedAt: string;
+  source: string;
+  merchant: string;
+  whyItMatters: string;
+}
+export interface NewsResult {
+  headlines: NewsHeadline[];
+  message: string;
+}
+const cache = new Map<string, { at: number; value: NewsResult }>();
+
+export async function getMoneyNews(
+  charges: Charge[],
+  fetcher = fetch,
+): Promise<NewsResult> {
   if (isDemo())
     return {
       headlines: [],
@@ -36,6 +56,9 @@ export async function getMoneyNews(charges: Charge[], fetcher = fetch) {
       headlines: [],
       message: "Add a charge or link a bank before checking merchant news.",
     };
+  const key = merchants.join("|").toLowerCase();
+  const hit = fetcher === fetch ? cache.get(key) : undefined;
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
   const url = new URL("https://newsapi.org/v2/everything");
   url.search = new URLSearchParams({
     q: `(${merchants.map((m) => `"${m}"`).join(" OR ")}) AND (subscription OR pricing OR renewal)`,
@@ -118,10 +141,12 @@ export async function getMoneyNews(charges: Charge[], fetcher = fetch) {
       ];
     })
     .slice(0, 3);
-  return {
+  const result: NewsResult = {
     headlines,
     message: headlines.length
       ? "Recent merchant news; check the publisher and your own plan before acting."
       : "No recent subscription news matching your merchants was found.",
   };
+  if (fetcher === fetch) cache.set(key, { at: Date.now(), value: result });
+  return result;
 }
