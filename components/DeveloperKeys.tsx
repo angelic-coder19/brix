@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { Check, Copy, KeyRound, Trash2 } from "lucide-react";
+import { ConfirmAction } from "./ui/ConfirmAction";
 import type { RequestFn } from "./brix/useBrixChat";
 
 interface ApiKey {
@@ -168,24 +169,21 @@ export default function DeveloperKeys({ request }: { request: RequestFn }) {
                   used {when(k.lastUsedAt)}
                 </small>
               </div>
-              <button
-                type="button"
+              <ConfirmAction
                 className="btn btn--danger btn--sm"
+                ariaLabel={`Revoke ${k.name}`}
+                icon={<Trash2 size={15} />}
+                label="Revoke"
+                question={`Revoke “${k.name}”? Apps using it stop working right away.`}
+                confirmLabel="Revoke key"
+                tone="danger"
                 disabled={busy}
-                aria-label={`Revoke ${k.name}`}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      `Revoke “${k.name}”? Apps using it will stop working immediately.`,
-                    )
-                  )
-                    void run(async () => {
-                      await request(`/api/developer/keys/${k.id}`, "DELETE");
-                    });
-                }}
-              >
-                <Trash2 size={15} /> Revoke
-              </button>
+                onConfirm={() =>
+                  void run(async () => {
+                    await request(`/api/developer/keys/${k.id}`, "DELETE");
+                  })
+                }
+              />
             </li>
           ))}
         </ul>

@@ -14,6 +14,7 @@ export function ConfirmAction({
   tone = "default",
   className = "btn",
   icon,
+  ariaLabel,
 }: {
   label: ReactNode;
   question: string;
@@ -23,6 +24,7 @@ export function ConfirmAction({
   tone?: "default" | "danger";
   className?: string;
   icon?: ReactNode;
+  ariaLabel?: string;
 }) {
   const [asking, setAsking] = useState(false);
   const confirmRef = useRef<HTMLButtonElement>(null);
@@ -41,6 +43,7 @@ export function ConfirmAction({
         type="button"
         className={className}
         disabled={disabled}
+        aria-label={ariaLabel}
         onClick={() => setAsking(true)}
       >
         {icon}
