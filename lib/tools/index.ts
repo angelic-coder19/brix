@@ -3,6 +3,7 @@ import { getState, updateState, setSecret } from "../store";
 import { HttpError } from "../auth";
 import { issueSandboxCard } from "../lithic";
 import { verifyUserPin } from "../identity";
+import { getMoneyNews } from "./getMoneyNews";
 import type { AppState, Charge, Channel, PendingAction } from "../types";
 export const mutations = new Set([
   "mark_to_cancel",
@@ -96,7 +97,7 @@ export async function proposeAction(
     s.pendingActions = { ...s.pendingActions, [channel]: action };
   });
   return {
-    reply: `${summary} Reply yes to confirm.${channel === "voice" && name === "create_one_time_card" ? " Confirm this card in the app with your PIN." : ""}`,
+    reply: `${summary} ${channel === "voice" ? `Confirm this request in the Brix app${name === "create_one_time_card" ? " with your PIN" : ""}. Spoken confirmation does not apply it.` : "Reply yes to confirm."}`,
     confirmationRequired: true,
   };
 }
@@ -285,10 +286,7 @@ export async function executeTool(
           .reduce((sum, e) => sum + (e.amountSaved || 0), 0),
       };
     case "get_money_news":
-      return {
-        headlines: [],
-        message: "Live news briefing isn't connected yet.",
-      };
+      return getMoneyNews(state.charges);
     default:
       throw new HttpError(400, "Unknown tool.");
   }

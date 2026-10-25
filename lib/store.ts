@@ -4,7 +4,10 @@ import { randomUUID } from "node:crypto";
 import { adminDb } from "./firebase/admin";
 import { isDemo, HttpError } from "./auth";
 import type { AppState, UserSecret } from "./types";
-const folder = path.join(process.cwd(), ".data");
+const folder =
+  process.env.BRIX_TEST_STORAGE === "true"
+    ? path.join(process.cwd(), ".data", "browser-tests")
+    : path.join(process.cwd(), ".data");
 const filename = (uid: string, suffix = "state") =>
   path.join(folder, `${Buffer.from(uid).toString("hex")}.${suffix}.json`);
 const locks = new Map<string, Promise<unknown>>();

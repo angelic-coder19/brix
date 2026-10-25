@@ -21,7 +21,9 @@ npm test            # unit tests (node:test + tsx)
 npm run test:e2e    # production build + Playwright (desktop + mobile, a11y, API stress)
 ```
 
-Playwright starts `next start` with demo mode on, or reuses a server already on port 3000. Install the browser once with `npx playwright install chromium`.
+Playwright starts its own `next start` on port 3100 with demo mode on and isolated data in `.data/browser-tests`; it never reuses your running app or resets your local demo workspace. Build with `NEXT_PUBLIC_BRIX_DEMO_MODE=true` for this suite because Next.js embeds public variables at build time. Install the browser once with `npx playwright install chromium`.
+
+Run `npm run check:config` for a local readiness report that never prints credential values. `npm run check:config -- --live` exits unsuccessfully until the required live settings are present. This checks configuration, not provider connectivity.
 
 > **Production:** `BRIX_DEMO_MODE` and `NEXT_PUBLIC_BRIX_DEMO_MODE` must both be `false`. In demo mode every visitor shares the same sample account and no sign-in is required. The server logs a warning if demo mode is on in a Vercel production deployment.
 
@@ -31,12 +33,16 @@ Playwright starts `next start` with demo mode on, or reuses a server already on 
 2. **Plaid:** obtain sandbox client ID and secret. Keep `PLAID_ENV=sandbox`; the application is for sandbox banking. Use the sandbox test credentials listed in the README.
 3. **Anthropic:** set `ANTHROPIC_API_KEY`. `ANTHROPIC_MODEL` is optional and defaults to `claude-opus-5-5`.
 4. **Twilio:** activate the WhatsApp sandbox, fill account SID, auth token, and sandbox sender. `TWILIO_PHONE_NUMBER`, `NEXT_PUBLIC_TWILIO_PHONE_NUMBER`, and `TWILIO_VERIFY_SERVICE_SID` are reserved for SMS/voice and phone verification and can stay blank for now. Put the display number and join code in the public WhatsApp environment fields. Have each demo phone join the sandbox and send a fresh message before the presentation.
-5. **Vapi:** create a voice assistant, attach a phone number, set the server secret, and enter the assistant and phone-number IDs. Configure its tools from `lib/agent/toolSchemas.ts`, use the shared prompt in `lib/agent/systemPrompt.ts`, and point them at `/api/vapi/tools`. Voice proposes actions; users confirm them in the signed-in app. Card confirmation also requires the user's PIN. See [INTEGRATIONS.md](INTEGRATIONS.md) for exact payloads and configuration.
+5. **Vapi:** create a voice assistant, attach a phone number, set the server secret, and enter the assistant and phone-number IDs. Use [docs/vapi-system-prompt.txt](docs/vapi-system-prompt.txt), export its tool definitions with `npm run vapi:tools -- https://YOUR_APP`, and point them at `/api/vapi/tools`. Voice proposes actions; users confirm them in the signed-in app. Card confirmation also requires the user's PIN. See [INTEGRATIONS.md](INTEGRATIONS.md) for exact payloads and configuration.
 6. **Hosting:** connect this GitHub repo to Vercel, add environment variables, and set `APP_URL` to the exact public HTTPS origin. Set **both demo flags to `false` before deploying the live app**. Rebuild after changing any `NEXT_PUBLIC_*` variable. Add the deployment domain in Firebase Auth.
 7. **Access control:** set `ADMIN_EMAILS` to the Google account used for demo controls. Generate separate random values for `CRON_SECRET` and `VAPI_SERVER_SECRET`. Keep them server-side.
 8. **Optional:** add a Lithic sandbox key for sandbox issuing. A mock card is available only in explicit demo mode. Merchant news and outbound phone calls remain deferred; the news environment variable is reserved for future implementation.
 
 Do not paste API keys into chat. Add them to the ignored `.env.local` file and the hosting provider's secret settings.
+
+Firebase service-account JSON files matching `*firebase-adminsdk*.json` and `*service-account*.json` are ignored alongside private env files. The Admin SDK reads `FIREBASE_ADMIN_PROJECT_ID`, `FIREBASE_ADMIN_CLIENT_EMAIL`, and `FIREBASE_ADMIN_PRIVATE_KEY`; these come from the service account's `project_id`, `client_email`, and `private_key`. Do not use a service-account email for `ADMIN_EMAILS`: that allowlist needs your human Google sign-in email.
+
+The local file is not uploaded to Vercel automatically. Copy the server configuration and generated `CRON_SECRET`/`VAPI_SERVER_SECRET` through Vercel's environment settings. The existing cron runs daily at **14:00 UTC** after deployment. Keep local demo flags enabled for credential-free testing; set both flags to false in the live deployment.
 
 ## Webhook endpoints
 

@@ -39,10 +39,15 @@ test("card decimals accepted; voice requires PIN; only masked demo card is persi
   const uid = `test-${randomUUID()}`;
   try {
     await setSecret(uid, { pinHash: hashPin("1234") });
-    await proposeAction(uid, "voice", "create_one_time_card", {
+    const proposal = await proposeAction(uid, "voice", "create_one_time_card", {
       purpose: "Trial",
       spendLimit: 1.1,
     });
+    assert.match(
+      proposal.reply,
+      /Confirm this request in the Brix app with your PIN/,
+    );
+    assert.doesNotMatch(proposal.reply, /Reply yes/);
     await assert.rejects(confirmAction(uid, "voice"), /PIN/);
     await assert.rejects(confirmAction(uid, "voice", "0000"), /PIN/);
     assert.equal((await getState(uid)).cards.length, 0);

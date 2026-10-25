@@ -19,3 +19,21 @@ test("demo access is disabled unless explicitly enabled", async () => {
     else process.env.BRIX_DEMO_MODE = previous;
   }
 });
+
+test("production never honors the local demo authentication bypass", async () => {
+  const previousDemo = process.env.BRIX_DEMO_MODE;
+  const previousTarget = process.env.VERCEL_ENV;
+  try {
+    process.env.BRIX_DEMO_MODE = "true";
+    process.env.VERCEL_ENV = "production";
+    await assert.rejects(
+      requireUser(new Request("https://www.usebrix.app/api/state")),
+      (error) => error instanceof HttpError && error.status === 401,
+    );
+  } finally {
+    if (previousDemo === undefined) delete process.env.BRIX_DEMO_MODE;
+    else process.env.BRIX_DEMO_MODE = previousDemo;
+    if (previousTarget === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = previousTarget;
+  }
+});

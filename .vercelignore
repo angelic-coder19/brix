@@ -1,0 +1,11 @@
+# Never upload local credentials, private backups, or test data.
+.env*
+*firebase-adminsdk*.json
+*service-account*.json
+credentials/
+.data/
+.git/
+.next/
+node_modules/
+test-results/
+playwright-report/

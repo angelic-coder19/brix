@@ -7,17 +7,10 @@ export class HttpError extends Error {
     super(message);
   }
 }
-let warnedDemoInProd = false;
 export const isDemo = () => {
   const on = process.env.BRIX_DEMO_MODE === "true";
-  // Demo mode skips sign-in and serves one shared sample account.
-  if (on && process.env.VERCEL_ENV === "production" && !warnedDemoInProd) {
-    warnedDemoInProd = true;
-    console.warn(
-      "BRIX_DEMO_MODE is true on a production deployment. Every visitor shares the demo account; set it to false.",
-    );
-  }
-  return on;
+  // An accidentally copied local flag must never bypass production identity.
+  return on && process.env.VERCEL_ENV !== "production";
 };
 export async function requireUser(
   request: Request,
