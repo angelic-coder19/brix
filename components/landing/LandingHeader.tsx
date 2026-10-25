@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import MobileMenu from "./MobileMenu";
 import { BrixMark } from "@/components/brand/BrixMark";
+import { Wordmark } from "@/components/brand/Wordmark";
 
 type NavLink = { href: string; label: string };
 
@@ -10,7 +11,14 @@ type NavLink = { href: string; label: string };
  * Full-width sticky header. Highlights the section you're reading and runs Brix
  * along its bottom edge as a scroll progress bar.
  */
-export default function LandingHeader({ links }: { links: NavLink[] }) {
+export default function LandingHeader({
+  links,
+  current,
+}: {
+  links: NavLink[];
+  /** Path of the current page, for links that point at other pages. */
+  current?: string;
+}) {
   const header = useRef<HTMLElement>(null);
   const [riding, setRiding] = useState(false);
   const [arrived, setArrived] = useState(false);
@@ -46,6 +54,7 @@ export default function LandingHeader({ links }: { links: NavLink[] }) {
   // Scroll-spy: the section crossing the upper third of the viewport is active.
   useEffect(() => {
     const sections = links
+      .filter((l) => l.href.startsWith("#"))
       .map((l) => document.querySelector<HTMLElement>(l.href))
       .filter((el): el is HTMLElement => !!el);
     const seen = new Map<string, boolean>();
@@ -70,16 +79,17 @@ export default function LandingHeader({ links }: { links: NavLink[] }) {
     >
       <div className="lp-nav__bar">
         <Link href="/" className="wordmark" aria-label="Brix home">
-          <BrixMark className="brand-mark" />
-          brix<span className="brand-period">.</span>
+          <Wordmark />
         </Link>
         <nav className="lp-nav__links" aria-label="Main">
           {links.map((l) => (
             <a
               key={l.href}
               href={l.href}
-              className={active === l.href ? "is-active" : undefined}
-              aria-current={active === l.href ? "location" : undefined}
+              className={active === l.href || current === l.href ? "is-active" : undefined}
+              aria-current={
+                current === l.href ? "page" : active === l.href ? "location" : undefined
+              }
             >
               {l.label}
             </a>

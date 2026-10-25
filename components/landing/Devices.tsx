@@ -3,7 +3,7 @@ import Image from "next/image";
 function StatusBar({ tone = "light" }: { tone?: "light" | "dark" }) {
   return (
     <div className={`device-phone__status device-phone__status--${tone}`} aria-hidden="true">
-      <time>9:41</time>
+      <span className="device-phone__time" data-time="9:41" />
       <span className="device-phone__icons">
         <svg viewBox="0 0 18 12" width="17" height="11">
           <rect x="0" y="8" width="3" height="4" rx="1" />

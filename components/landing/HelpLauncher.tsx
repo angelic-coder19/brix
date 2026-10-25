@@ -25,6 +25,37 @@ export default function HelpLauncher() {
   const [hover, setHover] = useState(false);
   const mood: BuddyMood = hover && chatMood === "idle" ? "happy" : chatMood;
 
+  // Match the section behind the launcher: sections mark themselves with
+  // data-surface="dark" | "accent"; anything else counts as light.
+  const [surface, setSurface] = useState<"light" | "dark" | "accent">("light");
+  useEffect(() => {
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const btn = launcher.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      const under = document
+        .elementsFromPoint(x, y)
+        .find((el) => !btn.contains(el) && el !== btn);
+      const value = under?.closest<HTMLElement>("[data-surface]")?.dataset.surface;
+      setSurface(value === "dark" || value === "accent" ? value : "light");
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [state]);
+
   // Hand focus back to the launcher whenever the panel goes away.
   useEffect(() => {
     if (!open && wasOpen.current) launcher.current?.focus();
@@ -109,6 +140,7 @@ export default function HelpLauncher() {
           aria-label="Questions? Open Brix help"
           aria-expanded={false}
           data-mood={mood}
+          data-surface={surface}
           onClick={() => {
             setHover(false);
             setState("open");

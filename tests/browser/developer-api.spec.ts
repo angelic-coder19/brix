@@ -79,8 +79,11 @@ test("settings creates, shows once, and revokes a key", async ({ page }) => {
   await expect(page.locator(".key-secret code")).toHaveText(/^brix_sk_/);
   await page.getByRole("button", { name: "I’ve saved it" }).click();
   await expect(page.locator(".key-secret")).toHaveCount(0);
-  page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Revoke Spreadsheet" }).click();
+  await page
+    .getByRole("group", { name: /Revoke “Spreadsheet”/ })
+    .getByRole("button", { name: "Revoke key" })
+    .click();
   await expect(page.getByText("No keys yet.")).toBeVisible();
 });
 
