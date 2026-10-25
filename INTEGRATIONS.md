@@ -29,7 +29,7 @@ Marking cancellation does not cancel with a merchant. The returned link is where
 
 The webhook validates `X-Twilio-Signature` against the configured public URL and all received form fields. It resolves `From` through the server phone index and claims `MessageSid` before running the agent. Replayed IDs receive empty TwiML rather than repeating an action. Unknown numbers receive a link to onboarding.
 
-Anthropic requests share a ten-second budget across a maximum of four tool rounds to leave room under Twilio's approximate fifteen-second webhook timeout. Storage and card-provider latency add overhead, so the timeout remains an integration risk. This build replies synchronously with TwiML; it does not implement a background queue or delayed REST reply. Test slow-provider behavior before the presentation. A claimed message that times out is not replayed automatically; check the app's activity and card state before requesting another mutation.
+Anthropic requests share a time budget across a maximum of four tool rounds: twelve seconds for WhatsApp (leaving room under Twilio's fifteen-second webhook timeout) and ten seconds elsewhere. Storage and card-provider latency add overhead, so the timeout remains an integration risk. This build replies synchronously with TwiML; it does not implement a background queue or delayed REST reply. Test slow-provider behavior before the presentation. A claimed message that times out is not replayed automatically; check the app's activity and card state before requesting another mutation.
 
 ## Vapi
 

@@ -5,6 +5,13 @@ import { toolSchemas } from "./toolSchemas";
 import type { Channel } from "../types";
 
 let client: Anthropic | undefined;
+/**
+ * Time allowed for all model and tool rounds. WhatsApp replies go back in
+ * Twilio's webhook response, which times out at 15 seconds, so 12 seconds
+ * leaves room for storage and network overhead.
+ */
+export const budgetMs = (channel: Channel) =>
+  channel === "whatsapp" ? 12000 : 10000;
 export const DEFAULT_MODEL = "claude-opus-5-5";
 type CreateMessage = (
   body: Anthropic.Beta.MessageCreateParamsNonStreaming,
@@ -26,7 +33,7 @@ export async function runAnthropicTurn(
   ];
   let reply =
     "I couldn't complete that request. Please try one action at a time.";
-  const deadline = Date.now() + 10000;
+  const deadline = Date.now() + budgetMs(channel);
   for (let turn = 0; turn < 4 && Date.now() < deadline; turn++) {
     let response: Anthropic.Beta.BetaMessage;
     try {
