@@ -7,6 +7,9 @@ import {
   SCOPES,
 } from "@/lib/api/keys";
 import { API_VERSION } from "@/lib/api/v1";
+import { ArrowUpRight } from "lucide-react";
+import LandingHeader from "@/components/landing/LandingHeader";
+import "../landing.css";
 import "./developers.css";
 
 export const metadata: Metadata = {
@@ -83,23 +86,68 @@ const ERRORS: [number, string, string][] = [
   ],
 ];
 
+const REPO = "https://github.com/Timeless-Dave/brix";
+
+const siteLinks = [
+  { href: "/#product", label: "Product" },
+  { href: "/#how", label: "How it works" },
+  { href: "/#demo", label: "Try the bot" },
+  { href: "/#faq", label: "FAQ" },
+  { href: "/developers", label: "Developers" },
+];
+
+const STACK: [string, string][] = [
+  ["Next.js 16", "App Router, route handlers for the API, React 19, TypeScript"],
+  ["Firebase", "Auth for sign-in, Firestore for charges, reminders and keys"],
+  ["Plaid", "sandbox, read-only recurring transactions"],
+  ["Anthropic", "the Brix agent behind web chat, WhatsApp and voice"],
+  ["Twilio", "WhatsApp reminders and phone verification"],
+  ["Vapi", "phone calls with Brix"],
+  ["Lithic", "sandbox single-use cards"],
+  ["Vercel", "hosting and the reminder cron"],
+];
+
+const ENV: [string, string[]][] = [
+  ["Demo", ["BRIX_DEMO_MODE", "NEXT_PUBLIC_BRIX_DEMO_MODE", "APP_URL"]],
+  [
+    "Firebase",
+    [
+      "NEXT_PUBLIC_FIREBASE_API_KEY",
+      "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+      "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+      "NEXT_PUBLIC_FIREBASE_APP_ID",
+      "FIREBASE_ADMIN_PROJECT_ID",
+      "FIREBASE_ADMIN_CLIENT_EMAIL",
+      "FIREBASE_ADMIN_PRIVATE_KEY",
+    ],
+  ],
+  ["Plaid", ["PLAID_CLIENT_ID", "PLAID_SECRET", "PLAID_ENV"]],
+  ["Anthropic", ["ANTHROPIC_API_KEY", "ANTHROPIC_MODEL"]],
+  [
+    "Twilio",
+    [
+      "TWILIO_ACCOUNT_SID",
+      "TWILIO_AUTH_TOKEN",
+      "TWILIO_WHATSAPP_FROM",
+      "TWILIO_PHONE_NUMBER",
+      "NEXT_PUBLIC_TWILIO_PHONE_NUMBER",
+      "TWILIO_VERIFY_SERVICE_SID",
+      "NEXT_PUBLIC_WHATSAPP_NUMBER",
+      "NEXT_PUBLIC_WHATSAPP_JOIN_CODE",
+    ],
+  ],
+  [
+    "Vapi",
+    ["VAPI_API_KEY", "VAPI_ASSISTANT_ID", "VAPI_PHONE_NUMBER_ID", "VAPI_SERVER_SECRET", "NEXT_PUBLIC_VAPI_PHONE_NUMBER"],
+  ],
+  ["Lithic", ["LITHIC_API_KEY", "LITHIC_ENV"]],
+  ["Other", ["NEWS_API_KEY", "CRON_SECRET", "ADMIN_EMAILS"]],
+];
+
 export default function DevelopersPage() {
   return (
     <div className="dev">
-      <header className="dev-header">
-        <Link href="/" className="wordmark wordmark--sm" aria-label="Brix home">
-          <span className="brand-block" />
-          brix<span className="brand-period">.</span>
-        </Link>
-        <nav aria-label="Developer docs">
-          <a href="#quickstart">Quickstart</a>
-          <a href="#reference">Reference</a>
-          <a href="/api/v1/openapi.json">OpenAPI</a>
-          <Link href="/settings" className="btn btn--sm btn--dark">
-            Get a key
-          </Link>
-        </nav>
-      </header>
+      <LandingHeader links={siteLinks} current="/developers" />
 
       <main className="dev-main">
         <section className="dev-hero">
@@ -111,6 +159,18 @@ export default function DevelopersPage() {
             shortcut on your phone. Every request acts for one Brix user with a
             key they create and can revoke.
           </p>
+          <nav className="dev-subnav" aria-label="On this page">
+            <a href="#quickstart">Quickstart</a>
+            <a href="#reference">API reference</a>
+            <a href="#run">Run it yourself</a>
+            <a href="/api/v1/openapi.json">OpenAPI</a>
+            <a href={REPO} rel="noreferrer" target="_blank">
+              GitHub <ArrowUpRight size={14} />
+            </a>
+            <Link href="/settings" className="btn btn--sm btn--dark">
+              Get a key
+            </Link>
+          </nav>
         </section>
 
         <section id="quickstart" className="dev-section">
@@ -365,6 +425,76 @@ print(r.json()["remind_at"])`}</code>
             password: anyone holding it can read that user’s subscriptions. If
             one leaks, revoke it in Settings and create a new one.
           </p>
+        </section>
+
+        <section id="run" className="dev-section">
+          <h2>Run it yourself</h2>
+          <p>
+            Brix is open source. The code, setup guide and tests are on{" "}
+            <a href={REPO} rel="noreferrer" target="_blank">
+              GitHub
+            </a>
+            . A local copy runs as a demo with sample data and no accounts.
+          </p>
+          <div className="dev-grid">
+            <div>
+              <h3>Stack</h3>
+              <ul className="dev-list">
+                {STACK.map(([name, use]) => (
+                  <li key={name}>
+                    <strong>{name}</strong> {use}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3>Local demo (Node 22+)</h3>
+              <pre className="dev-code" tabIndex={0}>
+                <code>{`git clone https://github.com/Timeless-Dave/brix
+cd brix
+npm install
+cp .env.example .env.local
+npm run dev`}</code>
+              </pre>
+              <p>
+                The example file turns on <code>BRIX_DEMO_MODE</code> and{" "}
+                <code>NEXT_PUBLIC_BRIX_DEMO_MODE</code>, which skip sign-in and
+                share one sample account. Both must be <code>false</code> in
+                production. Checks: <code>npm run lint</code>,{" "}
+                <code>npm run typecheck</code>, <code>npm test</code> and{" "}
+                <code>npx playwright test</code>.
+              </p>
+            </div>
+          </div>
+          <h3>Environment variables</h3>
+          <p>
+            Names from <code>.env.example</code>. Leave a provider’s values empty
+            to keep that integration off.
+          </p>
+          <div className="dev-table-wrap">
+            <table className="dev-table">
+              <thead>
+                <tr>
+                  <th scope="col">Area</th>
+                  <th scope="col">Variables</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ENV.map(([area, names]) => (
+                  <tr key={area}>
+                    <td>{area}</td>
+                    <td>
+                      {names.map((n) => (
+                        <code key={n} className="dev-env">
+                          {n}
+                        </code>
+                      ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       </main>
     </div>
