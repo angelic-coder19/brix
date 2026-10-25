@@ -101,6 +101,17 @@ export function AppSidebar({
   onSignOut: () => void;
 }) {
   const ref = useRef<HTMLElement>(null);
+  // Hover or focus peeks a collapsed rail open as an overlay; the toggle pins it.
+  const [peek, setPeek] = useState(false);
+  const peekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const canPeek = () =>
+    collapsed && window.matchMedia("(min-width: 761px) and (hover: hover)").matches;
+  const clearTimer = () => {
+    if (peekTimer.current) clearTimeout(peekTimer.current);
+    peekTimer.current = null;
+  };
+  useEffect(() => clearTimer, []);
+  const showRail = collapsed && !peek;
   useEffect(() => {
     if (!drawerOpen) return;
     const el = ref.current;
@@ -141,8 +152,26 @@ export function AppSidebar({
         id="app-sidebar"
         className="sidebar"
         aria-label="Brix navigation"
-        data-collapsed={collapsed ? "true" : "false"}
+        data-collapsed={showRail ? "true" : "false"}
+        data-peek={collapsed && peek ? "true" : "false"}
         data-drawer={drawerOpen ? "open" : "closed"}
+        onPointerEnter={(e) => {
+          if (e.pointerType !== "mouse" || !canPeek()) return;
+          clearTimer();
+          peekTimer.current = setTimeout(() => setPeek(true), 150);
+        }}
+        onPointerLeave={(e) => {
+          if (e.pointerType !== "mouse") return;
+          clearTimer();
+          if (!ref.current?.contains(document.activeElement) || !document.activeElement?.matches(":focus-visible"))
+            setPeek(false);
+        }}
+        onFocus={(e) => {
+          if (canPeek() && (e.target as HTMLElement).matches(":focus-visible")) setPeek(true);
+        }}
+        onBlur={(e) => {
+          if (!ref.current?.contains(e.relatedTarget as Node | null)) setPeek(false);
+        }}
       >
         <div className="sidebar-head">
           <Link href="/" className="wordmark sidebar-brand" aria-label="Brix home">
@@ -156,7 +185,11 @@ export function AppSidebar({
           <button
             type="button"
             className="icon-btn sidebar-toggle"
-            onClick={onToggle}
+            onClick={() => {
+              clearTimer();
+              setPeek(false);
+              onToggle();
+            }}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-controls="app-sidebar"
             aria-expanded={!collapsed}
