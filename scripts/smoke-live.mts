@@ -515,6 +515,19 @@ async function main() {
     view.portfolio?.positions?.[0]?.price > 0 && view.sample === false,
     `total $${view.portfolio?.total}`,
   );
+  r = await call("/api/market/history?symbol=VOO&range=1mo");
+  check(
+    "Price history (Yahoo)",
+    r.status === 200 && r.data.points?.length > 10 && !r.data.sample,
+    `${r.data.points?.length} closes`,
+  );
+  r = await call("/api/practice/leaderboard");
+  check(
+    "Leaderboard ranks you by coins",
+    r.status === 200 &&
+      r.data.entries?.some((e: any) => e.you && e.coins >= 100),
+    `${r.data.players} players`,
+  );
   r = await call("/api/market/news?symbols=VOO");
   check(
     "Stock news (Yahoo)",
