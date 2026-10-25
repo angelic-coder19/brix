@@ -2181,3 +2181,19 @@
     display: none;
   }
 }
+/* The compact setup pill keeps its dots beside the label on phones. */
+@media (max-width: 760px) {
+  .setup-strip--compact .setup-strip__dots {
+    width: auto;
+    flex: none;
+    margin: 0 auto 0 0;
+  }
+  .setup-strip--compact .setup-strip__dots li {
+    flex: none;
+  }
+}
+@media (max-width: 400px) {
+  .setup-strip--compact .setup-strip__dots {
+    display: none;
+  }
+}

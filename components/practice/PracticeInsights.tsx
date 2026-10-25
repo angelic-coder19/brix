@@ -285,9 +285,13 @@ export function Leaderboard({ request }: { request: RequestFn }) {
                 {e.rank}
               </span>
               <span className="leaderboard__name">
-                {e.sample ? e.name.replace("Sample · ", "") : e.name}
-                {e.you && <span className="badge badge--accent">You</span>}
-                {e.sample && <span className="badge">Sample</span>}
+                <span className="leaderboard__who">
+                  {e.sample ? e.name.replace("Sample · ", "") : e.name}
+                  {e.you && <span className="badge badge--accent">You</span>}
+                </span>
+                {e.sample && (
+                  <small className="leaderboard__tag">Sample player</small>
+                )}
               </span>
               <span
                 className={`leaderboard__gain ${e.gainPct >= 0 ? "is-up" : "is-down"}`}
