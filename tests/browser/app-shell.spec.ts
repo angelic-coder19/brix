@@ -35,11 +35,11 @@ test.describe("desktop shell", () => {
 
     // Hover peeks it open as an overlay without moving the page; leaving collapses it.
     const mainLeft = async () => (await page.locator(".app-main").boundingBox())!.x;
-    const before = await mainLeft();
+    await expect.poll(mainLeft).toBe(80);
     await sidebar.getByRole("link", { name: "Overview" }).hover();
     await expect(sidebar).toHaveAttribute("data-peek", "true");
     await expect.poll(async () => (await sidebar.boundingBox())?.width).toBeGreaterThan(200);
-    expect(await mainLeft()).toBe(before);
+    expect(await mainLeft()).toBe(80);
     await expect(shell).toHaveAttribute("data-sidebar", "collapsed");
     await page.mouse.move(900, 500);
     await expect(sidebar).toHaveAttribute("data-peek", "false");
