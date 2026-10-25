@@ -53,6 +53,7 @@ import {
   type RequestFn,
 } from "./brix/useBrixChat";
 import type { Charge } from "@/lib/types";
+import { summarizeCharges } from "@/lib/summary";
 import "./app.css";
 
 export type View =
@@ -339,24 +340,7 @@ export default function BrixApp({ view }: { view: View }) {
 
   const charges = useMemo(() => state?.charges ?? [], [state]);
   const active = charges.filter((c) => c.status !== "cancelled");
-  const monthly = active
-    .filter(
-      (c) =>
-        c.kind !== "trial" &&
-        c.status !== "to_cancel" &&
-        c.frequency !== "unknown",
-    )
-    .reduce(
-      (sum, c) =>
-        sum +
-        c.amount *
-          (c.frequency === "annual"
-            ? 1 / 12
-            : c.frequency === "weekly"
-              ? 52 / 12
-              : 1),
-      0,
-    );
+  const { monthly, subscriptionCount, trialCount } = summarizeCharges(charges);
   const saved = (state?.events ?? []).reduce(
     (sum, e) => sum + (e.amountSaved || 0),
     0,
@@ -592,13 +576,13 @@ export default function BrixApp({ view }: { view: View }) {
                       </div>
                       <p>
                         Across{" "}
-                        {active.filter((c) => c.kind !== "trial").length}{" "}
-                        subscriptions, billed monthly unless noted.
+                        {subscriptionCount}{" "}
+                        {subscriptionCount === 1 ? "subscription" : "subscriptions"}, not counting
+                        anything marked to cancel.
                       </p>
                       <div className="stat-card__footer">
                         <span>
-                          {charges.filter((c) => c.kind === "trial").length}{" "}
-                          free trials to keep an eye on
+                          {trialCount} free {trialCount === 1 ? "trial" : "trials"} to keep an eye on
                         </span>
                         <Link
                           href="/subscriptions"
