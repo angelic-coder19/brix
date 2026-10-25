@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import MobileMenu from "./MobileMenu";
 import { BrixMark } from "@/components/brand/BrixMark";
 import { Wordmark } from "@/components/brand/Wordmark";
+import PeekCta from "./PeekCta";
 
 type NavLink = { href: string; label: string };
 
@@ -99,9 +100,16 @@ export default function LandingHeader({
           <Link href="/dashboard" className="lp-nav__signin">
             Sign in
           </Link>
-          <Link href="/dashboard" className="btn btn--dark lp-nav__cta" data-buddy-mood="happy">
-            Open the demo
-          </Link>
+          <PeekCta size="sm" className="lp-nav__cta">
+            <Link
+              href="/dashboard"
+              className="btn btn--dark"
+              data-buddy-mood="happy"
+              aria-label="Try the Brix demo"
+            >
+              Try now
+            </Link>
+          </PeekCta>
           <MobileMenu links={links} />
         </div>
         <div className="lp-progress" aria-hidden="true">

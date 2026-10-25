@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import PeekCta from "./PeekCta";
 import { Menu, X } from "lucide-react";
 
 export default function MobileMenu({
@@ -36,13 +37,15 @@ export default function MobileMenu({
               </a>
             ))}
           </nav>
-          <Link
-            href="/dashboard"
-            className="btn btn--primary btn--block btn--pill"
-            onClick={() => setOpen(false)}
-          >
-            Try the live demo
-          </Link>
+          <PeekCta className="peek--block">
+            <Link
+              href="/dashboard"
+              className="btn btn--primary btn--block btn--pill"
+              onClick={() => setOpen(false)}
+            >
+              Try the demo
+            </Link>
+          </PeekCta>
         </div>
       )}
     </div>

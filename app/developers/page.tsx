@@ -9,6 +9,7 @@ import {
 import { API_VERSION } from "@/lib/api/v1";
 import { ArrowUpRight } from "lucide-react";
 import LandingHeader from "@/components/landing/LandingHeader";
+import PeekCta from "@/components/landing/PeekCta";
 import "../landing.css";
 import "./developers.css";
 
@@ -167,9 +168,11 @@ export default function DevelopersPage() {
             <a href={REPO} rel="noreferrer" target="_blank">
               GitHub <ArrowUpRight size={14} />
             </a>
+            <PeekCta size="sm">
             <Link href="/settings" className="btn btn--sm btn--dark">
               Get a key
             </Link>
+            </PeekCta>
           </nav>
         </section>
 

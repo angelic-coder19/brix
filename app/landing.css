@@ -1974,6 +1974,24 @@
   opacity: 1;
   transform: translateY(-78%) rotate(8deg);
 }
+.peek--sm .peek__brix {
+  right: 10px;
+  width: 26px;
+  height: 24px;
+}
+.peek--sm:hover .peek__brix,
+.peek--sm:focus-within .peek__brix {
+  transform: translateY(-70%) rotate(8deg);
+}
+.peek--block {
+  display: flex;
+}
+.peek--block > .btn {
+  flex: 1;
+}
+.peek > .btn--ghost {
+  background-color: var(--color-bg);
+}
 @media (prefers-reduced-motion: reduce) {
   .peek__brix {
     display: none;
