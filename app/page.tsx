@@ -148,7 +148,7 @@ export default function Home() {
           <div className="hero__copy">
             <p className="hero__kicker">Subscription and free-trial tracker for students</p>
             <h1>
-              Catch the charge <span className="serif hero__accent">before it catches you.</span>
+              Catch the charge <span className="accent-text hero__accent">before it catches you.</span>
             </h1>
             <p className="hero__lead">
               Brix finds the recurring charges on your bank account, keeps every free-trial end
@@ -481,7 +481,7 @@ export default function Home() {
           <div className="final-cta" data-reveal>
             <div className="final-cta__inner">
               <h2 id="cta-title">
-                Find out what you’re paying for <span className="serif">in two minutes.</span>
+                Find out what you’re paying for <span className="accent-text">in two minutes.</span>
               </h2>
               <p>The demo opens with a sample account. No sign-up, no card, no real money.</p>
               <div className="hero__ctas">

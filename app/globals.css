@@ -58,7 +58,7 @@
   /* Type */
   --font-sans: var(--font-figtree), "Figtree", system-ui, -apple-system,
     "Segoe UI", Arial, sans-serif;
-  --font-serif: var(--font-instrument), "Instrument Serif", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   --text-xs: 12px;
   --text-sm: 13px;
   --text-base: 15px;
@@ -76,6 +76,8 @@
   --shadow-sm: 0 1px 2px #3730240f;
   --shadow-md: 0 8px 30px #3730240f;
   --shadow-lg: 0 24px 70px #3730241f;
+  --shadow-card: 0 1px 0 #ffffffb3 inset, 0 1px 2px #3730240d, 0 2px 8px -4px #3730241a;
+  --shadow-card-hover: 0 1px 0 #ffffffb3 inset, 0 2px 4px #37302412, 0 14px 30px -14px #37302433;
   --shadow-brick: 0 3px 0 var(--color-line-strong);
   --shadow-brick-accent: 0 3px 0 #96341f;
 
@@ -206,11 +208,9 @@ p {
 .skip-link:focus {
   top: var(--space-4);
 }
-.serif {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.02em;
+/* Accent phrase inside a heading: same family, set apart by color only. */
+.accent-text {
+  color: var(--color-accent-ink);
 }
 .muted {
   color: var(--color-muted);
@@ -345,15 +345,22 @@ p {
   transition:
     transform 0.15s var(--ease-out),
     box-shadow 0.15s var(--ease-out),
-    background-color 0.15s;
+    background-color 0.15s,
+    border-color 0.15s;
 }
 .btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 0 var(--btn-depth);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--btn-depth);
+  background: color-mix(in srgb, var(--btn-bg) 92%, var(--btn-fg));
 }
 .btn:active:not(:disabled) {
   transform: translateY(2px);
   box-shadow: 0 1px 0 var(--btn-depth);
+  transition-duration: 0.05s;
+}
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
 }
 .btn--primary {
   --btn-bg: var(--color-accent);
@@ -409,6 +416,9 @@ p {
   background: var(--color-surface-2);
   color: var(--color-accent-ink);
 }
+.icon-btn:active {
+  background: var(--color-surface-3);
+}
 .icon-btn--outline {
   border: 1px solid var(--color-line);
   background: var(--color-surface);
@@ -432,6 +442,19 @@ p {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+/* Cards that are links or buttons get a real hover: border darkens, shadow grows. */
+.card--interactive {
+  transition:
+    border-color 0.18s var(--ease-out),
+    box-shadow 0.18s var(--ease-out),
+    transform 0.18s var(--ease-out);
+}
+.card--interactive:hover {
+  border-color: var(--color-line-strong);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
 }
 .card--pad {
   padding: var(--space-6);
@@ -720,4 +743,16 @@ input[type="range"] {
 }
 .merchant-logo--initial {
   border-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .card--interactive {
+    transition: none;
+  }
+  .btn:hover:not(:disabled),
+  .btn:active:not(:disabled),
+  .card--interactive:hover {
+    transform: none;
+  }
 }

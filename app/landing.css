@@ -127,8 +127,6 @@
 }
 .hero__accent {
   color: var(--color-accent-ink);
-  font-weight: 400;
-  letter-spacing: -0.02em;
 }
 .hero__lead {
   max-width: 540px;
@@ -900,10 +898,7 @@
   font-size: var(--text-md);
   color: var(--color-ink-soft);
 }
-.final-cta .serif {
-  color: var(--color-accent-ink);
-  font-weight: 400;
-}
+
 .final-cta__link {
   display: inline-flex;
   align-items: center;

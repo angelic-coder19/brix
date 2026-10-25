@@ -258,7 +258,9 @@
   display: flex;
   gap: var(--space-2);
   overflow-x: auto;
-  padding: 0 var(--space-4) var(--space-3);
+  /* Room above and below so hover/focus rings are never clipped by the scroller. */
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  scroll-padding-inline: var(--space-4);
   scrollbar-width: none;
 }
 .chip {
@@ -273,12 +275,19 @@
   transition:
     border-color 0.15s,
     color 0.15s,
-    transform 0.15s;
+    background-color 0.15s;
 }
 .chip:hover {
   border-color: var(--color-accent);
+  background: var(--color-accent-soft);
   color: var(--color-accent-ink);
-  transform: translateY(-1px);
+}
+.chip:active {
+  background: #efd5c7;
+}
+.chip:focus-visible {
+  outline: 2px solid var(--color-accent-strong);
+  outline-offset: -2px;
 }
 .chat__composer {
   display: flex;
