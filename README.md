@@ -323,7 +323,7 @@ Keys are SHA-256 hashed at rest, shown once, limited to 5 per user and 120 reque
 
 ## Run it locally
 
-Requires **Node 22+**. The local demo needs no API keys; it uses persistent sample data for "Maya", a Penn State sophomore.
+Requires **Node 22+**. The local demo needs no API keys; it uses persistent sample data for "Maya", a college sophomore.
 
 ```bash
 git clone https://github.com/Timeless-Dave/brix.git && cd brix
@@ -390,7 +390,7 @@ brix/
 | **Interchange** | A share of the card fee when Brix issues real one-time cards through a sponsor bank |
 | **API** | Paid tiers for apps that build on Brix data, with each student's permission |
 
-**Go-to-market:** Penn State first (student orgs, orientation, financial-aid offices), then bank and credit-union partners near campuses.
+**Go-to-market:** one campus first (student orgs, orientation, financial-aid offices), then bank and credit-union partners near campuses.
 
 ## What's next
 

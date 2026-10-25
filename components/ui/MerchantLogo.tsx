@@ -1,4 +1,6 @@
 import { brands, type BrandSlug } from "@/lib/brands";
+import { faviconUrl, merchantDomain } from "@/lib/merchant-domains";
+import { LogoImage } from "./LogoImage";
 
 const aliases: [RegExp, BrandSlug][] = [
   [/spotify/, "spotify"],
@@ -29,13 +31,20 @@ export function brandFor(merchant: string): BrandSlug | undefined {
   return aliases.find(([re]) => re.test(m))?.[1];
 }
 
-/** Square merchant tile: the brand mark when we have one, otherwise a tinted initial. */
+/**
+ * Square merchant tile. In order: our crisp brand mark, the bank's logo, the
+ * merchant's site icon, then a tinted initial.
+ */
 export default function MerchantLogo({
   merchant,
+  logoUrl,
+  website,
   size = 40,
   className = "",
 }: {
   merchant: string;
+  logoUrl?: string;
+  website?: string;
   size?: number;
   className?: string;
 }) {
@@ -56,6 +65,33 @@ export default function MerchantLogo({
       </span>
     );
   }
+  const initial = (
+    <Initial merchant={merchant} size={size} className={className} />
+  );
+  const domain = merchantDomain(merchant, website);
+  const src = logoUrl ?? (domain ? faviconUrl(domain) : undefined);
+  if (src)
+    return (
+      <LogoImage
+        src={src}
+        size={size}
+        className={className}
+        fallback={initial}
+      />
+    );
+  return initial;
+}
+
+function Initial({
+  merchant,
+  size,
+  className,
+}: {
+  merchant: string;
+  size: number;
+  className: string;
+}) {
+  const style = { width: size, height: size };
   const key = merchant.toLowerCase().split(/\s/)[0];
   const [bg, fg] =
     fallback[key] ??

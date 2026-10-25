@@ -46,3 +46,25 @@ test("leaderboard names show only a first name and initial", () => {
   assert.equal(publicName("Ana Maria de la Cruz"), "Ana C.");
   assert.equal(publicName(""), "A Brix student");
 });
+
+test("merchant logos: only Plaid's CDN is trusted, domains are cleaned", async () => {
+  const { merchantDomain, safeLogoUrl } =
+    await import("../lib/merchant-domains");
+  assert.equal(
+    safeLogoUrl("https://plaid-merchant-logos.plaid.com/spotify_947.png"),
+    "https://plaid-merchant-logos.plaid.com/spotify_947.png",
+  );
+  assert.equal(
+    safeLogoUrl("http://plaid-merchant-logos.plaid.com/x.png"),
+    undefined,
+  );
+  assert.equal(safeLogoUrl("https://evil.example/plaid.com.png"), undefined);
+  assert.equal(safeLogoUrl("javascript:alert(1)"), undefined);
+  assert.equal(
+    merchantDomain("Spotify", "https://www.spotify.com/us"),
+    "spotify.com",
+  );
+  assert.equal(merchantDomain("LinkedIn Premium"), "linkedin.com");
+  assert.equal(merchantDomain("Local Gym"), undefined);
+  assert.equal(merchantDomain("x", "not a domain"), undefined);
+});
