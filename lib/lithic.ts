@@ -43,3 +43,24 @@ export async function issueSandboxCard(
     source: "lithic" as const,
   };
 }
+/** Closes a sandbox card permanently. Demo cards never reach Lithic. */
+export async function closeSandboxCard(lithicToken: string) {
+  if (process.env.BRIX_DEMO_MODE === "true" || lithicToken.startsWith("demo_"))
+    return;
+  if (!process.env.LITHIC_API_KEY)
+    throw new Error("Lithic sandbox is not configured.");
+  const response = await fetch(
+    `https://sandbox.lithic.com/v1/cards/${encodeURIComponent(lithicToken)}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `api-key ${process.env.LITHIC_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ state: "CLOSED" }),
+      signal: AbortSignal.timeout(10000),
+    },
+  );
+  if (!response.ok)
+    throw new Error(`Lithic sandbox close failed (${response.status}).`);
+}

@@ -1,4 +1,4 @@
-export type Channel = "web" | "whatsapp" | "voice" | "system";
+export type Channel = "web" | "whatsapp" | "voice" | "system" | "api";
 export interface Charge {
   id: string;
   kind: "subscription" | "trial";
@@ -44,6 +44,8 @@ export interface ActivityEvent {
   /** Emoji reaction left on this chat message by the other party. */
   reaction?: string;
   requestId?: string;
+  /** Charge this event refers to, when there is one. */
+  chargeId?: string;
 }
 export interface PendingAction {
   status?: "processing" | "failed";

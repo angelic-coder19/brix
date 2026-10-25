@@ -32,7 +32,7 @@ for (const path of PAGES) {
   });
 }
 
-for (const path of ["/", "/dashboard", "/subscriptions", "/cards", "/settings"]) {
+for (const path of ["/", "/dashboard", "/subscriptions", "/cards", "/settings", "/developers"]) {
   test(`${path} has no serious accessibility violations`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(path);

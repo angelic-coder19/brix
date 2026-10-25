@@ -52,6 +52,14 @@ The local file is not uploaded to Vercel automatically. Copy the server configur
 | Vapi tool calls | `https://YOUR_APP/api/vapi/tools` | Server secret |
 | Reminder job | `https://YOUR_APP/api/jobs/reminders` | Cron bearer secret or authenticated admin |
 
+## Public API
+
+Users create personal API keys in **Settings → Developer API keys** and call `/api/v1`. Docs: [docs/API.md](docs/API.md), the `/developers` page, and `/api/v1/openapi.json`. Keys live in the Firestore `apiKeys` collection as SHA-256 hashes; redeploy `firestore.rules` after pulling (`firebase deploy --only firestore:rules`).
+
+## Syncing environment variables to Vercel
+
+`node scripts/push-vercel-env.mjs` shows which `.env.local` values would be copied to Vercel Production and Preview; add `--apply` to write them (secrets go through stdin and are stored as sensitive). `APP_URL` and the demo flags are skipped because they must differ per deployment. Redeploy afterwards.
+
 For local integration testing use an HTTPS tunnel, set `APP_URL` to its origin, and update the provider webhook URLs. Run an end-to-end check with your own verified phone before demoing another person's data.
 
 ## Presentation work

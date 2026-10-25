@@ -200,38 +200,58 @@ export async function confirmAction(
   await updateState(uid, (s) => {
     const charge = s.charges.find((c) => c.id === pending.args.chargeId);
     if (!charge) throw new HttpError(404, "That charge no longer exists.");
-    if (pending.name === "mark_to_cancel") {
-      if (charge.status === "to_cancel" || charge.status === "cancelled") {
-        reply = `${charge.merchant} is already marked to cancel.`;
-        return;
-      }
-      charge.status = "to_cancel";
-      const saved =
-        charge.nextDate > new Date().toISOString().slice(0, 10)
-          ? charge.amount
-          : 0;
-      reply = `${charge.merchant} is marked to cancel. Finish cancellation on the merchant's site${charge.cancelUrl ? `: ${charge.cancelUrl}` : "."}`;
-      event(s, channel, "marked_cancel", reply, saved);
-    } else {
-      const when = String(pending.args.when);
-      const id = `manual:${charge.id}:${when}`;
-      if (!s.reminders.some((r) => r.id === id))
-        s.reminders.push({
-          id,
-          chargeId: charge.id,
-          remindAt: when,
-          channel:
-            process.env.BRIX_DEMO_MODE !== "true" && s.user.whatsappOptIn
-              ? "whatsapp"
-              : "push",
-          sent: false,
-          createdBy: channel,
-        });
-      reply = `Reminder set for ${charge.merchant} on ${when.slice(0, 10)}${process.env.BRIX_DEMO_MODE !== "true" && s.user.whatsappOptIn ? " via WhatsApp" : " in the app"}.`;
-      event(s, channel, "reminder_created", reply);
-    }
+    reply =
+      pending.name === "mark_to_cancel"
+        ? markToCancel(s, channel, charge)
+        : addReminder(s, channel, charge, String(pending.args.when)).reply;
   });
   return reply;
+}
+/** Marks a charge to cancel inside a state update. Shared by confirmations and the public API. */
+export function markToCancel(s: AppState, channel: Channel, charge: Charge) {
+  if (charge.status === "to_cancel" || charge.status === "cancelled")
+    return `${charge.merchant} is already marked to cancel.`;
+  charge.status = "to_cancel";
+  const saved =
+    charge.nextDate > new Date().toISOString().slice(0, 10) ? charge.amount : 0;
+  const reply = `${charge.merchant} is marked to cancel. Finish cancellation on the merchant's site${charge.cancelUrl ? `: ${charge.cancelUrl}` : "."}`;
+  event(s, channel, "marked_cancel", reply, saved);
+  return reply;
+}
+/** Undoes a mark-to-cancel. Trials return to trial status. */
+export function reactivate(s: AppState, channel: Channel, charge: Charge) {
+  if (charge.status === "active" || charge.status === "trial")
+    return `${charge.merchant} is already active.`;
+  charge.status = charge.kind === "trial" ? "trial" : "active";
+  const reply = `${charge.merchant} is active again.`;
+  event(s, channel, "reactivated", reply);
+  return reply;
+}
+/** Adds a reminder inside a state update; `when` is an ISO timestamp from reminderDate. */
+export function addReminder(
+  s: AppState,
+  channel: Channel,
+  charge: Charge,
+  when: string,
+) {
+  const id = `manual:${charge.id}:${when}`;
+  const viaWhatsApp =
+    process.env.BRIX_DEMO_MODE !== "true" && s.user.whatsappOptIn;
+  let reminder = s.reminders.find((r) => r.id === id);
+  if (!reminder) {
+    reminder = {
+      id,
+      chargeId: charge.id,
+      remindAt: when,
+      channel: viaWhatsApp ? "whatsapp" : "push",
+      sent: false,
+      createdBy: channel,
+    };
+    s.reminders.push(reminder);
+  }
+  const reply = `Reminder set for ${charge.merchant} on ${when.slice(0, 10)}${viaWhatsApp ? " via WhatsApp" : " in the app"}.`;
+  event(s, channel, "reminder_created", reply);
+  return { reply, reminder };
 }
 export async function executeTool(
   uid: string,

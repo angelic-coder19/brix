@@ -587,6 +587,7 @@ export default function Home() {
             <a href="#how">How it works</a>
             <a href="#demo">Live demo</a>
             <a href="#faq">FAQ</a>
+            <Link href="/developers">Developer API</Link>
           </nav>
           <div>
             <h3>Project</h3>

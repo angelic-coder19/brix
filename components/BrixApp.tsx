@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import BrixBuddy from "./brix/BrixBuddy";
 import BrixChat from "./brix/BrixChat";
+import DeveloperKeys from "./DeveloperKeys";
 import {
   useBrixChat,
   type BrixChatApi,
@@ -56,12 +57,7 @@ import type { Charge } from "@/lib/types";
 import "./app.css";
 
 export type View =
-  | "dashboard"
-  | "subscriptions"
-  | "cards"
-  | "connect"
-  | "settings"
-  | "admin";
+  "dashboard" | "subscriptions" | "cards" | "connect" | "settings" | "admin";
 
 class ApiError extends Error {
   constructor(
@@ -84,7 +80,8 @@ const shortDate = (s: string) =>
     day: "numeric",
   });
 const tone = (merchant: string) =>
-  String((merchant.charCodeAt(0) || 0) % 6) as "0" | "1" | "2" | "3" | "4" | "5";
+  String((merchant.charCodeAt(0) || 0) % 6) as
+    "0" | "1" | "2" | "3" | "4" | "5";
 
 const nav = [
   { href: "dashboard", label: "Overview", icon: LayoutDashboard },
@@ -130,7 +127,9 @@ function ChargeRow({
       <div className="charge-name">
         <strong>
           {c.merchant}
-          {c.kind === "trial" && <span className="badge badge--warn">Trial</span>}
+          {c.kind === "trial" && (
+            <span className="badge badge--warn">Trial</span>
+          )}
           {c.status === "to_cancel" && (
             <span className="badge badge--accent">Marked to cancel</span>
           )}
@@ -168,7 +167,9 @@ function ChargeRow({
             title={`Remind me about ${c.merchant}`}
             aria-label={`Remind me about ${c.merchant}`}
             onClick={() =>
-              onAsk(`Remind me about ${c.merchant} 2 days before the next charge`)
+              onAsk(
+                `Remind me about ${c.merchant} 2 days before the next charge`,
+              )
             }
           >
             <Bell size={15} />
@@ -585,8 +586,7 @@ export default function BrixApp({ view }: { view: View }) {
                         <small>/ mo</small>
                       </div>
                       <p>
-                        Across{" "}
-                        {active.filter((c) => c.kind !== "trial").length}{" "}
+                        Across {active.filter((c) => c.kind !== "trial").length}{" "}
                         subscriptions. A little awareness adds up.
                       </p>
                       <div className="stat-card__footer">
@@ -625,7 +625,9 @@ export default function BrixApp({ view }: { view: View }) {
                           <h2>Coming up next</h2>
                           <p>Your next 14 days, without the surprises.</p>
                         </div>
-                        <span className="badge">{upcoming.length} upcoming</span>
+                        <span className="badge">
+                          {upcoming.length} upcoming
+                        </span>
                       </div>
                       {upcoming.length ? (
                         upcoming.map((c) => (
@@ -664,11 +666,16 @@ export default function BrixApp({ view }: { view: View }) {
                           Let’s talk <ArrowUpRight size={17} />
                         </button>
                       </div>
-                      <section className="activity" aria-label="Recent activity">
+                      <section
+                        className="activity"
+                        aria-label="Recent activity"
+                      >
                         <h3>
                           <Activity size={17} /> The latest
                         </h3>
-                        {state.events.some((e) => e.type !== "agent_message") ? (
+                        {state.events.some(
+                          (e) => e.type !== "agent_message",
+                        ) ? (
                           state.events
                             .filter((e) => e.type !== "agent_message")
                             .slice(0, 5)
@@ -797,7 +804,9 @@ export default function BrixApp({ view }: { view: View }) {
                         Review card <ArrowRight size={17} />
                       </button>
                     </form>
-                    <small>Sandbox only. These cards cannot spend real money.</small>
+                    <small>
+                      Sandbox only. These cards cannot spend real money.
+                    </small>
                   </section>
                   <div className="card-list">
                     {state.cards.length ? (
@@ -822,6 +831,29 @@ export default function BrixApp({ view }: { view: View }) {
                               ? "Demo card · Simulated single use"
                               : "Sandbox single-use card"}
                           </small>
+                          {c.state !== "CLOSED" && (
+                            <button
+                              type="button"
+                              className="btn btn--sm"
+                              disabled={busy}
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Close the card for ${c.purpose}? This can't be undone.`,
+                                  )
+                                )
+                                  void action(async () => {
+                                    await request("/api/cards", "PATCH", {
+                                      id: c.id,
+                                      state: "CLOSED",
+                                    });
+                                    setNotice("Card closed.");
+                                  });
+                              }}
+                            >
+                              Close card
+                            </button>
+                          )}
                         </article>
                       ))
                     ) : (
@@ -844,113 +876,120 @@ export default function BrixApp({ view }: { view: View }) {
                 />
               )}
               {view === "settings" && (
-                <form
-                  className="card form-card settings"
-                  key={`${state.user.whatsappOptIn}-${state.user.callOptIn}`}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const f = new FormData(e.currentTarget);
-                    void action(async () => {
-                      await request("/api/settings", "PATCH", {
-                        whatsappOptIn: f.get("whatsapp") === "on",
-                        callOptIn: f.get("calls") === "on",
-                        ...(f.get("pin") ? { pin: f.get("pin") } : {}),
+                <div className="settings-stack">
+                  <form
+                    className="card form-card settings"
+                    key={`${state.user.whatsappOptIn}-${state.user.callOptIn}`}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const f = new FormData(e.currentTarget);
+                      void action(async () => {
+                        await request("/api/settings", "PATCH", {
+                          whatsappOptIn: f.get("whatsapp") === "on",
+                          callOptIn: f.get("calls") === "on",
+                          ...(f.get("pin") ? { pin: f.get("pin") } : {}),
+                        });
+                        setNotice("Your preferences are saved.");
                       });
-                      setNotice("Your preferences are saved.");
-                    });
-                  }}
-                >
-                  <h2>Your channels</h2>
-                  <label className="toggle-row">
-                    <div>
-                      <strong>WhatsApp reminders</strong>
-                      <span>A heads-up before a charge arrives.</span>
-                    </div>
-                    <input
-                      className="switch"
-                      type="checkbox"
-                      name="whatsapp"
-                      defaultChecked={state.user.whatsappOptIn}
-                    />
-                  </label>
-                  <label className="toggle-row">
-                    <div>
-                      <strong>Phone calls</strong>
-                      <span>Allow Brix to reach out by voice.</span>
-                    </div>
-                    <input
-                      className="switch"
-                      type="checkbox"
-                      name="calls"
-                      defaultChecked={state.user.callOptIn}
-                    />
-                  </label>
-                  <label className="field">
-                    Set or reset your 4-digit voice PIN
-                    <input
-                      name="pin"
-                      type="password"
-                      inputMode="numeric"
-                      pattern="[0-9]{4}"
-                      maxLength={4}
-                      placeholder="Leave blank to keep current PIN"
-                      autoComplete="new-password"
-                    />
-                  </label>
-                  <p className="muted">
-                    Reminder checks run at 7 days and 2 days before a charge.
-                    Channel permissions stay in your control.
-                  </p>
-                  <button className="btn btn--primary" disabled={busy}>
-                    Save preferences <Check size={17} />
-                  </button>
-                  <hr className="divider" />
-                  <h2>Your data, your choice.</h2>
-                  <p>
-                    Disconnecting removes linked bank access. Deleting your
-                    account removes your Brix profile and stored data.
-                  </p>
-                  <div className="button-row">
-                    <button
-                      type="button"
-                      className="btn"
-                      disabled={busy}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Disconnect all linked banks from Brix?",
-                          )
-                        )
-                          void action(async () => {
-                            await request("/api/plaid/disconnect", "POST", {});
-                            setNotice("Your banks have been disconnected.");
-                          });
-                      }}
-                    >
-                      Disconnect bank
+                    }}
+                  >
+                    <h2>Your channels</h2>
+                    <label className="toggle-row">
+                      <div>
+                        <strong>WhatsApp reminders</strong>
+                        <span>A heads-up before a charge arrives.</span>
+                      </div>
+                      <input
+                        className="switch"
+                        type="checkbox"
+                        name="whatsapp"
+                        defaultChecked={state.user.whatsappOptIn}
+                      />
+                    </label>
+                    <label className="toggle-row">
+                      <div>
+                        <strong>Phone calls</strong>
+                        <span>Allow Brix to reach out by voice.</span>
+                      </div>
+                      <input
+                        className="switch"
+                        type="checkbox"
+                        name="calls"
+                        defaultChecked={state.user.callOptIn}
+                      />
+                    </label>
+                    <label className="field">
+                      Set or reset your 4-digit voice PIN
+                      <input
+                        name="pin"
+                        type="password"
+                        inputMode="numeric"
+                        pattern="[0-9]{4}"
+                        maxLength={4}
+                        placeholder="Leave blank to keep current PIN"
+                        autoComplete="new-password"
+                      />
+                    </label>
+                    <p className="muted">
+                      Reminder checks run at 7 days and 2 days before a charge.
+                      Channel permissions stay in your control.
+                    </p>
+                    <button className="btn btn--primary" disabled={busy}>
+                      Save preferences <Check size={17} />
                     </button>
-                    <button
-                      type="button"
-                      className="btn btn--danger"
-                      disabled={busy}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            "Permanently delete your Brix data and disconnect your banks? This cannot be undone.",
+                    <hr className="divider" />
+                    <h2>Your data, your choice.</h2>
+                    <p>
+                      Disconnecting removes linked bank access. Deleting your
+                      account removes your Brix profile and stored data.
+                    </p>
+                    <div className="button-row">
+                      <button
+                        type="button"
+                        className="btn"
+                        disabled={busy}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              "Disconnect all linked banks from Brix?",
+                            )
                           )
-                        )
-                          void action(async () => {
-                            await request("/api/account", "DELETE");
-                            const auth = getClientAuth();
-                            if (auth) await signOut(auth);
-                            router.push("/");
-                          });
-                      }}
-                    >
-                      Delete my data
-                    </button>
-                  </div>
-                </form>
+                            void action(async () => {
+                              await request(
+                                "/api/plaid/disconnect",
+                                "POST",
+                                {},
+                              );
+                              setNotice("Your banks have been disconnected.");
+                            });
+                        }}
+                      >
+                        Disconnect bank
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--danger"
+                        disabled={busy}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              "Permanently delete your Brix data and disconnect your banks? This cannot be undone.",
+                            )
+                          )
+                            void action(async () => {
+                              await request("/api/account", "DELETE");
+                              const auth = getClientAuth();
+                              if (auth) await signOut(auth);
+                              router.push("/");
+                            });
+                        }}
+                      >
+                        Delete my data
+                      </button>
+                    </div>
+                  </form>
+                  <DeveloperKeys request={request} />
+                </div>
               )}
               {view === "admin" && (
                 <section className="card form-card">
@@ -1024,7 +1063,11 @@ export default function BrixApp({ view }: { view: View }) {
               aria-current={view === n.href ? "page" : undefined}
             >
               <n.icon size={20} />
-              <span>{n.label.replace("One-time cards", "Cards").replace("Your charges", "Charges")}</span>
+              <span>
+                {n.label
+                  .replace("One-time cards", "Cards")
+                  .replace("Your charges", "Charges")}
+              </span>
             </Link>
           ),
         )}
@@ -1052,7 +1095,12 @@ export default function BrixApp({ view }: { view: View }) {
           aria-label="Ask Brix"
         >
           <span className="chat-launcher__face">
-            <BrixBuddy mood={chat.mood} scale={0.17} decorative follow={false} />
+            <BrixBuddy
+              mood={chat.mood}
+              scale={0.17}
+              decorative
+              follow={false}
+            />
           </span>
           <span className="chat-launcher__label">Ask Brix</span>
           {chat.mood === "concerned" && <span className="chat-launcher__dot" />}
@@ -1104,7 +1152,9 @@ function TrialModal({
         >
           <X />
         </button>
-        <span className="badge badge--accent">A head start on your next charge</span>
+        <span className="badge badge--accent">
+          A head start on your next charge
+        </span>
         <h2 id="trial-title">Try it. Don’t forget it.</h2>
         <p>We’ll keep the end date on your radar.</p>
         <form

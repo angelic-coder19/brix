@@ -779,3 +779,109 @@
     color: var(--color-accent-ink);
   }
 }
+
+/* Developer API keys */
+.settings-stack {
+  display: grid;
+  gap: var(--space-5);
+}
+.key-form {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+}
+.scope-list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.scope-list legend {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+.scope-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.scope-option input {
+  margin-top: 3px;
+  accent-color: var(--color-accent);
+}
+.scope-option span,
+.key-list li > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.scope-option small,
+.key-list small {
+  color: var(--color-muted);
+  font-size: var(--text-xs);
+}
+.key-secret {
+  display: grid;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px solid var(--color-green-line);
+  border-radius: var(--radius-md);
+  background: var(--color-green-soft);
+}
+.key-secret__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.key-secret code {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+.key-list {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.key-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-line);
+}
+.key-list code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+.virtual-card .btn {
+  justify-self: start;
+}
+.scope-option code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+.text-link {
+  color: var(--color-accent-ink);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
