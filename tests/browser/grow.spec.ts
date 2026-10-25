@@ -18,6 +18,8 @@ test("dashboard flags the new refund and the plan returns borrowed money first",
   await expect(
     page.getByRole("status").filter({ hasText: "days left" }),
   ).toBeVisible();
+  await expect(page.getByText("Three quick questions")).toBeVisible();
+  await page.getByText("More details for a sharper plan").click();
   await page.getByLabel("Loan interest rate (%)").fill("6.5");
   await page.getByLabel("Rent, food and bills per month").fill("100");
   await page.getByLabel("Months until next aid").fill("2");
@@ -147,4 +149,46 @@ test("refund and practice APIs validate input and stay idempotent", async ({
   ).json();
   expect(v1p.virtual_money).toBe(true);
   expect(v1p.portfolio.positions[0].symbol).toBe("AAPL");
+});
+
+test("dashboard leads with one decision: the borrowed part of the refund", async ({
+  page,
+}) => {
+  await page.goto("/dashboard");
+  const card = page.getByRole("region", { name: "Your next decision" });
+  await expect(card).toContainText("$1,200.00 of your refund is borrowed");
+  await expect(
+    card.getByRole("link", { name: /Plan my refund/ }),
+  ).toBeVisible();
+});
+
+test("gift cards: see unspent total, add one, log spending, use it up", async ({
+  page,
+}) => {
+  await page.goto("/cards");
+  const section = page.getByRole("region", { name: "Gift cards" });
+  await expect(section).toContainText("$52.35 unspent across 2 cards");
+  await expect(section).toContainText("Expires in 20 days");
+  await section.getByRole("button", { name: "Add a gift card" }).click();
+  await section.getByLabel("Store").fill("Chipotle");
+  await section.getByLabel("Balance (USD)").fill("25");
+  await section.getByRole("button", { name: "Save card" }).click();
+  await expect(section).toContainText("$77.35 unspent across 3 cards");
+  await section.getByLabel("Amount spent from Chipotle card").fill("25");
+  await section.getByRole("button", { name: "Log spend" }).first().click();
+  await expect(section).toContainText("$52.35 unspent across 2 cards");
+});
+
+test("chat replies say where their facts came from", async ({ page }) => {
+  await page.goto("/dashboard");
+  await page
+    .getByRole("button", { name: /Ask Brix|Open chat/ })
+    .first()
+    .click();
+  const box = page.getByPlaceholder(/Ask me anything/);
+  await box.fill("What's coming up?");
+  await box.press("Enter");
+  await expect(
+    page.getByRole("list", { name: "Where this came from" }).last(),
+  ).toContainText("Your charges (sample)", { timeout: 15000 });
 });

@@ -1,0 +1,97 @@
+/* Gift cards. Uses the shared tokens from app/globals.css. */
+.gift-cards {
+  width: 100%;
+}
+.gift-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  width: 100%;
+  flex-wrap: wrap;
+}
+.gift-head h2 {
+  margin: var(--space-2) 0 var(--space-1);
+}
+.gift-head p {
+  margin: 0;
+  max-width: 520px;
+  color: var(--color-ink-soft);
+}
+.gift-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: var(--space-3);
+  align-items: end;
+  width: 100%;
+}
+.gift-list {
+  display: grid;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gift-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-line);
+}
+.gift-list__main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.gift-list__balance {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.gift-spend {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.gift-spend input {
+  width: 96px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-sm);
+}
+.next-decision {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+  padding: var(--space-5);
+  border-left: 4px solid var(--color-accent);
+}
+.next-decision--clear {
+  border-left-color: var(--color-green);
+}
+.next-decision__eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-accent-ink);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.next-decision h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+.next-decision p {
+  margin: 4px 0 0;
+  max-width: 620px;
+  color: var(--color-ink-soft);
+}

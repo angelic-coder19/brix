@@ -83,6 +83,24 @@ export function demoState(uid = "demo-maya"): AppState {
     cancelUrl: String(cancelUrl),
     usageNote: "Seeded demo data — usage is not tracked.",
   }));
+  // Gift cards: one expiring soon, one that matches nothing.
+  state.giftCards = [
+    {
+      id: "demo-gift-target",
+      merchant: "Target",
+      balance: 40,
+      expiresOn: date(20),
+      addedOn: date(-30),
+      status: "active",
+    },
+    {
+      id: "demo-gift-starbucks",
+      merchant: "Starbucks",
+      balance: 12.35,
+      addedOn: date(-60),
+      status: "active",
+    },
+  ];
   // A school refund that is partly borrowed, still inside the 120-day window.
   state.refunds = [
     {

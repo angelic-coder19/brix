@@ -54,6 +54,9 @@ import MerchantNews from "./MerchantNews";
 import GoogleOneTap, { disableGoogleAutoSelect } from "./GoogleOneTap";
 import SmsSignIn from "./SmsSignIn";
 import Refunds from "./refunds/Refunds";
+import GiftCards from "./giftcards/GiftCards";
+import "./giftcards/giftcards.css";
+import { nextDecision, type NextDecision } from "@/lib/next-decision";
 import Practice from "./practice/Practice";
 import "./refunds/refunds.css";
 import {
@@ -117,7 +120,7 @@ const shortDate = (s: string) =>
 const nav = [
   { href: "dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "subscriptions", label: "Your charges", icon: Layers3 },
-  { href: "cards", label: "One-time cards", icon: CreditCard },
+  { href: "cards", label: "Cards", icon: CreditCard },
   { href: "connect", label: "Connections", icon: Cable },
 ] as const;
 
@@ -131,8 +134,8 @@ const titles: Record<View, [string, string]> = {
     "Every subscription and free trial Brix is watching.",
   ],
   cards: [
-    "One-time cards",
-    "Single-use sandbox cards with a hard spending limit.",
+    "Cards",
+    "Single-use sandbox cards with a hard limit, and gift cards so balances get spent.",
   ],
   refunds: [
     "Refunds",
@@ -149,6 +152,37 @@ const titles: Record<View, [string, string]> = {
   settings: ["Settings", "Reminder channels, your phone number and your data."],
   admin: ["Admin", "Demo controls and integration checks."],
 };
+
+/** The one decision worth attention right now, with a single next step. */
+function NextDecisionCard({
+  decision: d,
+  onAsk,
+}: {
+  decision: NextDecision;
+  onAsk: (message: string) => void;
+}) {
+  return (
+    <section
+      className={`card next-decision${d.kind === "clear" ? " next-decision--clear" : ""}`}
+      aria-label="Your next decision"
+    >
+      <div>
+        <span className="next-decision__eyebrow">Your next decision</span>
+        <h2>{d.title}</h2>
+        <p>{d.detail}</p>
+      </div>
+      {d.href ? (
+        <Link href={d.href} className="btn btn--primary">
+          {d.cta} <ArrowRight size={16} />
+        </Link>
+      ) : (
+        <button className="btn btn--primary" onClick={() => onAsk(d.ask!)}>
+          {d.cta} <ArrowRight size={16} />
+        </button>
+      )}
+    </section>
+  );
+}
 
 function ChargeRow({
   charge: c,
@@ -247,7 +281,10 @@ function BuddyCard({
               ? "Glad I could help!"
               : "Ask what bills next, or tell me what to cancel.";
   return (
-    <section className={`card card--accent ask-card ask-card--${chat.mood}`} aria-labelledby="ask-title">
+    <section
+      className={`card card--accent ask-card ask-card--${chat.mood}`}
+      aria-labelledby="ask-title"
+    >
       <div className="ask-card__head">
         <BrixMark mood={chat.mood} decorative className="ask-card__mark" />
         <div>
@@ -419,7 +456,9 @@ export default function BrixApp({ view }: { view: View }) {
       c.merchant.toLowerCase().includes(search.trim().toLowerCase()),
   );
   const name = state?.user.displayName || user?.displayName || "";
-  const openCards = (state?.cards ?? []).filter((c) => c.state === "OPEN").length;
+  const openCards = (state?.cards ?? []).filter(
+    (c) => c.state === "OPEN",
+  ).length;
   const newRefunds = (state?.refunds ?? []).filter(
     (r) => r.status === "new",
   ).length;
@@ -431,7 +470,10 @@ export default function BrixApp({ view }: { view: View }) {
       label: "Bank",
       done: (state?.charges ?? []).some((c) => c.source === "plaid") || demo,
     },
-    { label: "First trial", done: (state?.charges ?? []).some((c) => c.kind === "trial") },
+    {
+      label: "First trial",
+      done: (state?.charges ?? []).some((c) => c.kind === "trial"),
+    },
     {
       label: "Reminders",
       done: !!(state?.user.whatsappOptIn || state?.user.callOptIn),
@@ -726,35 +768,33 @@ export default function BrixApp({ view }: { view: View }) {
               )}
               {view === "dashboard" && (
                 <>
-                  {newRefunds > 0 && (
-                    <section
-                      className="card refund-banner"
-                      aria-label="School refund"
-                    >
-                      <div>
-                        <strong>Your school refund arrived</strong>
-                        <span>
-                          Part of it may be borrowed money that&apos;s free to
-                          return for 120 days. Make a plan before it disappears.
-                        </span>
-                      </div>
-                      <Link href="/refunds" className="btn btn--primary">
-                        Plan my refund <ArrowRight size={16} />
-                      </Link>
-                    </section>
-                  )}
+                  <NextDecisionCard
+                    decision={nextDecision(state)}
+                    onAsk={ask}
+                  />
                   {setupPending && (
-                    <section className="card setup-strip" aria-label="Finish setting up">
+                    <section
+                      className="card setup-strip"
+                      aria-label="Finish setting up"
+                    >
                       <div className="setup-strip__text">
                         <strong>Finish setting up Brix</strong>
                         <span>
                           {setupDone} of {setupSteps.length} done
-                          {setupNext ? ` · Next: ${setupNext.label.toLowerCase()}` : ""}
+                          {setupNext
+                            ? ` · Next: ${setupNext.label.toLowerCase()}`
+                            : ""}
                         </span>
                       </div>
-                      <ol className="setup-strip__dots" aria-label="Setup steps">
+                      <ol
+                        className="setup-strip__dots"
+                        aria-label="Setup steps"
+                      >
                         {setupSteps.map((st) => (
-                          <li key={st.label} data-done={st.done ? "true" : "false"}>
+                          <li
+                            key={st.label}
+                            data-done={st.done ? "true" : "false"}
+                          >
                             <span className="sr-only">
                               {st.label}: {st.done ? "done" : "to do"}
                             </span>
@@ -762,7 +802,10 @@ export default function BrixApp({ view }: { view: View }) {
                         ))}
                       </ol>
                       <div className="setup-strip__actions">
-                        <Link href="/onboarding" className="btn btn--primary btn--sm">
+                        <Link
+                          href="/onboarding"
+                          className="btn btn--primary btn--sm"
+                        >
                           Continue setup <ArrowRight size={15} />
                         </Link>
                         <button
@@ -791,7 +834,9 @@ export default function BrixApp({ view }: { view: View }) {
                       </span>
                       <span className="summary-stat__sub">
                         Across {subscriptionCount}{" "}
-                        {subscriptionCount === 1 ? "subscription" : "subscriptions"}
+                        {subscriptionCount === 1
+                          ? "subscription"
+                          : "subscriptions"}
                       </span>
                     </div>
                     <div className="summary-stat">
@@ -821,9 +866,14 @@ export default function BrixApp({ view }: { view: View }) {
                       <span className="summary-stat__label">
                         <ShieldCheck size={14} aria-hidden /> Charges avoided
                       </span>
-                      <span className="summary-stat__value">{money(saved)}</span>
+                      <span className="summary-stat__value">
+                        {money(saved)}
+                      </span>
                       <span className="summary-stat__sub">
-                        {state.charges.filter((c) => c.status === "to_cancel").length}{" "}
+                        {
+                          state.charges.filter((c) => c.status === "to_cancel")
+                            .length
+                        }{" "}
                         marked to cancel
                       </span>
                     </div>
@@ -1025,7 +1075,11 @@ export default function BrixApp({ view }: { view: View }) {
                   <div className="card-list">
                     {state.cards.length ? (
                       state.cards.map((c) => (
-                        <article className="card-item" key={c.id} id={`card-${c.id}`}>
+                        <article
+                          className="card-item"
+                          key={c.id}
+                          id={`card-${c.id}`}
+                        >
                           <VirtualCard
                             purpose={c.purpose}
                             last4={c.last4}
@@ -1083,6 +1137,14 @@ export default function BrixApp({ view }: { view: View }) {
                     )}
                   </div>
                 </div>
+              )}
+              {view === "cards" && (
+                <GiftCards
+                  cards={state.giftCards ?? []}
+                  request={request}
+                  action={action}
+                  busy={busy}
+                />
               )}
               {view === "refunds" && (
                 <Refunds

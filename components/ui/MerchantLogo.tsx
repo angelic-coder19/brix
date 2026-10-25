@@ -45,7 +45,12 @@ export default function MerchantLogo({
     const b = brands[slug];
     return (
       <span className={`merchant-logo ${className}`} style={style} aria-hidden>
-        <svg viewBox="0 0 24 24" width={size * 0.52} height={size * 0.52} fill={b.hex}>
+        <svg
+          viewBox="0 0 24 24"
+          width={size * 0.52}
+          height={size * 0.52}
+          fill={b.hex}
+        >
           <path d={b.path} />
         </svg>
       </span>
@@ -54,7 +59,9 @@ export default function MerchantLogo({
   const key = merchant.toLowerCase().split(/\s/)[0];
   const [bg, fg] =
     fallback[key] ??
-    tints[[...merchant].reduce((a, c) => a + c.charCodeAt(0), 0) % tints.length];
+    tints[
+      [...merchant].reduce((a, c) => a + c.charCodeAt(0), 0) % tints.length
+    ];
   return (
     <span
       className={`merchant-logo merchant-logo--initial ${className}`}
@@ -67,10 +74,23 @@ export default function MerchantLogo({
 }
 
 /** Monochrome brand mark for logo rows. */
-export function BrandMark({ slug, size = 22 }: { slug: BrandSlug; size?: number }) {
+export function BrandMark({
+  slug,
+  size = 22,
+}: {
+  slug: BrandSlug;
+  size?: number;
+}) {
   const b = brands[slug];
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" role="img" aria-label={b.title}>
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="currentColor"
+      role="img"
+      aria-label={b.title}
+    >
       <path d={b.path} />
     </svg>
   );

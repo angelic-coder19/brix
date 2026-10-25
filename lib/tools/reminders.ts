@@ -3,6 +3,7 @@ import { getState, updateState } from "../store";
 import { isDemo } from "../auth";
 import { sendWhatsApp } from "../twilio";
 import { placeReminderCall } from "../vapi-calls";
+import { giftCardAlerts } from "../giftcards";
 import type { AppState, Reminder } from "../types";
 
 /** Calls for the 2-day heads-up when allowed, otherwise WhatsApp, otherwise in-app. */
@@ -23,7 +24,9 @@ export function channelAllowed(s: AppState, channel: Reminder["channel"]) {
 export async function runReminders(uid: string) {
   const now = new Date(),
     today = now.toISOString().slice(0, 10);
+  let giftTexts: string[] = [];
   await updateState(uid, (s) => {
+    giftTexts = giftCardAlerts(s, now.getTime());
     for (const charge of s.charges.filter(
       (c) => c.status === "active" || c.status === "trial",
     )) {
@@ -131,7 +134,18 @@ export async function runReminders(uid: string) {
       failed++;
     }
   }
-  return { sent, inApp, skipped, failed };
+  // Gift card expiry alerts are already in the activity feed; also text them
+  // to students who turned on WhatsApp.
+  let giftCards = giftTexts.length;
+  if (giftTexts.length && !isDemo()) {
+    const { user } = await getState(uid);
+    if (user.whatsappOptIn && user.phoneE164)
+      for (const text of giftTexts)
+        await sendWhatsApp(user.phoneE164, text).catch(() => {
+          giftCards--;
+        });
+  }
+  return { sent, inApp, skipped, failed, giftCards };
 }
 
 /** What the assistant says first on a reminder call. */

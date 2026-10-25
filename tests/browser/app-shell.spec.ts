@@ -34,21 +34,30 @@ test.describe("desktop shell", () => {
     await expect(shell).toHaveAttribute("data-sidebar", "collapsed");
     await page.mouse.move(900, 500);
     await expect(sidebar).toHaveAttribute("data-collapsed", "true");
-    await expect.poll(async () => (await sidebar.boundingBox())?.width).toBeLessThan(90);
+    await expect
+      .poll(async () => (await sidebar.boundingBox())?.width)
+      .toBeLessThan(90);
     // The toggle sits on the logo row, not below it.
     const brand = await sidebar.locator(".sidebar-brand").boundingBox();
-    const toggle = await page.getByRole("button", { name: "Expand sidebar" }).boundingBox();
-    expect(Math.abs(brand!.y + brand!.height / 2 - (toggle!.y + toggle!.height / 2))).toBeLessThan(6);
+    const toggle = await page
+      .getByRole("button", { name: "Expand sidebar" })
+      .boundingBox();
+    expect(
+      Math.abs(brand!.y + brand!.height / 2 - (toggle!.y + toggle!.height / 2)),
+    ).toBeLessThan(6);
     expect(toggle!.x).toBeGreaterThan(brand!.x);
     // Labels stay as accessible names in the rail.
     await expect(sidebar.getByRole("link", { name: "Overview" })).toBeVisible();
 
     // Hover peeks it open as an overlay without moving the page; leaving collapses it.
-    const mainLeft = async () => (await page.locator(".app-main").boundingBox())!.x;
+    const mainLeft = async () =>
+      (await page.locator(".app-main").boundingBox())!.x;
     await expect.poll(mainLeft).toBe(80);
     await sidebar.getByRole("link", { name: "Overview" }).hover();
     await expect(sidebar).toHaveAttribute("data-peek", "true");
-    await expect.poll(async () => (await sidebar.boundingBox())?.width).toBeGreaterThan(200);
+    await expect
+      .poll(async () => (await sidebar.boundingBox())?.width)
+      .toBeGreaterThan(200);
     expect(await mainLeft()).toBe(80);
     await expect(shell).toHaveAttribute("data-sidebar", "collapsed");
     await page.mouse.move(900, 500);
@@ -122,7 +131,10 @@ test.describe("desktop shell", () => {
 
     await page.getByRole("button", { name: "Collapse sidebar" }).click();
     await page.mouse.move(900, 500);
-    await expect(page.locator("#app-sidebar")).toHaveAttribute("data-collapsed", "true");
+    await expect(page.locator("#app-sidebar")).toHaveAttribute(
+      "data-collapsed",
+      "true",
+    );
     await trigger.click();
     await expect(menu).toBeVisible();
     await menu.getByRole("menuitem", { name: "Settings" }).click();
@@ -190,7 +202,7 @@ test.describe("mobile shell", () => {
     await page.keyboard.press("Escape");
     await expect(sidebar).toBeHidden();
     await page.getByRole("button", { name: "Open menu" }).click();
-    await sidebar.getByRole("link", { name: /One-time cards/ }).click();
+    await sidebar.getByRole("link", { name: /^Cards/ }).click();
     await expect(page).toHaveURL(/\/cards$/);
     await expect(sidebar).toBeHidden();
   });

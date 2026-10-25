@@ -23,7 +23,9 @@ export default function StreamingText({
     const instant = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    const step = instant ? words.length : Math.max(1, Math.ceil(words.length / 60));
+    const step = instant
+      ? words.length
+      : Math.max(1, Math.ceil(words.length / 60));
     const id = setInterval(
       () =>
         setCount((n) => {

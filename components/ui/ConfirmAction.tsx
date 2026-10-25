@@ -64,7 +64,11 @@ export function ConfirmAction({
     >
       <span className="confirm-inline__q">{question}</span>
       <span className="confirm-inline__btns">
-        <button type="button" className="btn btn--sm btn--ghost" onClick={() => setAsking(false)}>
+        <button
+          type="button"
+          className="btn btn--sm btn--ghost"
+          onClick={() => setAsking(false)}
+        >
           Cancel
         </button>
         <button

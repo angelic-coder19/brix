@@ -12,9 +12,7 @@ export const isDemo = () => {
   // An accidentally copied local flag must never bypass production identity.
   return on && process.env.VERCEL_ENV !== "production";
 };
-export async function requireUser(
-  request: Request,
-): Promise<{
+export async function requireUser(request: Request): Promise<{
   uid: string;
   email?: string;
   phone_number?: string;
