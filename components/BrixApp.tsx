@@ -60,6 +60,7 @@ import { BrixMark } from "@/components/brand/BrixMark";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { VirtualCard } from "@/components/brand/VirtualCard";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
+import { AppSearch, type SearchResult } from "@/components/shell/AppSearch";
 import {
   AppSidebar,
   useSidebarState,
@@ -298,6 +299,12 @@ export default function BrixApp({ view }: { view: View }) {
     [],
   );
 
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (!q) return;
+    const t = setTimeout(() => setSearch(q.slice(0, 100)), 0);
+    return () => clearTimeout(t);
+  }, []);
   const refresh = useCallback(async () => {
     try {
       const next = await request<ClientState>("/api/state");
@@ -387,6 +394,23 @@ export default function BrixApp({ view }: { view: View }) {
       c.merchant.toLowerCase().includes(search.trim().toLowerCase()),
   );
   const name = state?.user.displayName || user?.displayName || "";
+  const searchPages = useMemo(
+    () => [
+      ...nav.map((n) => ({ href: n.href, label: n.label })),
+      { href: "settings", label: "Settings" },
+      { href: "onboarding", label: "Setup guide" },
+    ],
+    [],
+  );
+  const openResult = (r: SearchResult) => {
+    if (r.type === "page") router.push(r.href);
+    else if (r.type === "charge") {
+      setFilter("all");
+      setSearch(r.charge.merchant);
+      router.push(`/subscriptions?q=${encodeURIComponent(r.charge.merchant)}`);
+    } else if (r.type === "card") router.push(`/cards#card-${r.card.id}`);
+    else router.push("/dashboard#recent-activity");
+  };
   const openCards = (state?.cards ?? []).filter((c) => c.state === "OPEN").length;
   const navGroups: NavGroup[] = [
     {
@@ -464,6 +488,13 @@ export default function BrixApp({ view }: { view: View }) {
                 view.charAt(0).toUpperCase() + view.slice(1)}
             </strong>
           </span>
+          <AppSearch
+            pages={searchPages}
+            charges={state?.charges ?? []}
+            cards={state?.cards ?? []}
+            events={state?.events ?? []}
+            onSelect={openResult}
+          />
           <div className="topbar__actions">
             <span className="badge badge--green read-only">
               <ShieldCheck size={14} /> Read-only & secure
@@ -748,6 +779,7 @@ export default function BrixApp({ view }: { view: View }) {
                       </div>
                       <section
                         className="card activity"
+                        id="recent-activity"
                         aria-labelledby="activity-title"
                       >
                         <div className="card-head">
@@ -896,7 +928,7 @@ export default function BrixApp({ view }: { view: View }) {
                   <div className="card-list">
                     {state.cards.length ? (
                       state.cards.map((c) => (
-                        <article className="card-item" key={c.id}>
+                        <article className="card-item" key={c.id} id={`card-${c.id}`}>
                           <VirtualCard
                             purpose={c.purpose}
                             last4={c.last4}
