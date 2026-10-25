@@ -9,38 +9,22 @@ Devpost asks for: **who you are, why you built it, how you built it, and what's 
 
 ---
 
-## Part 1 · Set up your account (15 minutes, before recording)
+## Part 1 · Your account is ready (2-minute check)
 
-Your account right now has the Plaid sandbox test charges (United Airlines, a bike shop and so on) **listed twice**, no refund and no gift cards. Those charges don't look like a student's, so clear them and add the story's data.
+Everything the video needs is already in your account on usebrix.app:
 
-1. **Settings → Disconnect bank.** This removes the sandbox charges. (Don't re-link for the video; you'll mention bank linking instead.)
-2. **Overview → Add a free trial**, three times:
+| Where | What you'll see |
+|---|---|
+| **Connections** | A linked sandbox bank. Brix found **Spotify, Netflix, Apple (iCloud), Chegg and Planet Fitness** from it, with their real logos. |
+| **Charges** | Those five, plus two free trials: **LinkedIn Premium** ($39.99, ends in 5 days) and **Notion AI** ($10, ends in 20 days). |
+| **Refunds** | A **$1,850** "UNIVERSITY BURSAR REFUND" that arrived **Oct 15**, from the bank feed, marked "A mix" with **$1,200 borrowed**. |
+| **Overview** | "Your next decision": **"$1,200.00 of your refund is borrowed. Federal loan money you return by Fri, Feb 12 is cancelled with no interest or fees."** |
+| **Cards** | Four small gift cards: Target $9.40, Amazon $7.15, Starbucks $10.00 (expires in 10 days), Campus store $12.60. |
+| **Invest** | $300 of VOO bought with your $1,000 of virtual money, and a $25 weekly VTI auto-invest rule. |
 
-   | Trial name | Trial ends | Price after trial |
-   |---|---|---|
-   | LinkedIn Premium | 5 days from today | 39.99 |
-   | Spotify Premium | 12 days from today | 11.99 |
-   | Notion AI | 20 days from today | 10.00 |
-
-3. **Refunds → Add a refund:**
-   - Amount: **1850**
-   - Date it arrived: **October 15, 2026**
-   - Where it came from: **A mix**
-   - Borrowed part: **1200**
-
-   Your Overview will then say: **"$1,200.00 of your refund is borrowed. Federal loan money you return by Fri, Feb 12 is cancelled with no interest or fees."** That's the line you'll read on camera. If you use different numbers, say yours.
-4. **Cards → Add a gift card**, four times (small leftovers, like your friend's):
-
-   | Store | Balance | Expires |
-   |---|---|---|
-   | Target | 9.40 | leave blank |
-   | Amazon | 7.15 | leave blank |
-   | Starbucks | 10.00 | 10 days from today |
-   | Campus store | 12.60 | leave blank |
-
-5. **Invest:** you already have $1,000 of virtual money. Buy **$300 of VOO**, then add an auto-invest rule: **VTI, $25, every week.**
-6. **Overview:** click the **×** on the "Setup" pill so the top of the page is clean.
-7. **Phone (optional):** call **+1 (870) 395-8999** once to test it. Ask: *"I just got money back from school. What should I do?"*
+Before recording:
+1. Open **Overview** and click the **×** on the "Setup" pill, if it's there, so the top of the page is clean.
+2. **Phone (optional):** call **+1 (870) 395-8999** once to test it. Ask: *"I just got money back from school. What should I do?"*
 
 ---
 
@@ -84,7 +68,7 @@ Times are approximate. The whole run is about **4:40**. If you're running long, 
 
 **Overview.** Point at "Your next decision".
 
-> This is my dashboard. Up top, Brix shows the one thing I should deal with right now: twelve hundred dollars of my school refund is actually borrowed. If I give it back by February 12th, it's cancelled. No interest, no fees.
+> This is my dashboard. My bank's linked through Plaid, and Brix already found my subscriptions. But up top, it shows the one thing I should deal with right now: twelve hundred dollars of my school refund is actually borrowed. If I give it back by February 12th, it's cancelled. No interest, no fees.
 
 **Click "Plan my refund".** On the Refunds page, type **600** in "Rent, food and bills per month", then click **Make my plan**. Scroll the plan slowly.
 
@@ -92,7 +76,7 @@ Times are approximate. The whole run is about **4:40**. If you're running long, 
 
 **Click "Charges" in the sidebar.** Point at LinkedIn Premium.
 
-> Now, my roommate's problem. Here's a LinkedIn Premium trial that ends in five days. Brix reminds me a week before and two days before, in the app, on WhatsApp, or it'll actually call my phone.
+> Here are the subscriptions it found in my bank: Spotify, Netflix, Chegg. And here's my roommate's problem: a LinkedIn Premium trial that ends in five days. A bank can't see a trial until it charges you, so I added it in two taps. Brix reminds me a week before and two days before, in the app, on WhatsApp, or it'll actually call my phone.
 
 **Click "Cards".** Click the **Free trial** template, then **Review card**. When the chat opens, type **yes** and press Enter.
 
@@ -124,7 +108,7 @@ Scroll down to the gift cards.
 
 On **Market**:
 
-> There are 19.4 million college students in the US, so the market is big, but we're starting right here at Penn State.
+> There are 19.4 million college students in the US, so the market is big, but we'll start with a pilot on one campus.
 
 Press → to **Model**:
 
@@ -132,7 +116,7 @@ Press → to **Model**:
 
 ### 8 · What's next · Slide 7 (Plan) · 4:20–4:40
 
-> Next: a pilot at Penn State, then ten campuses, then twenty-five with two bank partners.
+> Next: a pilot on one campus, then ten campuses, then twenty-five with two bank partners.
 >
 > And one thing I really want to build is for my friend with the ten gift cards: letting you combine those small leftover balances, or split one purchase across a gift card and your own card. So ten cards with ten dollars each turns into a hundred dollars you can actually spend.
 
