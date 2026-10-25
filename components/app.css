@@ -7,7 +7,7 @@
   --sidebar-w: 248px;
 }
 .app-shell[data-sidebar="collapsed"] {
-  --sidebar-w: 72px;
+  --sidebar-w: 80px;
 }
 .sidebar {
   position: fixed;
@@ -296,10 +296,25 @@
 }
 
 /* Collapsed rail: icons only, labels as tooltips. */
+.sidebar[data-collapsed="true"] {
+  padding-inline: var(--space-2);
+}
 .sidebar[data-collapsed="true"] .sidebar-head {
-  flex-direction: column;
   padding-left: 0;
-  gap: var(--space-3);
+  gap: 0;
+  justify-content: space-between;
+}
+.sidebar[data-collapsed="true"] .sidebar-brand__mark svg {
+  width: 28px;
+  height: 28px;
+}
+.sidebar[data-collapsed="true"] .sidebar-toggle {
+  width: 32px;
+  height: 32px;
+}
+.sidebar[data-peek="true"] {
+  width: 248px;
+  box-shadow: 16px 0 40px rgb(41 41 32 / 0.12);
 }
 .sidebar[data-collapsed="true"] .sidebar-brand__full,
 .sidebar[data-collapsed="true"] .nav-item__label,
