@@ -1,6 +1,7 @@
 import { requireAdmin, errorResponse, HttpError, isDemo } from "@/lib/auth";
 import { demoState, saveState } from "@/lib/store";
 import { deleteApiKeys } from "@/lib/api/keys";
+import { resetPractice } from "@/lib/practice";
 export async function POST(request: Request) {
   try {
     const { uid } = await requireAdmin(request);
@@ -11,6 +12,7 @@ export async function POST(request: Request) {
       );
     await saveState(uid, demoState(uid));
     await deleteApiKeys(uid);
+    await resetPractice(uid);
     return Response.json({ reset: true });
   } catch (e) {
     return errorResponse(e);

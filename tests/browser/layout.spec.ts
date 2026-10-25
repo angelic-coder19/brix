@@ -38,7 +38,9 @@ test("header stays full-width while the progress train rides its bottom edge", a
   await expect(header).toHaveAttribute("data-riding", "false");
 });
 
-test("help launcher opens, minimizes with Escape and closes", async ({ page }) => {
+test("help launcher opens, minimizes with Escape and closes", async ({
+  page,
+}) => {
   await page.goto("/");
   const launcher = page.getByRole("button", { name: "Open Brix help" });
   await launcher.click();
@@ -48,7 +50,9 @@ test("help launcher opens, minimizes with Escape and closes", async ({ page }) =
 
   // Focus stays inside the panel.
   for (let i = 0; i < 12; i++) await page.keyboard.press("Tab");
-  expect(await panel.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+  expect(
+    await panel.evaluate((el) => el.contains(document.activeElement)),
+  ).toBe(true);
 
   await page.keyboard.press("Escape");
   await expect(panel).toBeHidden();
@@ -73,7 +77,10 @@ test("quick-reply chips are not clipped on hover", async ({ page }) => {
   await expect(chip).toBeVisible();
   await chip.hover();
   await page.waitForTimeout(300);
-  const [c, s] = await Promise.all([chip.boundingBox(), scroller.boundingBox()]);
+  const [c, s] = await Promise.all([
+    chip.boundingBox(),
+    scroller.boundingBox(),
+  ]);
   expect(c && s).toBeTruthy();
   expect(c!.y).toBeGreaterThanOrEqual(s!.y);
   expect(c!.y + c!.height).toBeLessThanOrEqual(s!.y + s!.height);
@@ -100,8 +107,13 @@ test("help launcher face follows the chat's mood", async ({ page }) => {
   await panel.getByRole("button", { name: "Minimize help" }).click();
 
   // Still working when minimized, then celebrating the cancellation.
-  await expect(launcher).toHaveAttribute("data-mood", /thinking|talking|celebrate/);
-  await expect(launcher).toHaveAttribute("data-mood", "celebrate", { timeout: 8000 });
+  await expect(launcher).toHaveAttribute(
+    "data-mood",
+    /thinking|talking|celebrate/,
+  );
+  await expect(launcher).toHaveAttribute("data-mood", "celebrate", {
+    timeout: 8000,
+  });
   await expect(face).toHaveAttribute("data-mood", "celebrate");
 });
 
@@ -120,10 +132,15 @@ test("app launcher face follows the chat's mood", async ({ page, request }) => {
     .click();
   await page.keyboard.press("Escape");
   await expect(chat).toBeHidden();
-  await expect(launcher).toHaveAttribute("data-mood", /thinking|talking|happy|listening/);
+  await expect(launcher).toHaveAttribute(
+    "data-mood",
+    /thinking|talking|happy|listening/,
+  );
   await expect(launcher.locator("svg.brix-mark")).toHaveAttribute(
     "data-mood",
     /thinking|talking|happy|listening/,
   );
-  await expect(launcher).toHaveAttribute("data-mood", resting!, { timeout: 10000 });
+  await expect(launcher).toHaveAttribute("data-mood", resting!, {
+    timeout: 10000,
+  });
 });

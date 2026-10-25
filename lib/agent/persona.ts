@@ -43,7 +43,14 @@ export const isTapback = (value: unknown): value is Tapback =>
   typeof value === "string" && (TAPBACKS as readonly string[]).includes(value);
 
 /** Reactions Brix may put on a user's message. */
-export const BOT_REACTIONS = [...TAPBACKS, "🎉", "⏰", "💳", "👀", "🫡"] as const;
+export const BOT_REACTIONS = [
+  ...TAPBACKS,
+  "🎉",
+  "⏰",
+  "💳",
+  "👀",
+  "🫡",
+] as const;
 
 export type AgentOutcome = "answered" | "proposed" | "confirmed" | "cleared";
 
@@ -66,7 +73,9 @@ const DAY = 86400000;
 
 export function daysUntil(isoDate: string, now = Date.now()) {
   const target = Date.parse(`${isoDate.slice(0, 10)}T00:00:00Z`);
-  const today = Date.parse(`${new Date(now).toISOString().slice(0, 10)}T00:00:00Z`);
+  const today = Date.parse(
+    `${new Date(now).toISOString().slice(0, 10)}T00:00:00Z`,
+  );
   return Math.round((target - today) / DAY);
 }
 

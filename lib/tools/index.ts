@@ -4,11 +4,17 @@ import { HttpError } from "../auth";
 import { issueSandboxCard } from "../lithic";
 import { verifyUserPin } from "../identity";
 import { getMoneyNews } from "./getMoneyNews";
+import { findSecurity } from "../market/universe";
+import { getQuotes } from "../market/quotes";
+import { practiceOrder, practiceView } from "../practice";
+import { getTickerNews } from "../news/tickers";
+import { planRefund } from "../refunds/plan";
 import type { AppState, Charge, Channel, PendingAction } from "../types";
 export const mutations = new Set([
   "mark_to_cancel",
   "set_reminder",
   "create_one_time_card",
+  "practice_trade",
 ]);
 const money = (n: number) => `$${n.toFixed(2)}`;
 const normalized = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -74,6 +80,18 @@ export async function proposeAction(
       );
     clean = { purpose, spendLimit: limit };
     summary = `Create a ${process.env.BRIX_DEMO_MODE === "true" ? "demo" : "sandbox"} single-use card for ${purpose}, limited to ${money(limit)}?`;
+  } else if (name === "practice_trade") {
+    const security = findSecurity(args.symbol);
+    if (!security)
+      throw new HttpError(400, "Choose a symbol from Brix's practice list.");
+    const side = args.side === "sell" ? "sell" : "buy";
+    const all = side === "sell" && args.amount === "all";
+    const amount = Number(args.amount);
+    if (!all && !(Number.isFinite(amount) && amount >= 1 && amount <= 100000))
+      throw new HttpError(400, "Give a dollar amount of at least $1.");
+    const price = (await getQuotes([security.symbol]))[security.symbol]?.price;
+    clean = { symbol: security.symbol, side, amount: all ? "all" : amount };
+    summary = `Practice trade with virtual money: ${side} ${all ? "all your" : money(amount) + " of"} ${security.symbol}${price ? ` at about ${money(price)} a share` : ""}?`;
   } else {
     const charge = matchCharge(state.charges, String(args.merchant || ""));
     clean = { chargeId: charge.id, merchant: charge.merchant };
@@ -160,6 +178,19 @@ export async function confirmAction(
     else delete s.pendingActions![channel];
   });
   const pending = claimed!;
+  if (pending.name === "practice_trade") {
+    const order = await practiceOrder(uid, {
+      symbol: pending.args.symbol,
+      side: pending.args.side,
+      ...(pending.args.amount === "all"
+        ? { shares: "all" }
+        : { amount: pending.args.amount }),
+      clientKey: pending.id,
+    });
+    const reply = `Practice ${order.side === "buy" ? "bought" : "sold"} ${order.shares} ${order.symbol} at ${money(order.price)} (${money(order.notional)} of virtual money)${order.afterHours ? ", at the last price since the market is closed" : ""}.`;
+    await updateState(uid, (s) => event(s, channel, "practice_trade", reply));
+    return reply;
+  }
   if (pending.name === "create_one_time_card") {
     try {
       const card = await issueSandboxCard(
@@ -307,6 +338,55 @@ export async function executeTool(
       };
     case "get_money_news":
       return getMoneyNews(state.charges);
+    case "get_refunds":
+      return {
+        refunds: (state.refunds ?? []).filter((r) => r.status !== "dismissed"),
+      };
+    case "plan_refund": {
+      const refunds = (state.refunds ?? []).filter(
+        (r) => r.status !== "dismissed",
+      );
+      const refund = refunds.find((r) => r.id === args.refund_id) ?? refunds[0];
+      if (!refund)
+        return {
+          message:
+            "No refund to plan. The student can add one on the Refunds page.",
+        };
+      const num = (v: unknown, d: number) =>
+        Number.isFinite(Number(v)) && Number(v) >= 0 ? Number(v) : d;
+      return planRefund(
+        refund,
+        {
+          monthsUntilNext: num(args.months_until_next, 4),
+          monthlyLiving: num(args.monthly_living, 0),
+          currentSavings: num(args.current_savings, 0),
+          yearsUntilRepayment: num(args.years_until_repayment, 4),
+        },
+        state.charges,
+      );
+    }
+    case "get_portfolio": {
+      const view = await practiceView(uid);
+      return view.portfolio
+        ? {
+            practice: true,
+            virtualMoney: true,
+            ...view.portfolio,
+            orders: view.portfolio.orders.slice(0, 5),
+          }
+        : {
+            message: "No practice portfolio yet.",
+            suggestedStart: view.suggestedStart,
+          };
+    }
+    case "get_stock_news": {
+      const symbols = (
+        Array.isArray(args.symbols) ? args.symbols : [args.symbol]
+      )
+        .map((x) => findSecurity(x)?.symbol)
+        .filter((x): x is string => !!x);
+      return getTickerNews(symbols.length ? symbols : ["VOO"]);
+    }
     default:
       throw new HttpError(400, "Unknown tool.");
   }

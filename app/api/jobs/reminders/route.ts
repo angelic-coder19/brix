@@ -1,20 +1,8 @@
 import { requireAdmin, errorResponse, HttpError } from "@/lib/auth";
 import { listUserIds } from "@/lib/store";
 import { runReminders } from "@/lib/tools/reminders";
-import { timingSafeEqual } from "node:crypto";
+import { isCron } from "@/lib/cron";
 export const runtime = "nodejs";
-function isCron(request: Request) {
-  const supplied =
-      request.headers.get("authorization")?.replace(/^Bearer /, "") ||
-      request.headers.get("x-cron-secret") ||
-      "",
-    expected = process.env.CRON_SECRET;
-  return (
-    !!expected &&
-    Buffer.byteLength(supplied) === Buffer.byteLength(expected) &&
-    timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))
-  );
-}
 async function sendReminders() {
   const results = [];
   for (const uid of await listUserIds()) results.push(await runReminders(uid));

@@ -63,6 +63,7 @@ export async function handleVapiTools(
         "mark_to_cancel",
         "set_reminder",
         "create_one_time_card",
+        "practice_trade",
       ].includes(call.function.name);
       if (mutation && proposed)
         throw new HttpError(

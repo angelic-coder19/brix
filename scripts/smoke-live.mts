@@ -2,6 +2,7 @@
 // Live end-to-end check against real providers. Creates a throwaway Firebase
 // user, exercises every feature as that user, then deletes the account.
 // Never places calls or sends WhatsApp messages. Costs a few Claude requests.
+// Covers refunds (Plaid custom user), the practice portfolio, and live news.
 //
 //   node --env-file=.env.local --import tsx scripts/smoke-live.mts https://www.usebrix.app
 //
@@ -387,6 +388,138 @@ async function main() {
     `${a5.data.data?.length} cards, ${a6.data.data?.length} news`,
   );
 
+  // School refund: a Plaid custom sandbox user with an aid refund deposit.
+  const refundDay = new Date(Date.now() - 5 * 86400000)
+    .toISOString()
+    .slice(0, 10);
+  const refundItem = await plaid("/sandbox/public_token/create", {
+    institution_id: "ins_109508",
+    initial_products: ["transactions"],
+    options: {
+      override_username: "user_custom",
+      override_password: JSON.stringify({
+        override_accounts: [
+          {
+            type: "depository",
+            subtype: "checking",
+            starting_balance: 500,
+            transactions: [
+              {
+                date_transacted: refundDay,
+                date_posted: refundDay,
+                amount: -2400,
+                description: "PENN STATE BURSAR REFUND",
+                currency: "USD",
+              },
+            ],
+          },
+        ],
+      }),
+    },
+  });
+  r = await call("/api/plaid/exchange", {
+    body: { public_token: refundItem.public_token },
+  });
+  let refundsFound = 0;
+  for (let i = 0; i < 8 && !refundsFound; i++) {
+    const s = await call("/api/plaid/sync", { body: {} });
+    refundsFound = s.data.refunds ?? 0;
+    if (!refundsFound) await sleep(4000);
+  }
+  const refunds = (await call("/api/refunds")).data.refunds ?? [];
+  const refund = refunds.find((x: any) => /BURSAR/.test(x.descriptor ?? ""));
+  check(
+    "Refund detected from bank deposit",
+    !!refund && refund.amount === 2400,
+    short(refunds.map((x: any) => x.descriptor)),
+  );
+  r = await call(`/api/refunds/${encodeURIComponent(refund?.id ?? "x")}/plan`, {
+    body: {
+      funding: "mixed",
+      loanAmount: 1500,
+      loanRate: 6.5,
+      loanType: "unsubsidized",
+      monthlyLiving: 300,
+      monthsUntilNext: 2,
+    },
+  });
+  const steps = r.data.refund?.plan?.steps?.map((x: any) => x.key) ?? [];
+  check(
+    "Refund plan returns unused loan money in the window",
+    steps.includes("return_loan") && !!r.data.refund?.plan?.returnBy,
+    short(steps),
+  );
+  turn = await chat(
+    "I just got money back from school. What should I do with it?",
+  );
+  check(
+    "Assistant explains the refund",
+    /loan|return|120|borrow/i.test(turn.reply ?? ""),
+    short(turn.reply),
+  );
+
+  // Practice portfolio at live prices.
+  r = await call("/api/practice", { body: { refundId: refund?.id } });
+  check(
+    "Practice portfolio sized to the refund",
+    r.status === 201 && r.data.portfolio?.total === 2400,
+    short(r.data.error ?? r.data.portfolio?.total),
+  );
+  r = await call("/api/practice/orders", {
+    body: { symbol: "VOO", side: "buy", amount: 100, clientKey: "smoke-buy" },
+  });
+  const fill = r.data.order;
+  check(
+    "Practice buy fills at a live price",
+    fill?.status === "filled" && fill.price > 50 && !("sample" in fill),
+    short(fill ?? r.data),
+  );
+  r = await call("/api/practice/rules", {
+    body: { symbol: "VTI", amount: 25, cadence: "weekly" },
+  });
+  check(
+    "Auto-invest rule saved",
+    r.status === 201,
+    short(r.data.rule?.nextRunOn ?? r.data),
+  );
+  const view = (await call("/api/practice")).data;
+  check(
+    "Portfolio valued with live quotes",
+    view.portfolio?.positions?.[0]?.price > 0 && view.sample === false,
+    `total $${view.portfolio?.total}`,
+  );
+  r = await call("/api/market/news?symbols=VOO");
+  check(
+    "Stock news (Yahoo)",
+    r.status === 200 && r.data.headlines?.length > 0,
+    `${r.data.headlines?.length} headlines${r.data.stale ? " (stale)" : ""}`,
+  );
+  r = await call("/api/news");
+  check(
+    "Merchant news (Google News)",
+    r.status === 200 && !r.data.stale,
+    `${r.data.headlines?.length} headlines`,
+  );
+  const owners = (await adminDb().collection("portfolios").get()).docs.map(
+    (d) => d.id,
+  );
+  if (owners.every((id) => id === uid)) {
+    const job = await fetch(BASE + "/api/jobs/practice", {
+      headers: { Authorization: `Bearer ${env.CRON_SECRET}` },
+    });
+    const body = await job.json();
+    check(
+      "Practice cron runs due rules",
+      job.status === 200 && body.filled >= 1,
+      short(body),
+    );
+  } else
+    check(
+      "Practice cron runs due rules",
+      true,
+      `skipped: ${owners.length - 1} other portfolio(s) exist`,
+    );
+
   // Cron, only when no real user could receive a message.
   const users = (await adminDb().collection("users").get()).docs.map(
     (d) => d.id,
@@ -430,13 +563,15 @@ async function cleanup() {
     adminDb().doc(`secrets/${uid}`).get(),
     adminDb().doc(`phoneIndex/${phone}`).get(),
     adminDb().collection("apiKeys").where("uid", "==", uid).get(),
+    adminDb().doc(`portfolios/${uid}`).get(),
   ]);
   check(
     "No data left behind",
     !leftovers[0].exists &&
       !leftovers[1].exists &&
       !leftovers[2].exists &&
-      leftovers[3].empty,
+      leftovers[3].empty &&
+      !leftovers[4].exists,
   );
 }
 

@@ -1,0 +1,150 @@
+import { test, expect } from "@playwright/test";
+
+// Refunds → plan → practice portfolio, end to end in the demo.
+
+test.beforeEach(async ({ request }) => {
+  expect((await request.post("/api/admin/reset-demo")).ok()).toBeTruthy();
+});
+
+test("dashboard flags the new refund and the plan returns borrowed money first", async ({
+  page,
+}) => {
+  await page.goto("/dashboard");
+  await page.getByRole("link", { name: /Plan my refund/ }).click();
+  await expect(page).toHaveURL(/\/refunds$/);
+  await expect(
+    page.getByRole("heading", { name: "$1,850.00 refund" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "days left" }),
+  ).toBeVisible();
+  await page.getByLabel("Loan interest rate (%)").fill("6.5");
+  await page.getByLabel("Rent, food and bills per month").fill("100");
+  await page.getByLabel("Months until next aid").fill("2");
+  await page.getByRole("button", { name: /Make my plan/ }).click();
+  const plan = page.locator(".refund-plan");
+  await expect(plan.getByText("Return unused loan money")).toBeVisible();
+  await expect(plan.getByText("Starter emergency fund")).toBeVisible();
+  await expect(plan.getByText(/taxable income/)).toBeVisible();
+  await expect(page.locator(".refund-list .badge")).toHaveText("Planned");
+});
+
+test("practice: start from the refund, buy, set a stop, auto-invest, sell, reset", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/refunds");
+  await page.getByRole("button", { name: /Make my plan/ }).click();
+  await page.getByRole("button", { name: "Start practicing" }).click();
+  await expect(page).toHaveURL(/\/practice$/);
+  await expect(page.locator(".practice-disclaimer")).toContainText(
+    "virtual money",
+  );
+  await expect(page.locator(".stat-card__value").first()).toHaveText(
+    "$1,850.00",
+  );
+
+  await page.getByLabel("Symbol").first().selectOption("VOO");
+  await page.getByLabel("Amount (USD)").fill("100");
+  await page.getByRole("button", { name: "Review order" }).click();
+  await expect(page.getByRole("group", { name: "Review order" })).toContainText(
+    "VOO",
+  );
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(page.getByText("Order filled.")).toBeVisible();
+  await expect(page.getByRole("rowheader", { name: /VOO/ })).toBeVisible();
+
+  await page.getByLabel("Stop-loss price for VOO").fill("999");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.locator(".alert--error")).toContainText("must be below");
+  await page.getByLabel("Stop-loss price for VOO").fill("500");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect(page.getByText("Saved stops for VOO.")).toBeVisible();
+
+  await page
+    .locator(".rule-form")
+    .getByRole("button", { name: "Add rule" })
+    .click();
+  await expect(page.getByText("$25.00 of VOO")).toBeVisible();
+  const job = await request.post("/api/jobs/practice");
+  expect((await job.json()).filled).toBe(1);
+  expect((await (await request.post("/api/jobs/practice")).json()).filled).toBe(
+    0,
+  );
+  await page.reload();
+  await expect(page.locator(".order-list")).toContainText("Auto-invest");
+
+  const sold = await request.post("/api/practice/orders", {
+    data: { symbol: "VOO", side: "sell", shares: "all" },
+  });
+  expect((await sold.json()).order.status).toBe("filled");
+  await page.reload();
+  await expect(page.getByText(/Many people start/)).toBeVisible();
+
+  await page.getByRole("button", { name: "Reset portfolio" }).click();
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: /Learn investing/ }),
+  ).toBeVisible();
+});
+
+test("refund and practice APIs validate input and stay idempotent", async ({
+  request,
+}) => {
+  const bad = await request.post("/api/refunds", {
+    data: { amount: -5, receivedOn: "2026-01-01" },
+  });
+  expect(bad.status()).toBe(400);
+  const made = await request.post("/api/refunds", {
+    data: {
+      amount: 900,
+      receivedOn: new Date().toISOString().slice(0, 10),
+      funding: "grant",
+    },
+  });
+  expect(made.status()).toBe(201);
+  const { refunds } = await (await request.get("/api/refunds")).json();
+  expect(refunds).toHaveLength(2);
+  await request.post("/api/practice", { data: { startingCash: 500 } });
+  expect(
+    (
+      await request.post("/api/practice", { data: { startingCash: 500 } })
+    ).status(),
+  ).toBe(409);
+  const order = {
+    symbol: "AAPL",
+    side: "buy",
+    amount: 50,
+    clientKey: "same-click",
+  };
+  const a = await (
+    await request.post("/api/practice/orders", { data: order })
+  ).json();
+  const b = await (
+    await request.post("/api/practice/orders", { data: order })
+  ).json();
+  expect(a.order.id).toBe(b.order.id);
+  expect(
+    (
+      await request.post("/api/practice/orders", {
+        data: { symbol: "GME", side: "buy", amount: 5 },
+      })
+    ).status(),
+  ).toBe(400);
+
+  const key = await (
+    await request.post("/api/developer/keys", {
+      data: { name: "grow", scopes: ["refunds:read", "practice:read"] },
+    })
+  ).json();
+  const auth = { authorization: `Bearer ${key.secret}` };
+  const v1r = await (
+    await request.get("/api/v1/refunds", { headers: auth })
+  ).json();
+  expect(v1r.data.length).toBe(2);
+  const v1p = await (
+    await request.get("/api/v1/practice", { headers: auth })
+  ).json();
+  expect(v1p.virtual_money).toBe(true);
+  expect(v1p.portfolio.positions[0].symbol).toBe("AAPL");
+});
