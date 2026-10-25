@@ -1,731 +1,412 @@
-# Brix — your money, brick by brick
+<div align="center">
 
-> **HackPSU Fall 2026 · Target track: FNB Challenge — Trust, Decisions & Financial Confidence**
-> Also eligible: HackPSU Grand Prize, Nittany AI Challenge (confirm multi-track submission on Discord).
+<a href="https://www.usebrix.app"><img src="app/opengraph-image.png" alt="Brix: catch the charge before it catches you" width="100%" /></a>
 
-Brix is an AI money assistant for college students that **catches money leaks before they happen** — free trials that turn into charges, forgotten subscriptions, surprise renewals — and lets students act on them from **anywhere**: the web app, a **phone call**, or **WhatsApp**.
+# Brix
 
-Students link a bank (Plaid sandbox for the demo). Brix finds every recurring charge, predicts the next one, and reaches out *a week before* it hits. The student can say "cancel it," "remind me Friday," or "make me a one-time card for this trial" — by voice, text, or tap.
+### Catch money moments before they pass.
 
-**Brix never moves money and never tells anyone what to buy.** It reads charges, explains them, reminds, and helps the user act. That boundary is the trust story for FNB.
+An AI money assistant for college students. Brix spots the moments students most often get money wrong: a free trial about to bill, borrowed money hidden in an aid refund, a gift card about to expire, a first investment. For each one it gives a single clear next step, in the app, on WhatsApp or over a phone call.
 
-## Implementation status
+[![Live app](https://img.shields.io/badge/live-usebrix.app-C8462A?style=for-the-badge)](https://www.usebrix.app)
+[![API docs](https://img.shields.io/badge/API-docs-292920?style=for-the-badge)](https://www.usebrix.app/developers)
+[![HackPSU Fall 2026](https://img.shields.io/badge/HackPSU-Fall%202026-1E407C?style=for-the-badge)](https://hackpsu.org)
 
-The runnable Next.js application now includes the landing page, dashboard, trial tracking, charge actions, masked demo cards, connections, settings, and admin reminder controls. Start with [SETUP.md](SETUP.md) (Node 22+): `npm install`, `cp .env.example .env.local`, then `npm run dev`. The default example explicitly enables a local demo with persistent sample data; **both demo flags must be `false` in production** (demo mode skips sign-in and shares one sample account).
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000?logo=nextdotjs)
+![React 19](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![Claude](https://img.shields.io/badge/AI-Claude%20Opus%205.5-D97757)
+![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?logo=firebase&logoColor=black)
+![Tests](https://img.shields.io/badge/tests-71%20unit%20·%20150%2B%20browser%20·%2044%20live-2F7D4F)
 
-Firebase, Plaid sandbox, Anthropic (Claude), Twilio WhatsApp, Vapi tools, and Lithic sandbox integration paths are implemented but require account configuration and provider-backed testing. Voice proposes changes that the signed-in user confirms in the app; voice card confirmation also requires a PIN. Users who allow calls get a Vapi reminder call 2 days before a charge. Merchant news comes from Google News RSS (Yahoo Finance RSS for stocks; NewsAPI only as a backup), cached in Firestore and filtered to real pricing stories. School refunds are detected from bank deposits; Brix plans them (essentials, emergency fund, returning unused federal loan money within 120 days, tax notes) and offers a practice portfolio with virtual money at real Yahoo prices, including auto-invest rules and stop-loss/take-profit. Google One Tap signs in returning visitors. A public REST API is documented in [docs/API.md](docs/API.md). `scripts/smoke-live.mts` runs a 40-step end-to-end check against real providers with a throwaway account. The sections below are the original product brief, including planned features, rather than a claim that every milestone has shipped.
+**Built for the FNB Challenge: Trust, Decisions & Financial Confidence**
 
-For this prototype, live state is stored atomically at `users/{uid}.state`, with server-only secrets and phone lookup documents. The UI refreshes state every five seconds. This differs from the proposed subcollection/realtime-listener design below. Raw Plaid transactions are not retained; sync cursors and normalized recurring charges are. Move large histories into subcollections before production use.
+[Try it](#try-it-in-60-seconds) · [The problem](#the-problem) · [What Brix does](#what-brix-does) · [How it works](#how-it-works) · [Trust](#trust-by-design) · [API](#developer-api) · [Run it](#run-it-locally)
 
----
-
-## Table of contents
-
-1. [The problem and the user](#1-the-problem-and-the-user)
-2. [What we build in 24 hours](#2-what-we-build-in-24-hours)
-3. [Demo script (3 minutes)](#3-demo-script-3-minutes)
-4. [Architecture](#4-architecture)
-5. [Tech stack](#5-tech-stack)
-6. [Repository structure](#6-repository-structure)
-7. [Data model (Firestore)](#7-data-model-firestore)
-8. [The agent: one brain, three channels](#8-the-agent-one-brain-three-channels)
-9. [API routes](#9-api-routes)
-10. [Integrations: setup and gotchas](#10-integrations-setup-and-gotchas)
-11. [Design system](#11-design-system)
-12. [Screens](#12-screens)
-13. [Milestones and timeline](#13-milestones-and-timeline)
-14. [Team split](#14-team-split)
-15. [Security and trust](#15-security-and-trust)
-16. [Business model](#16-business-model)
-17. [Judging fit (FNB criteria)](#17-judging-fit-fnb-criteria)
-18. [Risks, fallbacks and the cut list](#18-risks-fallbacks-and-the-cut-list)
-19. [Environment variables](#19-environment-variables)
-20. [Local setup](#20-local-setup)
-21. [Devpost submission checklist](#21-devpost-submission-checklist)
+</div>
 
 ---
 
-## 1. The problem and the user
+## Try it in 60 seconds
 
-**User:** a college student with a debit or credit card, several subscriptions (streaming, music, apps, gym, software), and a habit of signing up for free trials.
-
-**Problem:** students don't lose money in one big mistake. They lose it in small, silent charges they never decided on:
-
-- A free trial converts to a paid plan because nobody reminded them.
-- A subscription they stopped using keeps renewing.
-- A price goes up and they never notice.
-- The information exists (bank statements, receipts), but it's scattered, and nobody turns it into a decision *at the moment it matters* — the week before the charge.
-
-**FNB's question, our answer:**
-
-| FNB asks | Brix does |
+| Channel | How |
 |---|---|
-| Turn **information** into **understanding** | Reads bank transactions and finds every recurring charge, in plain words |
-| Turn **understanding** into **confidence** | Predicts the next charge and explains it: "Spotify, $11.99, Friday — you played it 2 times this month" |
-| Turn **confidence** into **action** | One tap, one text, or one phone call to cancel, set a reminder, or use a one-time card |
-| At the **moments that matter** | Reaches out 7 days and 2 days before a charge — not after |
+| 🌐 **Web app** | Open **[usebrix.app](https://www.usebrix.app)** and sign in with Google. Link the Plaid sandbox bank with `user_good` / `pass_good`. |
+| 📞 **Phone call** | Call **+1 (870) 395-8999**. Brix answers, reads your charges and proposes actions you confirm in the app. |
+| 💬 **WhatsApp** | Send `join frozen-partly` to **+1 (415) 523-8886** (Twilio sandbox), then ask *"what's coming up?"* |
+| 🧑‍💻 **API** | Create a key on the Developers page in the app, then `curl https://www.usebrix.app/api/v1/me -H "Authorization: Bearer $BRIX_API_KEY"` |
 
-> Team TODO before judging: replace this section's claims with 2–3 numbers from quick hallway interviews at HackPSU ("X of Y students we asked got charged for a trial they forgot"). Use "X of Y," never invented percentages.
-
----
-
-## 2. What we build in 24 hours
-
-### Must ship (the demo depends on these)
-
-| # | Feature | Done when |
-|---|---|---|
-| F1 | **Onboarding + auth** | User signs in with Google (Firebase Auth), adds and verifies a phone number |
-| F2 | **Plaid sandbox link** | User links a sandbox bank in Plaid Link; transactions sync into Firestore |
-| F3 | **Leak detector** | Recurring charges found and shown as "Brix cards" with next date, amount, and a usage note |
-| F4 | **Trial tracker** | User adds a free trial manually (name, end date, price after trial); it appears in the timeline |
-| F5 | **WhatsApp agent** | User texts the Brix WhatsApp number; agent answers "when's my next charge?" and can set a reminder / mark to cancel |
-| F6 | **Voice agent** | User calls the Brix number (Vapi); same answers and actions by voice |
-| F7 | **Proactive outreach** | A "run reminders" job sends a WhatsApp message (and optionally places an outbound call) for charges due in ≤7 days |
-| F8 | **Dashboard** | Upcoming charges timeline, monthly leak total, "money saved" counter |
-
-### Should ship (high demo value, cut if behind)
-
-| # | Feature | Done when |
-|---|---|---|
-| S1 | **One-time card** | Agent or UI creates a single-use virtual card (Lithic sandbox) for a free trial; card shown masked in app |
-| S2 | **Money news briefing** | Agent answers "anything I should know?" with 2–3 headlines that touch the user's own merchants (e.g., a price hike) |
-| S3 | **Brix mascot reactions** | The brick buddy reacts on screen (happy when money saved, worried when a trial is about to convert) |
-
-### Won't ship (roadmap slide only)
-
-Real money movement, real card issuing, automatic cancellation on the merchant's site, email receipt parsing, savings goals, investing.
+> [!NOTE]
+> Bank data is Plaid **sandbox** data and cards are Lithic **sandbox** cards. No real money moves anywhere in Brix, by design.
 
 ---
 
-## 3. Demo script (3 minutes)
+## The problem
 
-The demo follows one student, **Maya**, a Penn State sophomore. Every step is live; a screen recording is the backup.
+Students rarely lose money in one big mistake. They lose it at small moments nobody warns them about. The information already exists in bank statements and award letters. Nobody turns it into a decision **at the moment it matters**.
 
-| Time | What happens | What we say |
+| Moment | The data | Source |
 |---|---|---|
-| 0:00 | Landing page, Brix buddy waves | "Students don't go broke in one big mistake. They leak money in small charges they never chose." |
-| 0:15 | Maya signs in, links a sandbox bank via Plaid | "Maya links her bank. Brix only reads. It can't move a cent." |
-| 0:35 | Dashboard fills: 6 subscriptions, $63/month, next charge Friday | "In seconds Brix finds every recurring charge and when the next one hits." |
-| 0:55 | Maya adds a free trial: "Notion AI, ends in 3 days, then $10/mo" | "Free trials are the biggest leak, and banks can't see them until they charge." |
-| 1:10 | Admin presses "Run reminders" → Maya's phone gets a WhatsApp from Brix | "Brix reaches out before the charge, not after." |
-| 1:25 | Maya replies on WhatsApp: "cancel spotify, remind me about notion friday" | "She answers like she'd text a friend." |
-| 1:45 | Dashboard updates live: Spotify marked to cancel with the cancel link; reminder set; "saved" counter counts up | "Every action lands back in the app." |
-| 2:00 | Teammate calls the Brix number on speaker: "When's my next charge and can you make me a one-time card for a trial?" | "Or she just calls." |
-| 2:30 | Voice agent answers, creates a one-time card; card appears in the app | "That card works once. The trial can never turn into a charge." |
-| 2:45 | Close on the saved counter and the brick buddy | "Information to understanding, understanding to confidence, confidence to action. That's Brix." |
+| 🔔 **Forgotten trials** | **48%** of Americans paid for a trial they forgot to cancel. **59%** of Gen Z. | 2024 U.S. survey (via 9to5Mac) |
+| 🎁 **Unspent gift cards** | **$27B** sits unspent on U.S. gift cards. **43%** of adults hold at least one. | Bankrate, 2023–2024 |
+| 🎓 **Hidden loans** | **28%** of first-year students with federal loans said they had none. | Akers & Chingos, Brookings |
+| 📈 **Who to trust** | **48%** of Gen Z investors learned investing from social media. | FINRA Foundation & CFA Institute, 2023 |
 
-**Demo prep:** a seeded Plaid sandbox user with recurring charges, Maya's phone joined to the Twilio WhatsApp sandbox, the Vapi number saved as a contact, Wi-Fi + hotspot backup.
+FNB asks how technology can turn **information → understanding → confidence → action**. Brix does that at four specific, high-stakes moments in a student's money life.
 
 ---
 
-## 4. Architecture
+## What Brix does
 
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 1 · Before a charge hits
+Links a bank (Plaid), finds every subscription and free trial, predicts the next charge date, and reaches out **7 days and 2 days before** each one: in the app, on WhatsApp or with a phone call. Keep it, mark it to cancel (with the merchant's cancel link), set a reminder, or create a **single-use card** with a hard limit so a trial can never bill you.
+
+</td>
+<td width="50%"><img src="docs/images/dashboard.jpg" alt="Brix overview: the next decision, monthly recurring total and upcoming charges" /></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/images/refunds.jpg" alt="Refund planner showing 110 days left to return borrowed money free" /></td>
+<td width="50%" valign="top">
+
+### 2 · When a school refund lands
+Brix detects the aid refund deposit and points out what most students miss: **part of it may be borrowed**. Federal loan money returned within **120 days** is cancelled with no interest or fees. Brix shows the exact return-by date, the interest you'd otherwise pay, and a plan: essentials, an emergency buffer, then saving. It also flags when scholarship money may be **taxable**, with citations to studentaid.gov and IRS Publication 970.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 3 · Before a gift card expires
+Add a gift card by filling in a gift card. Brix tracks balances and expiry dates, reminds you **14 and 3 days** before a card expires, and when you ask about a store you're about to pay, reminds you to use the card first. One-time cards are edited the same way, on a real Brix card with templates such as *Free trial · $1*.
+
+</td>
+<td width="50%"><img src="docs/images/cards.jpg" alt="Cards page: edit a single-use Brix card and a gift card in place" /></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/images/invest.jpg" alt="Practice investing: shaded price history chart and Brix coins leaderboard" /></td>
+<td width="50%" valign="top">
+
+### 4 · Before you risk real money
+A **practice portfolio** with virtual money at **real Yahoo Finance prices**. Buy fractional shares, set stop-loss and take-profit, schedule auto-invest, compare yourself with the S&P 500, and climb a **leaderboard of Brix coins** that rewards habits (trading, auto-investing) more than luck. Orders never fill without a real price.
+
+</td>
+</tr>
+</table>
+
+**One decision at a time.** The dashboard opens with the single most important decision right now, such as *"$1,200 of your refund is borrowed. Return it by Feb 12"*, instead of a wall of numbers.
+
+**One assistant, everywhere.** The web chat, WhatsApp and phone calls all share **13 tools** that read the student's own data. Every answer is labelled with where it came from.
+
+<p align="center">
+  <img src="docs/images/chat.jpg" alt="Brix chat answering whether a refund is borrowed, with a source label" width="85%" />
+</p>
+
+<p align="center">
+  <img src="docs/images/mobile-dashboard.jpg" alt="Brix on a phone: overview" width="28%" />
+  &nbsp;
+  <img src="docs/images/mobile-cards.jpg" alt="Brix on a phone: cards" width="28%" />
+  &nbsp;
+  <img src="docs/images/mobile-invest.jpg" alt="Brix on a phone: invest" width="28%" />
+</p>
+<p align="center"><sub>Fully responsive from 360px phones to 1920px desktops, with a bottom tab bar on mobile.</sub></p>
+
+---
+
+## How it works
+
+### The journey: information → understanding → confidence → action
+
+```mermaid
+flowchart LR
+    A["🏦 Bank data<br/>Plaid sandbox"] --> B["🔍 Understand<br/>recurring charges, refunds,<br/>gift cards, prices"]
+    B --> C["🧭 Decide<br/>one next decision,<br/>ranked by urgency"]
+    C --> D{"Where is<br/>the student?"}
+    D -->|app| E["🌐 Web dashboard<br/>+ chat"]
+    D -->|messages| F["💬 WhatsApp"]
+    D -->|on the go| G["📞 Phone call"]
+    E & F & G --> H["✅ Act<br/>remind · mark to cancel ·<br/>one-time card · plan refund ·<br/>practice trade"]
+    H --> I["📒 Activity log<br/>+ money avoided"]
+
+    style A fill:#F7F5EF,stroke:#292920,color:#292920
+    style C fill:#C8462A,stroke:#A9321D,color:#fff
+    style H fill:#2F7D4F,stroke:#1F5A38,color:#fff
 ```
-                          ┌─────────────────────────────┐
-   Web / PWA (Next.js) ───►                             │
-                          │   Next.js API routes         │
-   WhatsApp ──► Twilio ───►   (Vercel, Node runtime)     │──► Anthropic (tool use)    
-                webhook   │                             │
-   Phone ────► Vapi ──────►   /api/agent/*  (shared      │──► Plaid (sandbox)
-                tool calls│    tool layer)               │──► Lithic (sandbox, one-time cards)
-                          │                             │──► News API
-                          └──────────────┬──────────────┘
-                                         │ Firebase Admin SDK
-                                         ▼
-                              Firestore  ·  Firebase Auth
-                                         ▲
-                     Cron / "Run reminders" button triggers /api/jobs/reminders
-                     → Twilio WhatsApp message + optional Vapi outbound call
+
+### System architecture: one brain, three channels
+
+```mermaid
+flowchart TB
+    subgraph Channels
+        WEB["🌐 Next.js web app<br/>React 19 · PWA"]
+        WA["💬 WhatsApp<br/>Twilio webhook"]
+        VOICE["📞 Phone<br/>Vapi assistant"]
+        API["🧑‍💻 Public REST API<br/>/api/v1 · scoped keys"]
+    end
+
+    subgraph Server["Next.js 16 route handlers on Vercel"]
+        AUTH["🔐 Verify every request<br/>Firebase ID token · Twilio signature ·<br/>Vapi secret · hashed API key · cron secret"]
+        AGENT["🧠 Claude agent loop<br/>claude-opus-5-5 · tool use ·<br/>time budget · server fallback"]
+        TOOLS["🧰 Shared tool layer · 13 tools<br/>lib/tools"]
+        CONFIRM["✋ Propose → confirm<br/>per channel · expires in 10 min ·<br/>applied exactly once"]
+    end
+
+    subgraph Data["Data, providers and outreach"]
+        FS[("🔥 Firestore<br/>users · secrets · portfolios ·<br/>phoneIndex · apiKeys · newsCache")]
+        PLAID["🏦 Plaid sandbox"]
+        LITHIC["💳 Lithic sandbox<br/>single-use cards"]
+        NEWS["📰 Google News RSS<br/>+ Yahoo Finance"]
+        OUT["📣 Proactive reminders<br/>WhatsApp or Vapi call,<br/>7 and 2 days before a charge"]
+    end
+
+    CRON["⏰ Vercel cron<br/>reminders daily · practice rules weekdays"]
+
+    WEB & WA & VOICE & API --> AUTH
+    AUTH --> AGENT
+    AUTH --> TOOLS
+    AGENT --> TOOLS
+    TOOLS --> CONFIRM
+    TOOLS --> FS & PLAID & LITHIC & NEWS
+    CRON --> TOOLS
+    TOOLS --> OUT
 ```
 
-**Key decision: one tool layer.** Every action (get next charges, set reminder, mark cancel, create card, news) is a plain TypeScript function in `lib/tools/`. The WhatsApp and web agent calls them through Anthropic tool use. The Vapi assistant calls the *same* functions through HTTP tool calls. The web UI calls them through API routes. One implementation, three channels, no drift.
+**Key decision: one tool layer.** Every capability (read charges, set a reminder, mark to cancel, create a card, plan a refund, place a practice trade, read news) is one TypeScript function in [`lib/tools`](lib/tools). Claude calls it from web and WhatsApp, Vapi calls it over HTTP from a phone call, and the UI and public API call it through routes. One implementation and one set of safety rules for every channel.
+
+### Every action waits for your yes
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor S as Student
+    participant C as Channel (web, WhatsApp, voice)
+    participant B as Brix agent (Claude)
+    participant T as Tool layer
+    participant DB as Firestore
+
+    S->>C: "Make me a card for the Notion trial, $1 limit"
+    C->>B: message + verified identity
+    B->>T: create_one_time_card(purpose, limit)
+    T->>DB: store PENDING action for this channel (10 min)
+    T-->>B: "Create a $1.00 single-use card? Reply yes"
+    B-->>S: proposal + source labels
+    S->>C: "yes"
+    Note over C,T: Voice can't confirm money actions.<br/>The student confirms in the app, plus a PIN for cards.
+    C->>T: confirmAction (atomic, applied once)
+    T->>DB: card issued (Lithic, idempotency key) + activity event
+    T-->>S: "Card ending 4242 created. View it in Cards."
+```
+
+### The refund planner
+
+```mermaid
+flowchart TD
+    R["🎓 Refund deposit detected<br/>e.g. PENN STATE BURSAR REFUND"] --> Q{"Any of it<br/>borrowed?"}
+    Q -->|loan| W{"Within 120 days<br/>of disbursement?"}
+    W -->|yes| RET["↩️ Return unused loan money<br/>cancelled with no interest or fees<br/>shows the return-by date + interest avoided"]
+    W -->|no| PAY["💸 Prepay the loan early<br/>shows interest saved"]
+    Q -->|grant or scholarship| TAX["🧾 Tax note<br/>money not spent on tuition or books<br/>may be taxable (IRS Pub 970)"]
+    RET & PAY & TAX --> E1["Step 1 · Essentials until<br/>the next disbursement"]
+    E1 --> E2["Step 2 · Starter emergency buffer"]
+    E2 --> E3["Step 3 · Save the rest<br/>optional same-size practice portfolio"]
+
+    style R fill:#F7F5EF,stroke:#292920
+    style RET fill:#2F7D4F,color:#fff,stroke:#1F5A38
+    style TAX fill:#FFF4DB,stroke:#C9962F
+```
+
+Every figure is computed by code from the student's inputs and labelled as an estimate. Brix never assumes a loan rate; the student enters it.
 
 ---
 
-## 5. Tech stack
+## Trust by design
 
-| Layer | Choice | Why |
+Trust is the FNB brief, so it is built into the architecture rather than added later.
+
+| Principle | How Brix enforces it |
+|---|---|
+| 🔒 **Never moves money** | Read-only Plaid access. Brix never cancels at a merchant; it records your decision and hands you the cancel link. Investing is practice-only. |
+| ✋ **Confirm before acting** | The AI can only *propose*. Proposals are stored per channel, expire after 10 minutes and are applied **exactly once**, even if two confirmations arrive at the same instant (tested). |
+| 📞 **Voice can't spend** | A spoken "yes" never applies a change. Card creation from a call needs in-app confirmation **plus a 4-digit PIN** (hashed, and locked for 15 minutes after 5 wrong tries). |
+| 🔢 **No invented numbers** | Amounts and dates come from code, never the model. The system prompt forbids personal investment advice. |
+| 🏷️ **Every answer cites its source** | Replies carry labels like *Your charges*, *Brix's math (estimate)*, *News: Google News* or *General info, not your data*. Demo data is always marked *(sample)*. |
+| 🛡️ **Every request verified** | Firebase ID tokens, Twilio signatures, a Vapi shared secret, a cron secret and SHA-256-hashed, scoped API keys. Firestore rules deny all client writes and every read of secrets. |
+| 🧑‍⚖️ **You stay in control** | Full activity log, a bank-disconnect button, revocable API keys and a complete **delete my data** that also removes your bank link and portfolio (verified by the live test). |
+| 👀 **Privacy** | Raw transactions are never stored, only detected charges and refunds. The leaderboard shows first names and initials only. |
+
+---
+
+## Why Brix fits the FNB criteria
+
+| FNB asks | Brix shows it with |
+|---|---|
+| **Information → understanding** | Recurring charges, refunds and gift cards explained in one plain line each |
+| **Understanding → confidence** | One "next decision" card, a 14-day timeline, a 120-day refund countdown, practice before real risk |
+| **Confidence → action** | One tap, one WhatsApp reply or one phone call to remind, cancel, protect a trial or plan a refund |
+| **Moments that matter most** | Reminders 7 and 2 days before a charge, 14 and 3 days before a gift card expires, and as soon as a refund lands |
+| **Knowing what to trust** | Source labels on every answer, confirm-before-act, read-only data, no advice, an audit trail |
+| **AI, personalization, prediction, automation** | A Claude tool-use agent on the student's own data, next-charge prediction, auto-invest rules, scheduled reminders |
+
+---
+
+## Feature checklist
+
+- [x] Google sign-in, Google One Tap and phone verification (Firebase Auth)
+- [x] Plaid sandbox link, transaction sync, recurring-charge detection and next-date prediction
+- [x] Free-trial tracking, reminders, mark-to-cancel with merchant cancel links
+- [x] Single-use virtual cards (Lithic sandbox) with templates and colours
+- [x] Refund detection from bank deposits and a 120-day loan-return planner with tax notes
+- [x] Gift card balances, expiry alerts and "use it first" nudges
+- [x] Practice portfolio: live prices, fractional shares, stop-loss and take-profit, auto-invest, S&P 500 comparison, price-history chart, coins leaderboard
+- [x] Merchant pricing news (Google News) and stock news (Yahoo Finance) with a shared cache and a stale-data fallback
+- [x] Claude assistant across web, WhatsApp and phone (Vapi), with source labels on every answer
+- [x] Proactive reminders by WhatsApp and outbound phone call (daily cron)
+- [x] Public REST API v1 with scoped keys, rate limits, an OpenAPI 3.1 spec and generated docs
+- [x] Accessible (axe checks pass on every main screen), responsive, respects reduced motion
+
+---
+
+## Developer API
+
+Brix is also a small platform. Students and other apps can pull Brix data into spreadsheets, Discord bots or dashboards using keys the student creates and revokes.
+
+```bash
+curl https://www.usebrix.app/api/v1/charges/upcoming?days=14 \
+  -H "Authorization: Bearer $BRIX_API_KEY"
+```
+
+| Scope | Grants |
+|---|---|
+| `charges:read` / `charges:write` | Charges, upcoming charges and the summary; add trials, mark to cancel |
+| `reminders:read` / `reminders:write` | List, create and delete reminders |
+| `cards:read` | Single-use cards, masked (never card numbers) |
+| `news:read` | Pricing news about your merchants |
+| `refunds:read` | School refunds and their plans |
+| `practice:read` | The practice portfolio: value, positions, rules and orders |
+
+Keys are SHA-256 hashed at rest, shown once, limited to 5 per user and 120 requests per minute. Trial creation is idempotent. Full reference: **[usebrix.app/developers](https://www.usebrix.app/developers)** · [docs/API.md](docs/API.md) · [`/api/v1/openapi.json`](https://www.usebrix.app/api/v1/openapi.json)
+
+---
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| App | **Next.js 16** (App Router, route groups, persistent app shell), **React 19**, **TypeScript** |
+| AI | **Claude Opus 5.5** via the Anthropic SDK: a manual tool-use loop with per-channel time budgets (12s WhatsApp, 10s otherwise) and a server-side fallback model |
+| Identity and data | **Firebase Auth** (Google, One Tap, phone) and **Firestore** through the Admin SDK |
+| Banking | **Plaid** sandbox (`/transactions/sync`, recurring streams) |
+| Cards | **Lithic** sandbox `SINGLE_USE` cards with idempotency keys |
+| Voice | **Vapi** assistant on a Twilio number, with tools pointing at `/api/vapi/tools` |
+| Messaging | **Twilio** WhatsApp, with signature-validated webhooks |
+| Markets and news | **Yahoo Finance** quotes and history, **Google News RSS**, cached in Firestore |
+| Hosting | **Vercel** with two cron jobs (reminders daily, practice rules on weekdays) |
+| Quality | `node:test`, **Playwright** (desktop + mobile), **axe-core**, a live production smoke test |
+| Design | Hand-written CSS design tokens, Figtree and Instrument Serif, Lucide icons, an SVG mascot with moods |
+
+---
+
+## Quality and testing
+
+| Suite | What it covers | Result |
 |---|---|---|
-| Framework | **Next.js (App Router) + TypeScript** | One codebase for UI and API routes; deploys to Vercel in minutes |
-| PWA | `next-pwa` or a hand-written manifest + service worker | Installs on phones for the demo |
-| Styling | **Tailwind CSS** | Fast; design tokens as CSS variables |
-| Components | **shadcn/ui** (copied in, restyled) | Accessible primitives; we own the styles |
-| Animation | **Motion** (formerly Framer Motion) | Page and card transitions, mascot reactions |
-| Effects | **React Bits** (reactbits.dev) | CountUp for money, typewriter text, click spark — copy only what we use |
-| Icons | **Lucide React**, `strokeWidth={1.7}` | Matches the reference design |
-| Auth | **Firebase Auth** (Google sign-in) | Zero backend auth code |
-| Database | **Firestore** | Realtime listeners make WhatsApp/voice actions appear live in the UI — great demo moment |
-| Server SDK | `firebase-admin` in API routes | Trusted writes, token verification |
-| Banking data | **Plaid** (sandbox): Link, `/transactions/sync`, `/transactions/recurring/get` | Real bank-link flow with fake data |
-| LLM | **Anthropic Claude** (tool use), model set by `ANTHROPIC_MODEL` (default `claude-opus-5-5`) | Strong tool use with explicit confirmation steps |
-| Voice | **Vapi** assistant + phone number, tools pointed at our API | Natural phone calls in an hour of setup |
-| Messaging | **Twilio WhatsApp sandbox** | Works without WhatsApp Business approval |
-| Cards | **Lithic sandbox**, card type `SINGLE_USE` | Real single-use card API, no real money |
-| News | NewsAPI.org or GNews (free tier), filtered by the user's merchant names | Personal, not generic, news |
-| Hosting | **Vercel** | Public HTTPS URL for Twilio and Vapi webhooks |
-| Local tunnels | `ngrok` | Webhooks during local dev |
+| **Unit** (`npm test`) | Recurring detection, refund classifier and planner maths, the order engine, the confirmation model, RSS parsing, quotes and history parsing, leaderboard scoring, API keys | **71 / 71 passing** |
+| **Browser** (`npm run test:e2e`) | Every screen on desktop and mobile, the chat, cards, refunds, practice, the API, keyboard shortcuts, accessibility scans, horizontal-overflow checks | **150+ passing** |
+| **Live smoke** (`scripts/smoke-live.mts`) | 44 steps against **production** with a throwaway account: Plaid sync, refund detection, Claude replies with sources, Lithic, signed WhatsApp and voice webhooks, live-price trades, price history, leaderboard, news, crons, then full data deletion | **44 / 44 passing** |
 
 ---
 
-## 6. Repository structure
+## Run it locally
+
+Requires **Node 22+**. The local demo needs no API keys; it uses persistent sample data for "Maya", a Penn State sophomore.
+
+```bash
+git clone https://github.com/Timeless-Dave/brix.git && cd brix
+npm install
+cp .env.example .env.local      # demo mode is on by default
+npm run dev                     # http://localhost:3000
+```
+
+```bash
+npm run lint && npm run typecheck
+npm test                        # unit tests
+npm run test:e2e                # production build + Playwright
+npm run check:config            # which live integrations are configured (never prints secrets)
+```
+
+To connect real sandbox providers (Firebase, Plaid, Anthropic, Twilio, Vapi, Lithic), follow **[SETUP.md](SETUP.md)** and **[INTEGRATIONS.md](INTEGRATIONS.md)**.
+
+> [!IMPORTANT]
+> `BRIX_DEMO_MODE` and `NEXT_PUBLIC_BRIX_DEMO_MODE` must both be `false` in production. Demo mode refuses to turn on in a Vercel production deployment.
+
+<details>
+<summary><b>Project structure</b></summary>
 
 ```
 brix/
 ├─ app/
-│  ├─ (marketing)/page.tsx              # Landing page
-│  ├─ (app)/layout.tsx                  # Authenticated shell + nav
-│  ├─ (app)/dashboard/page.tsx          # Timeline, leak total, saved counter
-│  ├─ (app)/subscriptions/page.tsx      # All recurring charges + trials
-│  ├─ (app)/cards/page.tsx              # One-time cards
-│  ├─ (app)/connect/page.tsx            # Phone verify, WhatsApp join, Plaid link
-│  ├─ (app)/settings/page.tsx
-│  ├─ admin/page.tsx                    # Demo controls: "Run reminders", reset demo
-│  └─ api/
-│     ├─ plaid/link-token/route.ts
-│     ├─ plaid/exchange/route.ts
-│     ├─ plaid/sync/route.ts
-│     ├─ trials/route.ts
-│     ├─ whatsapp/webhook/route.ts      # Twilio inbound
-│     ├─ vapi/tools/route.ts            # Vapi tool calls
-│     ├─ vapi/events/route.ts           # Vapi end-of-call reports (optional)
-│     ├─ jobs/reminders/route.ts        # Proactive outreach
-│     └─ cards/route.ts
+│  ├─ page.tsx                    # Landing page
+│  ├─ (workspace)/                # The signed-in app: one persistent shell
+│  │  ├─ layout.tsx               #   renders the app shell once for every page
+│  │  ├─ dashboard/ subscriptions/ cards/ refunds/ practice/
+│  │  └─ connect/ settings/ developer/ admin/
+│  ├─ developers/                 # Public API docs (generated from the OpenAPI spec)
+│  ├─ onboarding/                 # Guided setup
+│  └─ api/                        # 53 route handlers
+│     ├─ agent/ whatsapp/ vapi/   #   the three assistant channels
+│     ├─ plaid/ cards/ trials/ refunds/ gift-cards/ practice/ market/ news/
+│     ├─ jobs/                    #   cron: reminders, practice rules
+│     └─ v1/                      #   public REST API
 ├─ lib/
-│  ├─ firebase/admin.ts                 # firebase-admin init
-│  ├─ firebase/client.ts                # client SDK init
-│  ├─ plaid.ts
-│  ├─ twilio.ts
-│  ├─ vapi.ts
-│  ├─ lithic.ts
-│  ├─ agent/
-│  │  ├─ systemPrompt.ts                # Shared persona + guardrails
-│  │  ├─ toolSchemas.ts                 # JSON schemas (Anthropic + Vapi)
-│  │  ├─ persona.ts                     # Bot moods, reactions, quick replies
-│  │  └─ runAgent.ts                    # Chat loop for WhatsApp/web
-│  ├─ tools/                            # THE shared tool layer
-│  │  ├─ getUpcomingCharges.ts
-│  │  ├─ getSubscriptions.ts
-│  │  ├─ setReminder.ts
-│  │  ├─ markToCancel.ts
-│  │  ├─ createOneTimeCard.ts
-│  │  ├─ getMoneyNews.ts
-│  │  └─ getSavedSummary.ts
-│  ├─ recurring.ts                      # Normalize Plaid recurring streams
-│  ├─ identity.ts                       # Phone number → userId, PIN check
-│  └─ format.ts                         # Money/date formatting for voice and text
-├─ components/
-│  ├─ ui/                               # shadcn components, restyled
-│  ├─ brix/BrixBuddy.tsx                # Mascot with moods
-│  ├─ brix/Button3D.tsx                 # The slab button
-│  ├─ ChargeCard.tsx
-│  ├─ Timeline.tsx
-│  ├─ LeakMeter.tsx
-│  └─ SavedCounter.tsx                  # React Bits CountUp
-├─ public/
-│  ├─ brix/                             # Mascot PNGs (happy, worried, wave, thumbs-up)
-│  └─ manifest.webmanifest
-├─ scripts/
-│  └─ seed-demo.ts                      # Seeds Maya's demo data
-├─ firestore.rules
-├─ .env.example
-└─ README.md
+│  ├─ agent/                      # Claude loop, system prompt, tool schemas, moods, source labels
+│  ├─ tools/                      # THE shared tool layer (web, WhatsApp, voice, API)
+│  ├─ refunds/                    # detection + 120-day planner
+│  ├─ practice/                   # order engine, rules, leaderboard
+│  ├─ market/ news/               # quotes, history, RSS, cache
+│  ├─ api/                        # API keys, scopes, OpenAPI spec
+│  └─ store.ts                    # Firestore transactions (local files in demo mode)
+├─ components/                    # App shell, sidebar, ticker, cards studio, practice, chat, brand
+├─ tests/                         # unit tests + Playwright browser tests
+├─ scripts/                       # live smoke test, config check, Vapi tool export, seeding
+└─ docs/                          # API reference, Devpost write-up, pitch script, Vapi prompt
 ```
 
----
-
-## 7. Data model (Firestore)
-
-```
-users/{uid}
-  displayName: string
-  email: string
-  phoneE164: string            // "+18145550123", verified
-  whatsappOptIn: boolean
-  callOptIn: boolean
-  pinHash: string              // 4-digit PIN for sensitive voice actions
-  createdAt: Timestamp
-
-users/{uid}/plaidItems/{itemId}
-  institutionName: string
-  cursor: string               // for /transactions/sync
-  // accessToken is NOT stored here. See "secrets" below.
-
-secrets/{uid}                   // server-only collection, denied to clients by rules
-  plaidAccessTokens: { [itemId]: string }
-
-users/{uid}/charges/{chargeId}   // one doc per recurring stream or trial
-  kind: "subscription" | "trial"
-  merchant: string             // "Spotify"
-  amount: number               // 11.99 (dollars, 2dp)
-  frequency: "weekly" | "monthly" | "annual" | "unknown"
-  lastDate: string | null      // "2026-10-03"
-  nextDate: string             // "2026-11-03"
-  status: "active" | "to_cancel" | "cancelled" | "trial"
-  source: "plaid" | "manual" | "agent"
-  plaidStreamId?: string
-  cancelUrl?: string
-  usageNote?: string           // optional, e.g. "you opened it 2x this month" (manual for demo)
-  updatedAt: Timestamp
-
-users/{uid}/reminders/{reminderId}
-  chargeId: string
-  remindAt: Timestamp
-  channel: "whatsapp" | "call" | "push"
-  sent: boolean
-  createdBy: "web" | "whatsapp" | "voice"
-
-users/{uid}/cards/{cardId}
-  lithicToken: string
-  last4: string
-  type: "SINGLE_USE"
-  purpose: string              // "Notion AI trial"
-  spendLimit: number
-  state: "OPEN" | "CLOSED" | "PAUSED"
-  createdAt: Timestamp
-
-users/{uid}/events/{eventId}     // feed + "saved" math + audit log
-  type: "reminder_sent" | "marked_cancel" | "card_created" | "charge_avoided" | "agent_message"
-  channel: "web" | "whatsapp" | "voice" | "system"
-  amountSaved?: number
-  text?: string
-  createdAt: Timestamp
-
-phoneIndex/{phoneE164}           // server-only lookup for inbound calls/messages
-  uid: string
-```
-
-**Saved counter rule:** `amountSaved` is counted only when the user marks a charge to cancel *before* its `nextDate`, or a one-time card blocks a trial conversion. Label it in the UI as "Charges you avoided (estimated)" — never claim money we can't verify.
+</details>
 
 ---
 
-## 8. The agent: one brain, three channels
+## Business model
 
-### System prompt (shared, `lib/agent/systemPrompt.ts`)
-
-```
-You are Brix, a friendly money assistant for college students. You help users
-see their recurring charges and free trials, and act before money leaves.
-
-Rules:
-- You can READ charges and SET reminders, MARK charges to cancel, CREATE one-time
-  cards (sandbox), and SHARE money news that touches the user's own merchants.
-- You never move money, never give investment advice, never say "buy" or "sell"
-  any security, and never guess numbers. If a tool returns nothing, say so.
-- Always confirm before an action: repeat what you'll do in one sentence and wait
-  for "yes". For voice, creating a card also requires the user's 4-digit PIN.
-- Speak plainly. Amounts as "$11.99", dates as "Friday, November 3".
-- Keep replies under 2 sentences on voice, under 4 lines on WhatsApp.
-- "Mark to cancel" means you flag it and send the cancel link; the user finishes
-  cancelling on the merchant's site. Say that clearly.
-```
-
-### Tools (`lib/agent/toolSchemas.ts`)
-
-| Tool | Args | Returns | Side effect |
-|---|---|---|---|
-| `get_upcoming_charges` | `days?: number` (default 14) | list of `{merchant, amount, nextDate, kind}` | none |
-| `get_subscriptions` | — | all active charges + monthly total | none |
-| `set_reminder` | `merchant: string, when: string` (ISO date or "N days before") | reminder summary | writes `reminders` + `events` |
-| `mark_to_cancel` | `merchant: string` | cancel link + amount saved estimate | updates `charges.status`, writes `events` |
-| `create_one_time_card` | `purpose: string, spendLimit: number` | `{last4, spendLimit}` | Lithic sandbox call, writes `cards` + `events` |
-| `get_money_news` | — | 2–3 headlines with one-line "why it matters to you" | none |
-| `get_saved_summary` | — | total avoided this month | none |
-
-Merchant matching is fuzzy (lowercase, strip punctuation, `includes`), and when two charges match the tool returns both so the agent asks which one.
-
-### WhatsApp flow
-
-1. Twilio POSTs to `/api/whatsapp/webhook` (form-encoded: `From`, `Body`).
-2. Validate the Twilio signature (`X-Twilio-Signature`) with the auth token.
-3. Look up `phoneIndex/{From without "whatsapp:"}` → `uid`. Unknown number → reply with a sign-up link.
-4. Load the last ~10 messages for this user (store them in `users/{uid}/events` with `type: "agent_message"`).
-5. Run `runAgent()` — an Anthropic Messages tool-use loop with the tool schemas; execute tool calls server-side with the resolved `uid` (never trust a `uid` from the model).
-6. Reply with TwiML `<Response><Message>…</Message></Response>`, or via the Twilio REST API if the loop runs long (Twilio webhook timeout is ~15s; keep tool calls fast).
-
-### Voice flow (Vapi)
-
-1. Create a Vapi assistant in the dashboard: model = any Vapi-supported LLM (Vapi hosts the voice model; our tools are model-agnostic), the shared system prompt, a short first message ("Hey, it's Brix. What do you want to check?").
-2. Add each tool as a Vapi function tool whose server URL is `https://<app>/api/vapi/tools` (same JSON schemas).
-3. Attach a phone number (Vapi-provided, or import the team's Twilio number).
-4. On each tool call, Vapi POSTs the call object, including the caller's number. Resolve `uid` from `phoneIndex`. Verify Vapi's server secret header before doing anything.
-5. Return `{ results: [{ toolCallId, result }] }` with short, speakable strings.
-6. **Outbound:** `/api/jobs/reminders` can start a call with Vapi's create-call API (`assistantId`, `phoneNumberId`, `customer.number`), passing the charge in assistant overrides/variables so Brix opens with "Your Notion AI trial ends in 2 days."
-
-### PIN for sensitive voice actions
-
-Caller ID can be spoofed. Reading charges by caller ID is acceptable for the demo; **creating a card requires the 4-digit PIN** set during onboarding (hashed with bcrypt in `users.pinHash`). Say this in the pitch — FNB will care.
-
----
-
-## 9. API routes
-
-| Method | Route | Auth | Purpose |
-|---|---|---|---|
-| POST | `/api/plaid/link-token` | Firebase ID token | Create a Plaid Link token |
-| POST | `/api/plaid/exchange` | Firebase ID token | Exchange `public_token` → `access_token`, store in `secrets/{uid}` |
-| POST | `/api/plaid/sync` | Firebase ID token | `/transactions/sync` + `/transactions/recurring/get` → upsert `charges` |
-| POST/GET | `/api/trials` | Firebase ID token | Add / list manual trials |
-| POST | `/api/cards` | Firebase ID token | Create a one-time card from the UI |
-| POST | `/api/whatsapp/webhook` | Twilio signature | Inbound WhatsApp |
-| POST | `/api/vapi/tools` | Vapi secret header | Voice tool calls |
-| POST | `/api/vapi/events` | Vapi secret header | Optional: log call summaries to `events` |
-| POST | `/api/jobs/reminders` | `CRON_SECRET` header or admin user | Send due reminders (≤7 days, and ≤2 days) |
-| POST | `/api/admin/reset-demo` | admin user | Re-seed Maya's data between demos |
-
-All authenticated routes verify the Firebase ID token with `firebase-admin` and use the token's `uid` — never a `uid` from the request body.
-
----
-
-## 10. Integrations: setup and gotchas
-
-### Plaid (sandbox)
-- Create keys at the Plaid dashboard; `PLAID_ENV=sandbox`.
-- Link token: `products: ["transactions"]`, `country_codes: ["US"]`.
-- Sandbox login in Plaid Link: username `user_good`, password `pass_good`.
-- After exchange, call `/transactions/sync` (save the cursor), then `/transactions/recurring/get` for recurring outflow streams; map each stream → a `charges` doc (merchant, average amount, frequency, last/next date).
-- **Gotcha:** sandbox data may not include the exact subscriptions we want to show (Spotify, Netflix, etc.), and recurring detection can need several weeks of history. **Fallback built in from hour 1:** `scripts/seed-demo.ts` writes Maya's charges directly, marked `source: "plaid"` only if they came from Plaid — otherwise `source: "manual"`. Never fake the source label in code.
-
-### Twilio WhatsApp (sandbox)
-- Console → Messaging → Try it out → WhatsApp sandbox. Each demo phone sends the join code once.
-- Set the sandbox's "When a message comes in" URL to `https://<app>/api/whatsapp/webhook`.
-- **Gotcha:** outbound messages to a sandbox user only work after they joined, and freeform messages need an active 24-hour session (the user messaged recently). Before the demo, have Maya's phone send "hi" so the proactive message goes through.
-
-### Vapi
-- Create the assistant, tools, and phone number in the dashboard (faster than the API for a hackathon).
-- Set a server secret and check it on every request.
-- **Gotcha:** keep tool responses short and speakable; long JSON makes the voice ramble. Return a sentence, not an object.
-- Test outbound calls early — some numbers need verification on trial accounts.
-
-### Lithic (sandbox)
-- Sandbox API key; create a card with `type: "SINGLE_USE"` and a `spend_limit` (in cents).
-- Store only token, last4 and state. Never show the full PAN in the UI or say it on voice.
-- **Fallback:** if the sandbox account isn't approved in time, `createOneTimeCard` returns a mock card with `source: "mock"` and the UI says "Demo card."
-
-### Anthropic
-- Messages API with `tools`; loop until no tool calls or 4 iterations (with a deadline).
-- `ANTHROPIC_MODEL` in env so we can swap models without code changes; defaults to `claude-opus-5-5`.
-- With `BRIX_DEMO_MODE=true` a keyword-based demo agent answers instead, so no key is needed locally.
-
-### News
-- Query the news API with the user's top 3 merchant names + "price" OR "subscription".
-- Agent summarizes each headline in one line: why it matters to *this* user. If nothing relevant, say "Nothing that touches your subscriptions today."
-
----
-
-## 11. Design system
-
-### Direction
-Warm, calm, trustworthy — **cream paper, near-black type, one burnt-orange accent**. Inspired by the color contrast of the Bizi deck (color only; nothing else is borrowed). Layout and interaction feel inspired by usebizi.app: clean cards, soft depth, tactile 3D buttons.
-
-### Color tokens (`app/globals.css`)
-
-```css
-:root {
-  --bg:            #F8F5F0;  /* cream page */
-  --surface:       #FFFFFF;  /* cards on cream */
-  --surface-muted: #EDE6DD;  /* beige panels, chips */
-  --ink:           #1E1A18;  /* near-black text + dark cards */
-  --ink-muted:     #5F5852;  /* secondary text */
-  --line:          #E3DCD3;  /* borders */
-  --accent:        #C8462A;  /* burnt orange — brand, primary actions */
-  --accent-press:  #9E3520;  /* button slab / pressed */
-  --accent-soft:   #F6DED6;  /* orange tint backgrounds */
-  --success:       #2F7D4F;  /* money saved */
-  --warning:       #D98A1C;  /* charge in ≤7 days */
-  --danger:        #B42318;  /* trial converts tomorrow */
-}
-```
-
-Rules: orange is for **one** primary action per screen and for the brand. Warnings use `--warning`/`--danger`, not orange, so urgency never looks like branding. Money saved is always `--success`.
-
-Check contrast with a checker before shipping: white text on `--accent`, and `--ink-muted` on `--bg`, must meet WCAG AA for their size.
-
-### Typography
-
-| Use | Font | Weights |
-|---|---|---|
-| UI + body + headings | **Figtree** (Google Fonts via `next/font/google`) | 400, 500, 600, 800 |
-| Accent words in hero headlines | **Instrument Serif** (italic) | 400 |
-| Money amounts, card last4, dates in tables | **Geist Mono** | 400, 500 |
-
-```ts
-// app/layout.tsx
-import { Figtree, Instrument_Serif } from "next/font/google";
-import { GeistMono } from "geist/font/mono";
-const figtree = Figtree({ subsets: ["latin"], variable: "--font-figtree" });
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["italic"], variable: "--font-serif" });
-// body: font-family: var(--font-figtree), Arial, sans-serif;
-```
-
-Scale: hero 56/60 (800), H1 40/44 (800), H2 28/32 (700), body 16/24 (400), small 14/20, money 32 mono. Tight letter-spacing on big headings (`-0.02em`).
-
-### The 3D slab button (`components/brix/Button3D.tsx`)
-
-```css
-.btn-3d {
-  font-family: var(--font-figtree);
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 12px 20px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: 0 4px 0 0 #D2CBC1;          /* the slab */
-  transform: translateY(0);
-  transition: transform 80ms ease, box-shadow 80ms ease;
-}
-.btn-3d:hover  { transform: translateY(-1px); box-shadow: 0 5px 0 0 #D2CBC1; }
-.btn-3d:active { transform: translateY(4px);  box-shadow: 0 0 0 0 #D2CBC1; }
-
-.btn-3d.primary {
-  background: var(--accent);
-  border-color: var(--accent-press);
-  color: #fff;
-  box-shadow: 0 4px 0 0 var(--accent-press);
-}
-.btn-3d.primary:active { box-shadow: 0 0 0 0 var(--accent-press); }
-.btn-3d:focus-visible { outline: 3px solid var(--accent-soft); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .btn-3d { transition: none; } }
-```
-
-Use the same slab on chips (smaller: 2px slab) and on the charge cards' action buttons.
-
-### Icons
-Lucide React, `strokeWidth={1.7}`, `size={20}`, color via `currentColor`. Common set: `CalendarClock`, `BellRing`, `Scissors` (cancel), `CreditCard`, `PhoneCall`, `MessageCircle`, `Newspaper`, `PiggyBank`, `ShieldCheck`, `Sparkles`.
-
-### Motion and React Bits
-Copy only these components into `components/bits/`:
-- **CountUp** — saved counter and monthly leak total.
-- **Typewriter / TextType** — hero line: "Catch the charge *before* it catches you."
-- **Click Spark** — on primary 3D buttons only.
-- Optional: a subtle cursor glow on the landing page only (never inside the app).
-
-Motion rules: 150–250ms, ease-out; cards rise 8px on enter; nothing loops forever except the mascot's idle bob (2px, 3s). Respect `prefers-reduced-motion`.
-
-### The Brix buddy (mascot)
-A small clay-style **orange brick with a face**, rounded corners, soft studio lighting, cream background — matching the soft 3D look of the deck's mascot without copying it.
-
-Generate 4 poses as transparent PNGs (one image generator, same prompt + pose):
-> "A cute 3D clay-render character: a small rounded orange brick (color #C8462A) with a friendly face, big glossy black eyes, tiny smile, short stubby arms and legs, soft studio lighting, subtle texture, transparent background, Pixar-like but simple. Pose: [waving / thumbs up / worried holding a phone / celebrating with confetti]."
-
-Moods in UI: `wave` (landing, empty states), `thumbs` (action done), `worried` (trial converts in ≤2 days), `celebrate` (money saved).
-
-### Layout
-- Landing: cream background, hero left (headline + 3D buttons), buddy right on a soft white sphere; dark `--ink` section below for "how it works", like the deck's black card.
-- App: left sidebar on desktop, bottom tab bar on mobile (Home, Charges, Cards, Connect). Cards on white, 16px radius, 1px `--line` border, no heavy shadows.
-
----
-
-## 12. Screens
-
-1. **Landing** — hero, "how it works" (3 steps: link → Brix watches → you act from anywhere), channels row (app / WhatsApp / call), CTA.
-2. **Connect** — 3 steps with progress: verify phone, join WhatsApp (shows the join code + QR), link bank (Plaid). Set a 4-digit PIN.
-3. **Dashboard** — Leak meter (monthly recurring total), "Next 14 days" timeline, saved counter, buddy with mood, recent activity feed (shows WhatsApp/voice actions live via Firestore listener).
-4. **Charges** — list of subscription and trial cards: merchant, amount, next date, status chip, actions: Remind · Mark to cancel · One-time card. "+ Add free trial" button.
-5. **Cards** — one-time cards: purpose, last4, limit, state.
-6. **Settings** — channels on/off, reminder timing (7 days / 2 days), PIN reset, disconnect bank, delete my data.
-7. **Admin (demo only)** — "Run reminders now", "Reset demo", "Call Maya now".
-
----
-
-## 13. Milestones and timeline
-
-Hacking started **Sat Oct 24, 2:00 PM**. Devpost project must be created by **11:30 PM Saturday**. Submissions close around **2:00 PM Sunday** (confirm the exact time on Discord). Each milestone ends with a demo-able state.
-
-| # | Window | Milestone | Acceptance criteria |
-|---|---|---|---|
-| M0 | Sat 2:45–3:30 PM | **Accounts + skeleton** | Repo + Vercel deploy live; Firebase project; Plaid, Twilio, Vapi, Lithic, Anthropic, News keys in Vercel env; Tailwind tokens + fonts in place |
-| M1 | 3:30–6:00 PM | **Auth + data spine** | Google sign-in; `users`, `charges`, `events` writing; `seed-demo.ts` creates Maya; dashboard renders seeded charges from Firestore |
-| M2 | 6:00–8:30 PM | **Plaid live** | Link → exchange → sync → recurring streams upserted into `charges`; fallback seed still works |
-| M3 | 6:00–9:00 PM (parallel) | **WhatsApp agent** | Text "what's my next charge?" → correct answer; "remind me about Spotify Friday" → reminder doc + UI updates live |
-| M4 | 9:00–11:30 PM | **Voice agent** | Call the Vapi number → asks next charge → correct answer; mark-to-cancel by voice works |
-| ✅ | **11:30 PM** | **Devpost project created** | Title, tagline, team members added (fill content later) |
-| M5 | 11:30 PM–2:00 AM | **Proactive reminders** | Admin "Run reminders" sends WhatsApp for charges ≤7 days; outbound Vapi call works for ≤2 days |
-| M6 | 2:00–5:00 AM | **Trials + one-time cards** | Add trial in UI; `create_one_time_card` works from UI, WhatsApp and voice (with PIN); mock fallback ready |
-| M7 | 5:00–8:00 AM | **Design pass** | 3D buttons, mascot moods, CountUp, typewriter hero, mobile layout, reduced motion; no console errors |
-| M8 | 8:00–10:00 AM | **News + polish** | `get_money_news` filtered by merchants; empty/error states written; reset-demo works |
-| M9 | 10:00 AM–12:00 PM | **Freeze + record** | Feature freeze at 10:00. Record the 3-minute demo video; screenshots; Devpost write-up |
-| M10 | 12:00–1:30 PM | **Submit + rehearse** | Devpost submitted with video, repo link, track selection (FNB + Nittany AI + Grand Prize); 3 full rehearsals |
-
-**Sleep:** stagger 2–3 hour naps between 2 AM and 8 AM so someone is always building.
-
-**Rule:** if a milestone is >45 minutes late, apply its fallback (section 18) and move on.
-
----
-
-## 14. Team split
-
-| Role | Owns | Milestones |
-|---|---|---|
-| **A — Backend / data** | Firebase admin, Plaid, data model, seed script, reminders job | M1, M2, M5 |
-| **B — Agents** | Shared tool layer, Anthropic tool loop, Twilio webhook, Vapi assistant + tools, PIN | M3, M4, M6 |
-| **C — Frontend / design** | Design system, landing, dashboard, charges, cards, mascot, React Bits | M1 UI, M7 |
-| **D — Pitch / product** (or shared) | Hallway interviews (3–4 questions), Devpost, demo script, video, slides, business model | M9, M10 |
-
-With 3 people, merge D into C and A.
-
-**Hallway interview (10 minutes, ask 8–10 hackers):**
-1. When did you last get charged for something you forgot you signed up for? How much?
-2. How do you track your subscriptions today?
-3. Would you rather get a reminder by text, call, or app notification? (choose one)
-4. Have you ever used a one-time or virtual card?
-
-Log answers as "X of Y" for the pitch.
-
----
-
-## 15. Security and trust
-
-This is half of the FNB story — build it and say it.
-
-- **Read-only bank access.** Plaid `transactions` only. Brix cannot move money.
-- **Secrets server-side.** Plaid access tokens live in a server-only Firestore collection (rules deny all client reads/writes); API keys only in Vercel env vars.
-- **Webhook verification.** Twilio signature on every WhatsApp request; Vapi secret on every tool call; `CRON_SECRET` on the jobs route.
-- **Identity across channels.** Phone numbers verified at onboarding; `phoneIndex` maps phone → user; PIN required for creating cards by voice.
-- **Confirm before acting.** The agent repeats every action and waits for "yes."
-- **No advice, no guessing.** The system prompt forbids investment advice and invented numbers; tools return real data or "nothing found."
-- **User control.** Disconnect bank and delete-my-data in Settings (delete removes `users/{uid}`, `secrets/{uid}`, `phoneIndex` entry, and calls Plaid `/item/remove`).
-- **Audit trail.** Every agent action writes an `events` doc with channel and timestamp, visible to the user in the activity feed.
-
-`firestore.rules` (core):
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{db}/documents {
-    match /users/{uid}/{document=**} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;            // all writes go through API routes
-    }
-    match /users/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
-    }
-    match /secrets/{uid}   { allow read, write: if false; }
-    match /phoneIndex/{p}  { allow read, write: if false; }
-  }
-}
-```
-
----
-
-## 16. Business model
-
-Brix earns from four streams. For the pitch, lead with the bank white-label — FNB is a bank and a judge.
-
-| Stream | How it works | Why it fits |
-|---|---|---|
-| **Freemium** | Free: bank link, leak detector, app reminders. **Brix Plus** (student price, e.g. $3.99/mo — to validate): WhatsApp + phone agent, one-time cards, news briefings | Students pay small amounts for things that visibly save money |
-| **Bank / credit union white-label** | Banks license Brix's agent and leak detector inside their own app, branded as theirs | Banks want engaged young customers; Brix is a ready-made "financial confidence" feature |
-| **Interchange on Brix cards** | When Brix issues real one-time cards through a sponsor bank, Brix earns a share of the card fee on each purchase | Revenue from the cards students already use for trials |
-| **Savings share (optional)** | Small share of charges avoided, capped and opt-in | Aligns price with value; test carefully for trust |
-
-**Unit logic to say out loud (all assumptions, label them):** if Brix catches one unwanted $10–15 charge per student per month, a $3.99 plan pays for itself several times over. Validate with real users before quoting any conversion rate.
-
-**Go-to-market:** campus first (student orgs, hackathons, orientation), then bank/credit-union partnerships near campuses. Real cards and real money movement come only after a sponsor-bank partnership and compliance review.
-
----
-
-## 17. Judging fit (FNB criteria)
-
-| FNB says | Brix shows it with |
+| Stream | How it works |
 |---|---|
-| "Know what to trust" | Read-only data, confirm-before-act, no advice, audit trail, PIN |
-| "Information → understanding" | Recurring charges explained in one line each |
-| "Understanding → confidence" | Upcoming-charge timeline and leak meter: the user sees the month before it happens |
-| "Confidence → action" | One reply or one call to remind, cancel or protect a trial |
-| "Moments that matter most" | Outreach 7 days and 2 days before a charge |
-| AI, personalized insights, predictive planning, automation | Claude agent with tools, merchant-matched news, next-charge prediction, proactive reminders |
+| **Free core** | Bank link, charge detection, in-app reminders, refund planner, practice portfolio |
+| **Brix Plus** (to validate) | WhatsApp and phone reminders, one-time cards, news briefings, at a student price |
+| **Bank and credit-union white-label** | Banks such as FNB embed Brix's assistant in their own app to win and keep young customers |
+| **Interchange** | A share of the card fee when Brix issues real one-time cards through a sponsor bank |
+| **API** | Paid tiers for apps that build on Brix data, with each student's permission |
 
-**Nittany AI** criteria (clear problem, meaningful AI, creative approach, working prototype, positive impact) are covered by the same demo; mention the multi-channel agent as the creative piece.
+**Go-to-market:** Penn State first (student orgs, orientation, financial-aid offices), then bank and credit-union partners near campuses.
 
----
+## What's next
 
-## 18. Risks, fallbacks and the cut list
-
-| Risk | Signal | Fallback |
-|---|---|---|
-| Plaid sandbox has no useful recurring data | `/transactions/recurring/get` returns few streams | Seeded Maya data labeled `source: "manual"`; still show the real Plaid Link flow |
-| Twilio WhatsApp session expired | Outbound message fails | Maya texts "hi" right before the demo; fallback to SMS from a Twilio number |
-| Vapi call fails on venue network | No connection | Play the pre-recorded call clip in the video; show the transcript in the app |
-| Lithic sandbox not approved | 401/403 | Mock card labeled "Demo card" |
-| LLM picks wrong tool | Wrong answer in testing | Tighten tool descriptions; add 3 few-shot examples in the system prompt |
-| Webhook timeouts | Twilio retries / no reply | Reply "Got it, one sec…" immediately, then send the answer via REST |
-| Running out of time | Behind at 6:00 AM | Cut in this order: news → mascot moods → outbound calls → one-time cards. **Never cut:** dashboard, WhatsApp agent, voice agent, reminders job |
+- Sponsor-bank partnership and compliance review, then real cards and production bank data
+- A pilot inside a bank app (white-label)
+- Hand-off from practice to low-cost brokers, without Brix ever holding money
+- OAuth and webhooks for the API, so other student apps can build on Brix
 
 ---
 
-## 19. Environment variables
+<div align="center">
 
-```bash
-# .env.example
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
-FIREBASE_ADMIN_PROJECT_ID=
-FIREBASE_ADMIN_CLIENT_EMAIL=
-FIREBASE_ADMIN_PRIVATE_KEY=          # wrap in quotes; replace \n correctly
+<img src="public/brix-mark.svg" alt="" width="56" />
 
-PLAID_CLIENT_ID=
-PLAID_SECRET=
-PLAID_ENV=sandbox
+**Brix: your money, brick by brick.**
 
-ANTHROPIC_API_KEY=
-ANTHROPIC_MODEL=                     # optional, defaults to claude-opus-5-5
+Built in 24 hours at **HackPSU Fall 2026** by **David Adedeji** and Team Brix.
 
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_WHATSAPP_FROM=whatsapp:+1XXXXXXXXXX   # sandbox number from Twilio Console
+[usebrix.app](https://www.usebrix.app) · [API docs](https://www.usebrix.app/developers) · [Devpost write-up](docs/DEVPOST.md)
 
-VAPI_API_KEY=
-VAPI_ASSISTANT_ID=
-VAPI_PHONE_NUMBER_ID=
-VAPI_SERVER_SECRET=
-
-LITHIC_API_KEY=
-LITHIC_ENV=sandbox
-
-NEWS_API_KEY=
-
-CRON_SECRET=
-ADMIN_EMAILS=                        # comma-separated, for /admin
-APP_URL=https://<your-app>.vercel.app
-```
-
-Never commit `.env.local`. Rotate every key after the hackathon.
-
----
-
-## 20. Local setup
-
-```bash
-git clone <repo> && cd brix
-npm install
-cp .env.example .env.local    # fill in keys
-npm run dev                   # http://localhost:3000
-npx ngrok http 3000           # paste the https URL into Twilio + Vapi while developing
-npx tsx scripts/seed-demo.ts  # seed Maya
-```
-
-Deploy: push to `main` → Vercel builds automatically. Update Twilio and Vapi webhook URLs to the Vercel URL before the demo.
-
----
-
-## 21. Devpost submission checklist
-
-- [ ] Project created by **11:30 PM Saturday**
-- [ ] Tracks selected: FNB Challenge, Nittany AI Challenge, Grand Prize (confirm multi-track rules)
-- [ ] Tagline: "Catch the charge before it catches you."
-- [ ] What it does / how we built it / challenges / what we learned / what's next — written from this README
-- [ ] Demo video (≤3 min) uploaded and linked
-- [ ] Public GitHub repo with this README; no secrets in history
-- [ ] Screenshots: landing, dashboard, WhatsApp chat, voice call transcript, one-time card
-- [ ] Hallway interview numbers ("X of Y") in the write-up
-- [ ] Every teammate added on Devpost
-- [ ] Rehearsed 3 times; backup video on two devices
-
----
-
-*Built at HackPSU Fall 2026.*
+</div>

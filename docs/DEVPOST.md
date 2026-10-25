@@ -59,7 +59,7 @@ Brix shows up at the moments students most often get money wrong, and turns each
 
 **One decision at a time.** The dashboard opens with the single most important decision right now (for example, "$1,200 of your refund is borrowed, return by Feb 12"), not a wall of numbers.
 
-**The same assistant everywhere.** The web chat, WhatsApp and a phone call (Vapi) all use the same 12 tools on the student's own data. Merchant and stock news (Google News and Yahoo Finance) is filtered to real pricing stories and labelled as news, not a confirmed change. A public, scoped REST API lets students pull their data into their own tools.
+**The same assistant everywhere.** The web chat, WhatsApp and a phone call (Vapi) all use the same 13 tools on the student's own data. Merchant and stock news (Google News and Yahoo Finance) is filtered to real pricing stories and labelled as news, not a confirmed change. A public, scoped REST API lets students pull their data into their own tools.
 
 ### The trust design (what makes this an FNB answer, not an API wrapper)
 
@@ -75,13 +75,13 @@ Brix shows up at the moments students most often get money wrong, and turns each
 
 - **App:** Next.js 16 (App Router) with React 19 and TypeScript, deployed on Vercel. A Vercel cron job runs the daily reminder check.
 - **Identity and data:** Firebase Authentication (Google and phone sign-in) and Firestore. All writes go through server routes. Firestore rules deny every client write and every read of secrets.
-- **AI:** Claude (`claude-opus-5-5`) through the Anthropic SDK, with a manual tool-use loop. Twelve tools share one tool layer across web, WhatsApp, and voice. The loop has a time budget (12 seconds for WhatsApp, within Twilio's 15-second limit; 10 seconds elsewhere), and a server-side fallback model handles any refused request.
+- **AI:** Claude (`claude-opus-5-5`) through the Anthropic SDK, with a manual tool-use loop. Thirteen tools share one tool layer across web, WhatsApp, and voice. The loop has a time budget (12 seconds for WhatsApp, within Twilio's 15-second limit; 10 seconds elsewhere), and a server-side fallback model handles any refused request.
 - **Voice:** a Vapi assistant on a Twilio number. Its tool calls hit `/api/vapi/tools`, which finds the caller by verified phone number and runs the same tools as the web chat.
 - **Messaging:** Twilio WhatsApp, with signature validation on inbound messages.
 - **Money data:** Plaid sandbox (`/transactions/sync` and recurring streams) for charges, and Lithic sandbox for single-use cards. Card creation uses idempotency keys, and an uncertain failure is never retried automatically.
 - **News and prices:** Google News RSS for merchant pricing stories and Yahoo Finance for stocks, cached in Firestore with a stale-data fallback; live Yahoo prices for the practice portfolio, and orders never fill without a real price.
 - **Developer platform:** a versioned `/api/v1` with SHA-256-hashed personal keys, six scopes, per-key rate limits, idempotent trial creation, an OpenAPI 3.1 spec, and a docs page generated from that same spec.
-- **Quality:** 66 unit tests, 130 Playwright browser tests (desktop and mobile, including WCAG AA accessibility checks), and a 40-step live test that runs against production with a throwaway account: real Plaid sandbox sync, Claude, Lithic, signed WhatsApp and voice webhooks, refund detection, live-price trades and news.
+- **Quality:** 71 unit tests, 150+ Playwright browser tests (desktop and mobile, including WCAG AA accessibility checks), and a 44-step live test that runs against production with a throwaway account: real Plaid sandbox sync, Claude, Lithic, signed WhatsApp and voice webhooks, refund detection, live-price trades and news.
 
 ### Challenges we ran into
 

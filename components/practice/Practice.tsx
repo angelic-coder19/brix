@@ -242,11 +242,11 @@ function Start({
           </button>
         </form>
       </section>
+      <MarketSnapshot request={request} />
       <div className="practice-insights">
         <PriceChart request={request} symbols={["VOO", "QQQ", "VTI"]} />
         <Leaderboard request={request} />
       </div>
-      <MarketSnapshot request={request} />
     </div>
   );
 }

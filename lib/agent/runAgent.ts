@@ -6,11 +6,27 @@ import { HttpError, isDemo } from "../auth";
 import { confirmAction, executeTool, proposeAction } from "../tools";
 import { buildMeta, type AgentMeta, type AgentOutcome } from "./persona";
 import { sourcesFor } from "./sources";
-import type { Channel, Charge } from "../types";
+import type { Channel, Charge, Refund } from "../types";
+
+const DAY = 86400000;
 
 export { DEFAULT_MODEL } from "./anthropic";
 
-async function demoReply(uid: string, message: string, channel: Channel) {
+/** Offline demo answers, with the tools they read so sources stay honest. */
+async function demoReply(
+  uid: string,
+  message: string,
+  channel: Channel,
+): Promise<{ text: string; tools: string[] }> {
+  const text = await demoText(uid, message, channel);
+  return typeof text === "string" ? { text, tools: [] } : text;
+}
+
+async function demoText(
+  uid: string,
+  message: string,
+  channel: Channel,
+): Promise<string | { text: string; tools: string[] }> {
   const state = await getState(uid);
   const lower = message.toLowerCase();
   const merchant = state.charges.find((c) =>
@@ -57,13 +73,57 @@ async function demoReply(uid: string, message: string, channel: Channel) {
     };
     return `You've marked $${result.amount.toFixed(2)} in charges to avoid this month (estimated). Finish any cancellations on the merchant sites.`;
   }
+  if (/refund|borrow|loan/.test(lower)) {
+    const { refunds } = (await executeTool(uid, channel, "get_refunds")) as {
+      refunds: Refund[];
+    };
+    const r = refunds[0];
+    if (!r)
+      return "I don't see a school refund yet. Add one on the Refunds page and I'll help you plan it.";
+    const due = new Date(Date.parse(`${r.receivedOn}T12:00:00Z`) + 120 * DAY)
+      .toISOString()
+      .slice(0, 10);
+    return {
+      text: r.loanAmount
+        ? `Your $${r.amount.toFixed(2)} refund includes $${r.loanAmount.toFixed(2)} in loans. Federal loan money you return by ${friendlyDate(due)} is cancelled with no interest or fees. Want a plan on the Refunds page?`
+        : `Your $${r.amount.toFixed(2)} refund arrived ${friendlyDate(r.receivedOn)}. Tell me if any of it was a loan and I'll show the return-by date.`,
+      tools: ["get_refunds"],
+    };
+  }
+  if (/gift/.test(lower)) {
+    const g = (await executeTool(uid, channel, "get_gift_cards")) as {
+      total: number;
+      cards: { merchant: string }[];
+      expiringSoon: { merchant: string; expiresOn?: string }[];
+    };
+    const soon = g.expiringSoon[0];
+    return {
+      text: g.cards.length
+        ? `You have $${g.total.toFixed(2)} on ${g.cards.length} gift card${g.cards.length === 1 ? "" : "s"}.${soon?.expiresOn ? ` ${soon.merchant} expires ${friendlyDate(soon.expiresOn)}, so use it first.` : ""}`
+        : "No gift cards tracked yet. Add them on the Cards page.",
+      tools: ["get_gift_cards"],
+    };
+  }
+  if (/portfolio|invest|stock|practice/.test(lower)) {
+    const p = (await executeTool(uid, channel, "get_portfolio")) as {
+      total?: number;
+      gainPct?: number;
+    };
+    return {
+      text:
+        p.total !== undefined
+          ? `Your practice portfolio is worth $${p.total.toFixed(2)} in virtual money (${p.gainPct! >= 0 ? "+" : ""}${p.gainPct!.toFixed(2)}%). It's practice only; no real money moves.`
+          : "You haven't started a practice portfolio. Open Invest to try it with virtual money.",
+      tools: ["get_portfolio"],
+    };
+  }
   if (/news/.test(lower)) return "Live news briefing isn't connected yet.";
   const charges = (await executeTool(
     uid,
     channel,
     "get_upcoming_charges",
   )) as Charge[];
-  return charges.length
+  const upcoming = charges.length
     ? `Coming up: ${charges
         .slice(0, 3)
         .map(
@@ -72,6 +132,7 @@ async function demoReply(uid: string, message: string, channel: Channel) {
         )
         .join("; ")}. Ask me to set a reminder or mark a charge to cancel.`
     : "No upcoming charges in the next 14 days. Add a trial or connect your bank to get started.";
+  return { text: upcoming, tools: ["get_upcoming_charges"] };
 }
 
 function friendlyDate(iso: string): string {
@@ -138,8 +199,9 @@ export async function runAgentTurn(
     });
     reply = "Okay, I cleared the pending action.";
   } else if (isDemo()) {
-    reply = await demoReply(uid, input, channel);
-    sources = sourcesFor(["get_upcoming_charges"], true);
+    const demo = await demoReply(uid, input, channel);
+    reply = demo.text;
+    if (demo.tools.length) sources = sourcesFor(demo.tools, true);
   } else {
     if (!process.env.ANTHROPIC_API_KEY)
       throw new HttpError(
