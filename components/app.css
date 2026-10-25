@@ -1604,8 +1604,16 @@
   .search-trigger {
     display: inline-grid;
   }
+  .topbar__brand {
+    margin-right: auto;
+  }
   .app-search {
     display: none;
+  }
+  /* backdrop-filter makes the bar a containing block for fixed children. */
+  .topbar:has(.app-search.is-sheet) {
+    z-index: 90;
+    backdrop-filter: none;
   }
   .app-search.is-sheet {
     display: flex;
@@ -1769,8 +1777,10 @@
     flex-wrap: wrap;
     padding: var(--space-3) var(--space-4);
   }
+  .setup-strip__text {
+    width: 100%;
+  }
   .setup-strip__dots {
-    order: 3;
     width: 100%;
     margin: 0;
   }
@@ -1778,6 +1788,10 @@
     flex: 1;
   }
   .setup-strip__actions {
-    margin-left: auto;
+    width: 100%;
+  }
+  .setup-strip__actions .btn {
+    flex: 1;
+    justify-content: center;
   }
 }

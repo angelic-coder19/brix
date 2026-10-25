@@ -74,7 +74,9 @@ test.describe("mobile search", () => {
     const sheet = page.getByRole("dialog", { name: "Search Brix" });
     await expect(sheet).toBeVisible();
     const vw = page.viewportSize()!.width;
-    expect((await sheet.boundingBox())!.width).toBeGreaterThanOrEqual(vw - 1);
+    const sb = (await sheet.boundingBox())!;
+    expect(sb.width).toBeGreaterThanOrEqual(vw - 1);
+    expect(sb.height).toBeGreaterThanOrEqual(page.viewportSize()!.height - 1);
     const box = sheet.getByRole("combobox");
     await expect(box).toBeFocused();
     await box.fill("spot");
