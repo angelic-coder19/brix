@@ -122,29 +122,18 @@ function respond(
       pending,
       saved,
     };
-  if (/trial/.test(lower)) {
-    const trial = SAMPLE.find((c) => c.trial)!;
+  if (/thank|thx|love|awesome|great|lol|haha/.test(lower))
     return {
-      reply: `${trial.merchant} is a free trial that turns into $${trial.amount.toFixed(2)}/mo ${inDays(trial.days)}. Want a reminder before it does?`,
+      reply: "Anytime! I'll keep watching the little charges.",
       outcome: "answered",
-      mood: "concerned",
+      mood: "happy",
       pending,
       saved,
     };
-  }
-  if (match)
-    return {
-      reply: `${match.merchant} is $${match.amount.toFixed(2)} and ${match.trial ? "the trial ends" : "renews"} ${inDays(match.days)}. Want me to remind you or mark it to cancel?`,
-      outcome: "answered",
-      mood: match.days <= 3 ? "concerned" : "happy",
-      pending,
-      saved,
-    };
-  const soon = SAMPLE[0];
   return {
     reply: `Coming up: ${SAMPLE.slice(0, 3)
       .map((c) => `${c.merchant} $${c.amount.toFixed(2)} ${inDays(c.days)}`)
-      .join(", ")}. Heads up, ${soon.merchant} is close.`,
+      .join(", ")}. Notion AI's free trial ends ${inDays(12)}.`,
     outcome: "answered",
     mood: "concerned",
     pending,
@@ -152,116 +141,78 @@ function respond(
   };
 }
 
-const START_CHIPS = ["What's coming up?", "Mark Netflix to cancel", "Remind me about Spotify"];
-const TAPBACK_MOOD: Record<Tapback, BuddyMood> = {
-  "❤️": "happy",
-  "👍": "happy",
-  "😂": "happy",
-  "🙏": "happy",
-  "😮": "listening",
-  "👎": "concerned",
-};
-
 export default function BotDemo() {
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      id: 0,
-      role: "assistant",
-      text: "Hi, I'm Brix! Tap a suggestion or ask me anything. I'll always check with you before I act.",
-    },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [streaming, setStreaming] = useState<number | null>(null);
   const [mood, setMood] = useState<BuddyMood>("idle");
+  const [after, setAfter] = useState<BuddyMood>("idle");
   const [pending, setPending] = useState<Pending>(null);
   const [saved, setSaved] = useState(0);
   const [burst, setBurst] = useState(0);
-  const after = useRef<{ mood: BuddyMood; celebrate: boolean } | null>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const id = useRef(0);
   const list = useRef<HTMLDivElement>(null);
-  const nextId = useRef(1);
-
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);
   }, []);
-
   useEffect(() => {
-    const el = list.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
-    if (streaming === null) return;
-    const id = setInterval(() => {
-      el.scrollTop = el.scrollHeight;
-    }, 120);
-    return () => clearInterval(id);
-  }, [messages.length, busy, streaming]);
-
-  const later = (fn: () => void, ms: number) => {
+    const node = list.current;
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [messages, busy, streaming]);
+  const later = (fn: () => void, ms: number) =>
     timers.current.push(setTimeout(fn, ms));
-  };
 
-  const send = (raw: string) => {
-    const text = raw.trim().slice(0, 500);
-    if (!text || busy || streaming !== null) return;
-    const result = respond(text, pending, saved);
-    const userId = nextId.current++;
-    const botId = nextId.current++;
-    setMessages((m) => [...m, { id: userId, role: "user", text }]);
+  function send(text: string) {
+    const trimmed = text.trim().slice(0, 500);
+    if (!trimmed || busy) return;
+    const userId = ++id.current;
+    setMessages((m) => [...m, { id: userId, role: "user", text: trimmed }]);
     setInput("");
     setBusy(true);
     setMood("thinking");
-    const reaction = reactionFor(text, result.outcome, result.action);
+    const result = respond(trimmed, pending, saved);
     later(() => {
-      if (reaction)
-        setMessages((m) =>
-          m.map((x) => (x.id === userId ? { ...x, reaction } : x)),
-        );
-    }, 350);
-    later(() => {
-      setBusy(false);
+      const reaction = reactionFor(trimmed, result.outcome, result.action);
+      const botId = ++id.current;
+      setMessages((m) => [
+        ...m.map((x) => (x.id === userId && reaction ? { ...x, reaction } : x)),
+        { id: botId, role: "assistant", text: result.reply },
+      ]);
       setPending(result.pending);
       setSaved(result.saved);
-      setMood("talking");
-      after.current = {
-        mood: result.mood,
-        celebrate: result.outcome === "confirmed",
-      };
-      setMessages((m) => [...m, { id: botId, role: "assistant", text: result.reply }]);
+      setBusy(false);
       setStreaming(botId);
-    }, 750 + Math.min(600, text.length * 8));
-  };
-
-  const finish = useCallback(() => {
+      setMood("talking");
+      setAfter(result.mood);
+    }, 750);
+  }
+  const done = useCallback(() => {
     setStreaming(null);
-    const next = after.current;
-    if (!next) return;
-    setMood(next.mood);
-    if (next.celebrate) setBurst((n) => n + 1);
-    timers.current.push(setTimeout(() => setMood("idle"), 3500));
-  }, []);
-
-  const react = (id: number, emoji: Tapback | null) => {
+    setMood(after);
+    if (after === "celebrate") setBurst((b) => b + 1);
+    later(() => setMood((m) => (m === after ? "idle" : m)), 3500);
+  }, [after]);
+  function react(msgId: number, emoji: Tapback | null) {
     setMessages((m) =>
-      m.map((x) => (x.id === id ? { ...x, reaction: emoji ?? undefined } : x)),
+      m.map((x) =>
+        x.id === msgId ? { ...x, reaction: emoji ?? undefined } : x,
+      ),
     );
     if (emoji) {
-      setMood(TAPBACK_MOOD[emoji]);
-      later(() => setMood("idle"), 2500);
+      setMood(emoji === "👎" ? "concerned" : emoji === "😮" ? "listening" : "happy");
+      later(() => setMood("idle"), 2200);
     }
-  };
-
-  const submit = (e: FormEvent) => {
+  }
+  function submit(e: FormEvent) {
     e.preventDefault();
     send(input);
-  };
-
+  }
   const chips = pending
     ? ["Yes", "No"]
-    : saved
-      ? ["How much have I saved?", "What's coming up?", "Remind me about Adobe"]
-      : START_CHIPS;
+    : ["What's coming up?", "Mark Netflix to cancel", "Remind me about Spotify", "How much have I saved?"];
 
   return (
     <div className="bot-demo">
@@ -283,6 +234,12 @@ export default function BotDemo() {
           <span className="badge badge--green">Live</span>
         </header>
         <div className="chat__messages" ref={list} role="log" aria-live="polite">
+          <div className="msg msg--assistant">
+            <div className="msg__bubble">
+              Hi, I’m Brix! Tap a suggestion or ask me anything. I’ll always
+              check with you before I act.
+            </div>
+          </div>
           {messages.map((m) => (
             <div key={m.id} className={`msg msg--${m.role}`}>
               <div
@@ -294,7 +251,7 @@ export default function BotDemo() {
                 }
               >
                 {m.id === streaming ? (
-                  <StreamingText text={m.text} onDone={finish} />
+                  <StreamingText text={m.text} onDone={done} />
                 ) : (
                   m.text
                 )}

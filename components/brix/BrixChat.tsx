@@ -2,20 +2,21 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Send, X } from "lucide-react";
 import BrixBuddy from "./BrixBuddy";
+import "./chat.css";
 import StreamingText from "./StreamingText";
 import Tapbacks from "./Tapbacks";
 import type { BuddyMood } from "@/lib/agent/persona";
 import type { BrixChatApi } from "./useBrixChat";
 
 const STATUS: Record<BuddyMood, string> = {
-  idle: "Here when you need me",
+  idle: "Here for the little things",
   listening: "Listening…",
-  thinking: "Typing…",
+  thinking: "Checking your charges…",
   talking: "Typing…",
   happy: "Glad to help",
-  celebrate: "Brick by brick!",
-  concerned: "Heads up",
-  error: "Hmm, that didn’t work",
+  celebrate: "Nice move! 🎉",
+  concerned: "Keeping an eye on something",
+  error: "Hmm, that didn't work",
 };
 
 export default function BrixChat({
@@ -25,6 +26,9 @@ export default function BrixChat({
   chat: BrixChatApi;
   onClose: () => void;
 }) {
+  const [input, setInput] = useState("");
+  const list = useRef<HTMLDivElement>(null);
+  const field = useRef<HTMLInputElement>(null);
   const {
     messages,
     busy,
@@ -38,45 +42,40 @@ export default function BrixChat({
     celebration,
     headsUp,
   } = chat;
-  const [input, setInput] = useState("");
-  const field = useRef<HTMLInputElement>(null);
-  const list = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     field.current?.focus();
   }, []);
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !document.querySelector(".tapback__menu"))
+        onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
-
-  // Keep the newest message in view, including while a reply streams in.
   useEffect(() => {
-    const el = list.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
+    const node = list.current;
+    if (node) node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
+  }, [messages.length, busy, streamingId]);
+  // Keep the view pinned while a reply streams in.
+  useEffect(() => {
     if (!streamingId) return;
+    const node = list.current;
     const id = setInterval(() => {
-      el.scrollTop = el.scrollHeight;
+      if (node) node.scrollTop = node.scrollHeight;
     }, 120);
     return () => clearInterval(id);
-  }, [messages.length, busy, streamingId]);
+  }, [streamingId]);
 
-  async function submit(e: FormEvent) {
-    e.preventDefault();
-    const text = input;
-    if (!text.trim()) return;
+  async function submit(e?: FormEvent) {
+    e?.preventDefault();
+    const text = input.trim();
+    if (!text || busy) return;
     setInput("");
-    const ok = await send(text);
-    if (!ok) setInput(text);
+    await send(text);
+    field.current?.focus();
   }
-
-  const status =
-    mood === "concerned" && headsUp ? `Heads up: ${headsUp}` : STATUS[mood];
 
   return (
     <section
@@ -86,19 +85,21 @@ export default function BrixChat({
     >
       <header className="chat__header">
         <span className="chat__avatar">
-          <BrixBuddy mood={mood} scale={0.19} decorative follow={false} />
+          <BrixBuddy mood={mood} scale={0.19} />
         </span>
         <div className="chat__title">
           <strong>Brix</strong>
-          <small aria-live="polite">{status}</small>
+          <small aria-live="polite">
+            {mood === "concerned" && headsUp ? `Heads up: ${headsUp}` : STATUS[mood]}
+          </small>
         </div>
         <button
-          type="button"
           className="icon-btn"
-          onClick={onClose}
           aria-label="Close chat"
+          onClick={onClose}
+          type="button"
         >
-          <X size={18} />
+          <X size={20} />
         </button>
       </header>
       <div className="chat__messages" ref={list} role="log" aria-live="polite">
