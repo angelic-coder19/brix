@@ -10,7 +10,10 @@ type Status = "idle" | "confirm" | "done";
  * action asks once, then shows what happened. Nothing here touches an account.
  */
 export default function LeavePreview() {
-  const [status, setStatus] = useState<Record<Row, Status>>({ bank: "idle", data: "idle" });
+  const [status, setStatus] = useState<Record<Row, Status>>({
+    bank: "idle",
+    data: "idle",
+  });
   const set = (row: Row, s: Status) => setStatus((v) => ({ ...v, [row]: s }));
   const rows: {
     id: Row;
@@ -41,7 +44,11 @@ export default function LeavePreview() {
     },
   ];
   return (
-    <div className="leave" aria-label="Settings preview with sample data" role="group">
+    <div
+      className="leave"
+      aria-label="Settings preview with sample data"
+      role="group"
+    >
       <div className="leave__head">
         <span>Settings</span>
         <span>Your data</span>
@@ -55,7 +62,9 @@ export default function LeavePreview() {
             </span>
             <div className="leave__text">
               <strong>{s === "confirm" ? r.ask : r.title}</strong>
-              <small aria-live="polite">{s === "done" ? r.done : r.detail}</small>
+              <small aria-live="polite">
+                {s === "done" ? r.done : r.detail}
+              </small>
             </div>
             {s === "idle" && (
               <button
@@ -68,7 +77,11 @@ export default function LeavePreview() {
             )}
             {s === "confirm" && (
               <span className="leave__confirm">
-                <button type="button" className="btn btn--sm btn--ghost" onClick={() => set(r.id, "idle")}>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={() => set(r.id, "idle")}
+                >
                   Cancel
                 </button>
                 <button
@@ -81,7 +94,11 @@ export default function LeavePreview() {
               </span>
             )}
             {s === "done" && (
-              <button type="button" className="leave__undo" onClick={() => set(r.id, "idle")}>
+              <button
+                type="button"
+                className="leave__undo"
+                onClick={() => set(r.id, "idle")}
+              >
                 Reset preview
               </button>
             )}

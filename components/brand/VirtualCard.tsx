@@ -36,7 +36,10 @@ export function VirtualCard({
   const closed = state === "CLOSED";
   const paused = state === "PAUSED";
   const createdLabel = created
-    ? new Date(created).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    ? new Date(created).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
     : "";
   const onMove = (e: PointerEvent<HTMLDivElement>) => {
     const el = ref.current;
@@ -70,7 +73,9 @@ export function VirtualCard({
             <BrixMark className="vcard__mark" />
             brix<span className="brand-period">.</span>
           </span>
-          <span className="vcard__type">{closed ? "Closed" : paused ? "Paused" : "Virtual · Single use"}</span>
+          <span className="vcard__type">
+            {closed ? "Closed" : paused ? "Paused" : "Virtual · Single use"}
+          </span>
         </div>
         <span className="vcard__chip" />
         <p className="vcard__number">
@@ -96,9 +101,7 @@ export function VirtualCard({
             </div>
           ) : null}
         </div>
-        <span className="vcard__limit">
-          Limit {usd(limit)} · single use
-        </span>
+        <span className="vcard__limit">Limit {usd(limit)} · single use</span>
         {note && <span className="vcard__note">{note}</span>}
       </div>
     </div>

@@ -23,7 +23,8 @@ export default function Scrolly({ steps }: { steps: ScrollyStep[] }) {
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries)
-          if (e.isIntersecting) setActive(Number((e.target as HTMLElement).dataset.step));
+          if (e.isIntersecting)
+            setActive(Number((e.target as HTMLElement).dataset.step));
       },
       { rootMargin: "-45% 0px -45% 0px" },
     );

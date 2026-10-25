@@ -87,9 +87,17 @@ export default function LandingHeader({
             <a
               key={l.href}
               href={l.href}
-              className={active === l.href || current === l.href ? "is-active" : undefined}
+              className={
+                active === l.href || current === l.href
+                  ? "is-active"
+                  : undefined
+              }
               aria-current={
-                current === l.href ? "page" : active === l.href ? "location" : undefined
+                current === l.href
+                  ? "page"
+                  : active === l.href
+                    ? "location"
+                    : undefined
               }
             >
               {l.label}

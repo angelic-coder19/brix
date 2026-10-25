@@ -2,7 +2,10 @@ import Image from "next/image";
 
 function StatusBar({ tone = "light" }: { tone?: "light" | "dark" }) {
   return (
-    <div className={`device-phone__status device-phone__status--${tone}`} aria-hidden="true">
+    <div
+      className={`device-phone__status device-phone__status--${tone}`}
+      aria-hidden="true"
+    >
       <span className="device-phone__time" data-time="9:41" />
       <span className="device-phone__icons">
         <svg viewBox="0 0 18 12" width="17" height="11">
@@ -15,7 +18,16 @@ function StatusBar({ tone = "light" }: { tone?: "light" | "dark" }) {
           <path d="M8 2.6c2.3 0 4.4.9 6 2.4l1.3-1.4A10.4 10.4 0 0 0 8 .6C5.2.6 2.6 1.7.7 3.6L2 5c1.6-1.5 3.7-2.4 6-2.4Zm0 4c1.2 0 2.3.5 3.2 1.2l1.3-1.4A6.6 6.6 0 0 0 8 4.6c-1.7 0-3.3.7-4.5 1.8l1.3 1.4C5.7 7.1 6.8 6.6 8 6.6Zm0 4.8 2-2.1a2.9 2.9 0 0 0-4 0l2 2.1Z" />
         </svg>
         <svg viewBox="0 0 27 12" width="25" height="11">
-          <rect x="0.5" y="0.5" width="22" height="11" rx="3.2" fill="none" stroke="currentColor" opacity=".4" />
+          <rect
+            x="0.5"
+            y="0.5"
+            width="22"
+            height="11"
+            rx="3.2"
+            fill="none"
+            stroke="currentColor"
+            opacity=".4"
+          />
           <rect x="2" y="2" width="17" height="8" rx="2" />
           <path d="M24 4v4c.8-.3 1.4-1.1 1.4-2S24.8 4.3 24 4Z" opacity=".45" />
         </svg>
@@ -51,8 +63,8 @@ export function Phone({
             alt={alt}
             width={1179}
             height={2556}
-          sizes={sizes}
-          preload={preload}
+            sizes={sizes}
+            preload={preload}
             loading={preload ? "eager" : "lazy"}
           />
           <StatusBar />

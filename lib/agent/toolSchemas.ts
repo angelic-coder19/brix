@@ -43,6 +43,10 @@ export const toolSchemas: Anthropic.Beta.BetaTool[] = [
     ["purpose", "spendLimit"],
   ),
   tool(
+    "get_gift_cards",
+    "Read the student's gift cards: unspent balances, cards expiring soon, and cards for a store they already pay",
+  ),
+  tool(
     "get_refunds",
     "Read school refunds (financial aid money sent back after tuition), including how much is borrowed",
   ),

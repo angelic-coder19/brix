@@ -9,7 +9,8 @@ export function Wordmark() {
     <>
       <BrixMark className="brand-mark" />
       <span className="wordmark__text">
-        br<span className="brand-i">i</span>x<span className="brand-period">.</span>
+        br<span className="brand-i">i</span>x
+        <span className="brand-period">.</span>
       </span>
     </>
   );

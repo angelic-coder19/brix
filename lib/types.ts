@@ -46,6 +46,8 @@ export interface ActivityEvent {
   requestId?: string;
   /** Charge this event refers to, when there is one. */
   chargeId?: string;
+  /** Where an assistant reply's facts came from, shown under the message. */
+  sources?: string[];
 }
 export interface PendingAction {
   status?: "processing" | "failed";
@@ -71,9 +73,22 @@ export interface AppState {
   events: ActivityEvent[];
   /** Optional so accounts created before refunds existed still load. */
   refunds?: Refund[];
+  giftCards?: GiftCard[];
 }
-export type RefundFunding = "loan" | "grant" | "scholarship" | "mixed" | "unknown";
-export type LoanType = "subsidized" | "unsubsidized" | "private" | "parent_plus";
+/** A store gift card the student owns; unspent balances are easy to forget. */
+export interface GiftCard {
+  id: string;
+  merchant: string;
+  balance: number;
+  /** Optional: many cards never expire, but promo cards often do. */
+  expiresOn?: string;
+  addedOn: string;
+  status: "active" | "used";
+}
+export type RefundFunding =
+  "loan" | "grant" | "scholarship" | "mixed" | "unknown";
+export type LoanType =
+  "subsidized" | "unsubsidized" | "private" | "parent_plus";
 /** Money a school sent back after tuition: often partly borrowed. */
 export interface Refund {
   id: string;

@@ -5,6 +5,7 @@ import { getState, updateState } from "../store";
 import { HttpError, isDemo } from "../auth";
 import { confirmAction, executeTool, proposeAction } from "../tools";
 import { buildMeta, type AgentMeta, type AgentOutcome } from "./persona";
+import { sourcesFor } from "./sources";
 import type { Channel, Charge } from "../types";
 
 export { DEFAULT_MODEL } from "./anthropic";
@@ -111,6 +112,9 @@ export async function runAgentTurn(
   let outcome: AgentOutcome = "answered";
   let action: string | undefined;
   let reply: string;
+  const toolsUsed = new Set<string>();
+  // Labels only for answers composed from data; confirmations speak for themselves.
+  let sources: string[] | undefined;
   if (/^(yes|yes please|confirm|go ahead)[.!]?$/i.test(input)) {
     try {
       reply = await confirmAction(uid, channel);
@@ -133,8 +137,10 @@ export async function runAgentTurn(
       if (s.pendingActions) delete s.pendingActions[channel];
     });
     reply = "Okay, I cleared the pending action.";
-  } else if (isDemo()) reply = await demoReply(uid, input, channel);
-  else {
+  } else if (isDemo()) {
+    reply = await demoReply(uid, input, channel);
+    sources = sourcesFor(["get_upcoming_charges"], true);
+  } else {
     if (!process.env.ANTHROPIC_API_KEY)
       throw new HttpError(
         503,
@@ -153,9 +159,11 @@ export async function runAgentTurn(
       .map((e) => ({ role: e.role as "user" | "assistant", content: e.text }));
     // The Messages API requires the conversation to open with a user turn.
     while (history[0]?.role === "assistant") history.shift();
-    reply = await runAnthropicTurn(input, channel, history, (name, args) =>
-      executeTool(uid, channel, name, args),
-    );
+    reply = await runAnthropicTurn(input, channel, history, (name, args) => {
+      toolsUsed.add(name);
+      return executeTool(uid, channel, name, args);
+    });
+    sources = sourcesFor(toolsUsed);
   }
   const userEventId = randomUUID(),
     assistantEventId = randomUUID();
@@ -182,6 +190,7 @@ export async function runAgentTurn(
         channel,
         text: reply,
         createdAt,
+        ...(sources ? { sources } : {}),
       },
       {
         id: userEventId,

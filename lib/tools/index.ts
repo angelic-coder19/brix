@@ -9,6 +9,7 @@ import { getQuotes } from "../market/quotes";
 import { practiceOrder, practiceView } from "../practice";
 import { getTickerNews } from "../news/tickers";
 import { planRefund } from "../refunds/plan";
+import { giftCardSummary } from "../giftcards";
 import type { AppState, Charge, Channel, PendingAction } from "../types";
 export const mutations = new Set([
   "mark_to_cancel",
@@ -338,6 +339,15 @@ export async function executeTool(
       };
     case "get_money_news":
       return getMoneyNews(state.charges);
+    case "get_gift_cards": {
+      const g = giftCardSummary(state);
+      return g.cards.length
+        ? g
+        : {
+            ...g,
+            message: "No gift cards tracked. Add them on the Cards page.",
+          };
+    }
     case "get_refunds":
       return {
         refunds: (state.refunds ?? []).filter((r) => r.status !== "dismissed"),

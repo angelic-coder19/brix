@@ -70,7 +70,10 @@ function Slider({
   return (
     <div className="calc__field">
       <label htmlFor={id}>{label}</label>
-      <div className="calc__track" style={{ "--pct": `${pct}%`, "--p": pct / 100 } as React.CSSProperties}>
+      <div
+        className="calc__track"
+        style={{ "--pct": `${pct}%`, "--p": pct / 100 } as React.CSSProperties}
+      >
         <output className="calc__bubble" htmlFor={id} aria-hidden="true">
           {format(value)}
         </output>
@@ -145,7 +148,11 @@ export default function TrialCalculator() {
 
       <div className="calc__result">
         <span className="calc__kicker">Forgotten trials could cost you</span>
-        <output className="calc__total" htmlFor={`${id}-t ${id}-p ${id}-m`} aria-live="polite">
+        <output
+          className="calc__total"
+          htmlFor={`${id}-t ${id}-p ${id}-m`}
+          aria-live="polite"
+        >
           <span className="sr-only">{money(year)} per school year</span>
           <span aria-hidden="true">{money(shownYear)}</span>
         </output>
@@ -173,16 +180,18 @@ export default function TrialCalculator() {
         </div>
 
         <p className="calc__with">
-          Brix reminds you 7 days and 2 days before each trial ends. That’s {headsUps}{" "}
-          heads-ups a year, so every charge is one you chose.
+          Brix reminds you 7 days and 2 days before each trial ends. That’s{" "}
+          {headsUps} heads-ups a year, so every charge is one you chose.
         </p>
         <p className="calc__formula">
           {trials} {trials === 1 ? "trial" : "trials"} × ${price}/mo × {months}{" "}
-          {months === 1 ? "month" : "months"} = {money(semester)} per semester × {SEMESTERS}{" "}
-          semesters = {money(year)} per school year
+          {months === 1 ? "month" : "months"} = {money(semester)} per semester ×{" "}
+          {SEMESTERS} semesters = {money(year)} per school year
         </p>
       </div>
-      <p className="calc__note">Estimate for illustration. Your numbers depend on your trials.</p>
+      <p className="calc__note">
+        Estimate for illustration. Your numbers depend on your trials.
+      </p>
     </div>
   );
 }

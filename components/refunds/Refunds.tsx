@@ -269,10 +269,10 @@ function RefundDetail({
         }}
       >
         <fieldset>
-          <legend>Where the money came from</legend>
+          <legend>Three quick questions</legend>
           <div className="refund-grid">
             <label className="field">
-              Source
+              Where it came from
               <select name="funding" defaultValue={refund.funding}>
                 {Object.entries(FUNDING).map(([v, l]) => (
                   <option key={v} value={v}>
@@ -282,7 +282,7 @@ function RefundDetail({
               </select>
             </label>
             <label className="field">
-              Borrowed part (USD)
+              How much was a loan? (USD)
               <input
                 name="loanAmount"
                 type="number"
@@ -291,6 +291,22 @@ function RefundDetail({
                 defaultValue={refund.loanAmount ?? ""}
               />
             </label>
+            <label className="field">
+              Rent, food and bills per month
+              <input
+                name="monthlyLiving"
+                type="number"
+                min="0"
+                step="1"
+                defaultValue={inputs?.monthlyLiving ?? ""}
+                placeholder="0"
+              />
+            </label>
+          </div>
+        </fieldset>
+        <details className="refund-more" open={!!(refund.loanRate || plan)}>
+          <summary>More details for a sharper plan (optional)</summary>
+          <div className="refund-grid">
             <label className="field">
               Loan interest rate (%)
               <input
@@ -313,11 +329,6 @@ function RefundDetail({
                 <option value="private">Private loan</option>
               </select>
             </label>
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend>Your next few months</legend>
-          <div className="refund-grid">
             <label className="field">
               Months until next aid
               <input
@@ -327,17 +338,6 @@ function RefundDetail({
                 max="12"
                 step="1"
                 defaultValue={inputs?.monthsUntilNext ?? 4}
-              />
-            </label>
-            <label className="field">
-              Rent, food and bills per month
-              <input
-                name="monthlyLiving"
-                type="number"
-                min="0"
-                step="1"
-                defaultValue={inputs?.monthlyLiving ?? ""}
-                placeholder="0"
               />
             </label>
             <label className="field">
@@ -363,7 +363,7 @@ function RefundDetail({
               />
             </label>
           </div>
-        </fieldset>
+        </details>
         <button className="btn btn--primary" disabled={busy}>
           {plan ? "Update my plan" : "Make my plan"} <ArrowRight size={16} />
         </button>

@@ -8,7 +8,9 @@ test.beforeEach(async ({ request }) => {
 test.describe("desktop search", () => {
   test.skip(({ isMobile }) => isMobile, "Top bar search field");
 
-  test("finds charges with grouped, highlighted results and keyboard nav", async ({ page }) => {
+  test("finds charges with grouped, highlighted results and keyboard nav", async ({
+    page,
+  }) => {
     await page.goto("/dashboard");
     await expect(page.getByText(/Across 6 subscriptions/)).toBeVisible();
     await page.keyboard.press("/");
@@ -16,7 +18,9 @@ test.describe("desktop search", () => {
     await expect(box).toBeFocused();
     await box.fill("net");
     const list = page.getByRole("listbox", { name: "Search results" });
-    await expect(list.getByRole("group", { name: "Charges and trials" })).toBeVisible();
+    await expect(
+      list.getByRole("group", { name: "Charges and trials" }),
+    ).toBeVisible();
     const first = list.getByRole("option").first();
     await expect(first).toContainText("Netflix");
     await expect(first.locator("mark")).toHaveText("Net");
@@ -25,8 +29,12 @@ test.describe("desktop search", () => {
     expect(axe.violations).toEqual([]);
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/subscriptions\?q=Netflix/);
-    await expect(page.getByLabel("Search charges", { exact: true })).toHaveValue("Netflix");
-    await expect(page.getByRole("region", { name: "Charges" }).getByText("Spotify")).toHaveCount(0);
+    await expect(
+      page.getByLabel("Search charges", { exact: true }),
+    ).toHaveValue("Netflix");
+    await expect(
+      page.getByRole("region", { name: "Charges" }).getByText("Spotify"),
+    ).toHaveCount(0);
   });
 
   test("pages, arrows, empty state, clear and escape", async ({ page }) => {
@@ -86,7 +94,9 @@ test.describe("mobile search", () => {
   });
 });
 
-test("compact overview and setup strip with real progress", async ({ page }) => {
+test("compact overview and setup strip with real progress", async ({
+  page,
+}) => {
   await page.goto("/dashboard");
   const summary = page.getByRole("region", { name: "Summary" });
   await expect(summary).toContainText("Monthly recurring");
@@ -97,11 +107,18 @@ test("compact overview and setup strip with real progress", async ({ page }) => 
 
   const strip = page.getByRole("region", { name: "Finish setting up" });
   await expect(strip).toContainText(/\d of 5 done/);
-  await expect(strip.getByRole("list", { name: "Setup steps" }).getByRole("listitem")).toHaveCount(5);
+  await expect(
+    strip.getByRole("list", { name: "Setup steps" }).getByRole("listitem"),
+  ).toHaveCount(5);
   // Even 1px border, no one-sided accent bar.
   const borders = await strip.evaluate((el) => {
     const cs = getComputedStyle(el);
-    return [cs.borderLeftWidth, cs.borderRightWidth, cs.borderTopWidth, cs.borderBottomWidth];
+    return [
+      cs.borderLeftWidth,
+      cs.borderRightWidth,
+      cs.borderTopWidth,
+      cs.borderBottomWidth,
+    ];
   });
   expect(new Set(borders).size).toBe(1);
   expect(borders[0]).toBe("1px");
