@@ -287,6 +287,8 @@ curl https://www.usebrix.app/api/v1/charges/upcoming?days=14 \
 | `refunds:read` | School refunds and their plans |
 | `practice:read` | The practice portfolio: value, positions, rules and orders |
 
+<p align="center"><img src="docs/images/developers.jpg" alt="Brix developer docs: quickstart with curl, JavaScript and Python" width="85%" /></p>
+
 Keys are SHA-256 hashed at rest, shown once, limited to 5 per user and 120 requests per minute. Trial creation is idempotent. Full reference: **[usebrix.app/developers](https://www.usebrix.app/developers)** · [docs/API.md](docs/API.md) · [`/api/v1/openapi.json`](https://www.usebrix.app/api/v1/openapi.json)
 
 ---
