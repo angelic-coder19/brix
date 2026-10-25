@@ -1,6 +1,6 @@
 # Brix demo video: recording script (5 minutes)
 
-Deck: https://claude.ai/artifact/2XDUSkAowBZCmjDaKxhjKy (12 slides). Deck time ≈ 2:00, live app ≈ 2:45.
+Deck: https://claude.ai/artifact/2XDUSkAowBZCmjDaKxhjKy (10 slides). Deck time ≈ 1:45, live app ≈ 2:15.
 
 ## Set up before you hit record (10 minutes)
 
@@ -41,17 +41,15 @@ Deck: https://claude.ai/artifact/2XDUSkAowBZCmjDaKxhjKy (12 slides). Deck time �
 | 2:20–2:35 | **App · Cards** | Point to the gift cards and the Target countdown, then log a $10 spend. | “Gift cards are money too. Brix tracks balances and expiry, and reminds me to use my Target card before I pay with my own money.” |
 | 2:35–2:55 | **App · Practice investing** | Show portfolio value, “Compared with the S&P 500”, and the allocation chart. | “And before I risk real money, I practice. Virtual money sized to my refund, live prices, auto-invest every week, compared with the S&P 500. Brix never tells me what to buy with real money.” |
 | 2:55 | **Swipe left** to the deck. | | |
-| 2:55–3:05 | **Deck · 4 Trust** | | “That’s the trust design: read-only, nothing happens without my yes, sources on every answer, and code does the math.” |
-| 3:05–3:13 | **Deck · 5 Built** | | “All of this is live, with 42 end-to-end checks passing on production and a public API for others to build on. [Say your X of Y interview numbers.]” |
-| 3:13–3:27 | **Deck · 6 Competition** | Point to the Brix column. | “Rocket Money and YNAB are built for general adults and charge for the useful parts. Brix is the only one built around student decision moments, and the only one that turns an aid refund into a plan.” |
-| 3:27–3:35 | **Deck · 7 Market** | | “19.4 million U.S. college students, about a 930 million dollar consumer opportunity. We start at Penn State.” |
-| 3:35–3:49 | **Deck · 8 Model** | | “We earn four ways: a free core with Brix Plus, white-label licensing for banks like FNB, a usage-based developer API, and later, card interchange.” |
-| 3:49–3:57 | **Deck · 9 Plan** | | “25 campuses and two bank partners in two years, about 720 thousand dollars in year two on our assumptions.” |
-| 3:57–4:07 | **Deck · 10 Ask** | | “We’re asking for 250 thousand dollars of pre-seed funding and an FNB pilot, mostly for security, compliance and campus growth.” |
-| 4:07–4:15 | **Deck · 11 Impact** | | “At 50,000 students, that’s millions kept: trials skipped, loan interest avoided, gift cards spent.” |
-| 4:15–4:20 | **Deck · 12 Close** | Hold the slide. | “Brix: your money, brick by brick. Try it at usebrix.app. Thank you.” |
+| 2:55–3:12 | **Deck · 4 Competition** | Point to the Brix column. | “All of this is live, read-only, and every action waits for my yes. Rocket Money and YNAB are built for general adults and charge for the useful parts. Brix is the only one built around student decision moments, and the only one that turns an aid refund into a plan.” |
+| 3:12–3:22 | **Deck · 5 Market** | | “19.4 million U.S. college students, about a 930 million dollar consumer opportunity. We start at Penn State.” |
+| 3:22–3:37 | **Deck · 6 Model** | | “We earn four ways: a free core with Brix Plus, white-label licensing for banks like FNB, a usage-based developer API, and later, card interchange.” |
+| 3:37–3:47 | **Deck · 7 Plan** | | “25 campuses and two bank partners in two years, about 720 thousand dollars in year two.” |
+| 3:47–3:58 | **Deck · 8 Ask** | | “We’re asking for 250 thousand dollars of pre-seed funding and an FNB pilot, mostly for security, compliance and campus growth.” |
+| 3:58–4:06 | **Deck · 9 Impact** | | “At 50,000 students, that’s millions kept: trials skipped, loan interest avoided, gift cards spent.” |
+| 4:06–4:12 | **Deck · 10 Close** | Hold the slide; the QR code opens usebrix.app. | “Brix: your money, brick by brick. Scan to try it. Thank you.” |
 
-Total ≈ 4:20, which leaves 40 seconds of buffer under the 5-minute limit.
+Total ≈ 4:12, which leaves about 45 seconds of buffer under the 5-minute limit.
 
 ## If something goes wrong on camera
 
@@ -61,9 +59,8 @@ Total ≈ 4:20, which leaves 40 seconds of buffer under the 5-minute limit.
 
 ## Placeholders to fill in before recording
 
-- Slide 1 and 12: your name, team names, contact email.
-- Slide 5: real “X of Y” hallway-interview numbers. If you didn't interview anyone, delete that footer.
-- Slides 6, 8, 10: bracketed amounts ([$3.99/mo], [$1 per member a month], [$250K]) are proposals. Keep the brackets or confirm the numbers.
+- Say your name in the opening line; the deck itself has no placeholders left.
+- If you ran hallway interviews, add your real “X of Y” count when you speak over the problem slide.
 
 ## Sources quoted
 
