@@ -114,3 +114,13 @@ test("assistant replies are plain text; WhatsApp keeps its bold", async () => {
     "Coming up\n*Netflix* is $15.49\n• Spotify on Fri",
   );
 });
+
+test("WhatsApp gets 12 seconds, within Twilio's 15-second webhook limit", async () => {
+  const { budgetMs } = await import("../lib/agent/anthropic");
+  assert.equal(budgetMs("whatsapp"), 12000);
+  assert.ok(
+    budgetMs("whatsapp") <= 15000 - 3000,
+    "keeps 3 seconds of headroom",
+  );
+  assert.equal(budgetMs("web"), 10000);
+});

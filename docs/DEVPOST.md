@@ -75,7 +75,7 @@ Brix shows up at the moments students most often get money wrong, and turns each
 
 - **App:** Next.js 16 (App Router) with React 19 and TypeScript, deployed on Vercel. A Vercel cron job runs the daily reminder check.
 - **Identity and data:** Firebase Authentication (Google and phone sign-in) and Firestore. All writes go through server routes. Firestore rules deny every client write and every read of secrets.
-- **AI:** Claude (`claude-opus-5-5`) through the Anthropic SDK, with a manual tool-use loop. Twelve tools share one tool layer across web, WhatsApp, and voice. The loop has a 10-second budget, and a server-side fallback model handles any refused request.
+- **AI:** Claude (`claude-opus-5-5`) through the Anthropic SDK, with a manual tool-use loop. Twelve tools share one tool layer across web, WhatsApp, and voice. The loop has a time budget (12 seconds for WhatsApp, within Twilio's 15-second limit; 10 seconds elsewhere), and a server-side fallback model handles any refused request.
 - **Voice:** a Vapi assistant on a Twilio number. Its tool calls hit `/api/vapi/tools`, which finds the caller by verified phone number and runs the same tools as the web chat.
 - **Messaging:** Twilio WhatsApp, with signature validation on inbound messages.
 - **Money data:** Plaid sandbox (`/transactions/sync` and recurring streams) for charges, and Lithic sandbox for single-use cards. Card creation uses idempotency keys, and an uncertain failure is never retried automatically.
