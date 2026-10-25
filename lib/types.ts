@@ -69,6 +69,50 @@ export interface AppState {
   reminders: Reminder[];
   cards: VirtualCard[];
   events: ActivityEvent[];
+  /** Optional so accounts created before refunds existed still load. */
+  refunds?: Refund[];
+}
+export type RefundFunding = "loan" | "grant" | "scholarship" | "mixed" | "unknown";
+export type LoanType = "subsidized" | "unsubsidized" | "private" | "parent_plus";
+/** Money a school sent back after tuition: often partly borrowed. */
+export interface Refund {
+  id: string;
+  amount: number;
+  receivedOn: string;
+  source: "plaid" | "manual";
+  descriptor?: string;
+  funding: RefundFunding;
+  loanAmount?: number;
+  /** Annual interest rate as a percentage, entered by the student. */
+  loanRate?: number;
+  loanType?: LoanType;
+  status: "new" | "planned" | "dismissed";
+  plan?: RefundPlan;
+}
+export interface RefundPlanInputs {
+  monthsUntilNext: number;
+  monthlyLiving: number;
+  currentSavings: number;
+  yearsUntilRepayment: number;
+}
+export interface RefundPlanStep {
+  key: "essentials" | "emergency" | "return_loan" | "prepay_loan" | "save";
+  label: string;
+  amount: number;
+  reason: string;
+  link?: { label: string; href: string };
+}
+export interface RefundPlan {
+  createdAt: string;
+  inputs: RefundPlanInputs;
+  steps: RefundPlanStep[];
+  /** Last day to return Direct Loan money without interest or fees. */
+  returnBy?: string;
+  /** Interest the returned or prepaid loan money would have built, if a rate was given. */
+  interestAvoided?: number;
+  notes: string[];
+  /** Virtual dollars for the practice portfolio; never real money. */
+  practiceAmount: number;
 }
 export interface UserSecret {
   pinHash?: string;

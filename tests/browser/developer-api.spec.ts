@@ -20,7 +20,9 @@ test("key lifecycle against the public API", async ({ request }) => {
   expect(me.headers()["x-ratelimit-limit"]).toBe("120");
   expect(me.headers()["x-request-id"]).toMatch(/^req_/);
 
-  const charges = await (await request.get("/api/v1/charges", { headers: auth })).json();
+  const charges = await (
+    await request.get("/api/v1/charges", { headers: auth })
+  ).json();
   expect(charges.data.length).toBeGreaterThan(0);
 
   const reminder = await request.post("/api/v1/reminders", {
@@ -37,21 +39,31 @@ test("key lifecycle against the public API", async ({ request }) => {
 
   const listed = await (await request.get("/api/developer/keys")).json();
   expect(JSON.stringify(listed)).not.toContain(secret);
-  expect((await request.delete(`/api/developer/keys/${key.id}`)).ok()).toBeTruthy();
-  expect((await request.get("/api/v1/me", { headers: auth })).status()).toBe(401);
+  expect(
+    (await request.delete(`/api/developer/keys/${key.id}`)).ok(),
+  ).toBeTruthy();
+  expect((await request.get("/api/v1/me", { headers: auth })).status()).toBe(
+    401,
+  );
 });
 
 test("concurrent API calls on one key stay consistent", async ({ request }) => {
   const { secret } = await (
-    await request.post("/api/developer/keys", { data: { name: "load", scopes: ["charges:read"] } })
+    await request.post("/api/developer/keys", {
+      data: { name: "load", scopes: ["charges:read"] },
+    })
   ).json();
   const results = await Promise.all(
     Array.from({ length: 40 }, () =>
-      request.get("/api/v1/summary", { headers: { authorization: `Bearer ${secret}` } }),
+      request.get("/api/v1/summary", {
+        headers: { authorization: `Bearer ${secret}` },
+      }),
     ),
   );
   expect(results.every((r) => r.status() === 200)).toBe(true);
-  const remaining = results.map((r) => Number(r.headers()["x-ratelimit-remaining"]));
+  const remaining = results.map((r) =>
+    Number(r.headers()["x-ratelimit-remaining"]),
+  );
   expect(new Set(remaining).size).toBe(40);
 });
 
@@ -63,7 +75,9 @@ test("OpenAPI spec and docs page are public", async ({ request, page }) => {
   expect(Object.keys(doc.paths)).toContain("/charges/{id}");
 
   await page.goto("/developers");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Build on Brix.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Build on Brix.",
+  );
   await expect(page.locator("#get-charges")).toBeVisible();
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
@@ -92,7 +106,9 @@ test("a demo card can be closed", async ({ request }) => {
   await request.post("/api/agent/chat", { data: { message: "yes" } });
   const { cards } = await (await request.get("/api/cards")).json();
   expect(cards[0].state).toBe("OPEN");
-  const closed = await request.patch("/api/cards", { data: { id: cards[0].id, state: "CLOSED" } });
+  const closed = await request.patch("/api/cards", {
+    data: { id: cards[0].id, state: "CLOSED" },
+  });
   expect(closed.ok()).toBeTruthy();
   expect((await closed.json()).cards[0].state).toBe("CLOSED");
 });

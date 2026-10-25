@@ -1,6 +1,9 @@
 import { HttpError } from "./auth";
 import { getSecret, setSecret, updateState } from "./store";
 import { normalizeRecurring, type RecurringStream } from "./recurring";
+import { detectRefund, type IncomingTransaction } from "./refunds/detect";
+import { notifyRefunds, recordRefunds } from "./refunds";
+import type { Refund } from "./types";
 export class PlaidError extends HttpError {
   constructor(public code: string) {
     super(502, "Plaid could not complete this request. Please try again.");
@@ -36,6 +39,8 @@ export async function syncPlaid(uid: string) {
   if (!items.length) throw new HttpError(400, "Link a sandbox bank first.");
   let count = 0;
   const cursors = { ...secret.plaidCursors };
+  // Only school refunds are kept from the transaction feed; nothing else is stored.
+  const refunds: Refund[] = [];
   for (const [id, access_token] of items) {
     let cursor = cursors[id],
       hasMore = true,
@@ -48,11 +53,16 @@ export async function syncPlaid(uid: string) {
         const page = await plaidRequest<{
           next_cursor: string;
           has_more: boolean;
+          added?: IncomingTransaction[];
         }>("/transactions/sync", {
           access_token,
           count: 500,
           ...(cursor ? { cursor } : {}),
         });
+        for (const tx of page.added ?? []) {
+          const refund = detectRefund(tx);
+          if (refund) refunds.push(refund);
+        }
         cursor = page.next_cursor;
         hasMore = page.has_more;
       } catch (error) {
@@ -83,7 +93,9 @@ export async function syncPlaid(uid: string) {
     cursors[id] = cursor!;
   }
   await setSecret(uid, { plaidCursors: cursors });
-  return { synced: count };
+  const fresh = await recordRefunds(uid, refunds, "system");
+  await notifyRefunds(uid, fresh);
+  return { synced: count, refunds: fresh.length };
 }
 export async function disconnectPlaid(uid: string) {
   const secret = await getSecret(uid);

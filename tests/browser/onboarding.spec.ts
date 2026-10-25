@@ -14,7 +14,9 @@ test("onboarding happy path in demo mode", async ({ page, request }) => {
 
   const progress = page.getByRole("progressbar", { name: "Setup progress" });
   await expect(page.getByText("Step 1 of 6")).toBeVisible();
-  await expect(page.getByRole("heading", { level: 1, name: "You’re in." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "You’re in." }),
+  ).toBeVisible();
   await expect(progress).toHaveAttribute("aria-valuenow", "0");
   const axe = await new AxeBuilder({ page }).analyze();
   expect(axe.violations).toEqual([]);
@@ -29,7 +31,9 @@ test("onboarding happy path in demo mode", async ({ page, request }) => {
   await page.getByRole("button", { name: "Continue" }).click();
 
   // Bank: back works, then use the sample bank
-  await expect(page.getByRole("heading", { name: "Link a bank, or skip it" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Link a bank, or skip it" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Back" }).click();
   await expect(page.getByLabel("Your name")).toHaveValue("Maya Chen");
   await page.getByRole("button", { name: "Continue" }).click();
@@ -45,11 +49,15 @@ test("onboarding happy path in demo mode", async ({ page, request }) => {
   await page.getByRole("button", { name: "Add trial" }).click();
 
   // Reminders: skip
-  await expect(page.getByRole("heading", { name: "Where should reminders reach you?" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Where should reminders reach you?" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Skip for now" }).click();
 
   // Done
-  await expect(page.getByRole("heading", { level: 1, name: "You’re set up, Maya." })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "You’re set up, Maya." }),
+  ).toBeVisible();
   await expect(progress).toHaveAttribute("aria-valuenow", "100");
   const summary = page.locator(".ob__summary");
   await expect(summary).toContainText("Notion AI");
@@ -63,19 +71,31 @@ test("onboarding happy path in demo mode", async ({ page, request }) => {
 
   await page.getByRole("button", { name: "Go to your overview" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole("button", { name: "Mark Notion AI to cancel" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Finish setting up" })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Mark Notion AI to cancel" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Finish setting up" }),
+  ).toHaveCount(0);
 });
 
-test("onboarding shows an error and keeps the step when saving fails", async ({ page }) => {
+test("onboarding shows an error and keeps the step when saving fails", async ({
+  page,
+}) => {
   await page.goto("/onboarding");
   await page.getByRole("button", { name: "Continue" }).click();
   await page.route("**/api/settings", (route) =>
-    route.fulfill({ status: 500, contentType: "application/json", body: '{"error":"Could not save right now."}' }),
+    route.fulfill({
+      status: 500,
+      contentType: "application/json",
+      body: '{"error":"Could not save right now."}',
+    }),
   );
   await page.getByLabel("Your name").fill("Maya");
   await page.getByRole("button", { name: "Continue" }).click();
-  await expect(page.locator(".ob__error")).toHaveText("Could not save right now.");
+  await expect(page.locator(".ob__error")).toHaveText(
+    "Could not save right now.",
+  );
   await expect(page.getByText("Step 2 of 6")).toBeVisible();
 });
 
@@ -86,5 +106,7 @@ test("setup strip can be dismissed", async ({ page }) => {
   await expect(strip).toHaveCount(0);
   await page.reload();
   await expect(page.getByText(/Across 6 subscriptions/)).toBeVisible();
-  await expect(page.getByRole("region", { name: "Finish setting up" })).toHaveCount(0);
+  await expect(
+    page.getByRole("region", { name: "Finish setting up" }),
+  ).toHaveCount(0);
 });

@@ -42,4 +42,36 @@ export const toolSchemas: Anthropic.Beta.BetaTool[] = [
     { purpose: { type: "string" }, spendLimit: { type: "number" } },
     ["purpose", "spendLimit"],
   ),
+  tool(
+    "get_refunds",
+    "Read school refunds (financial aid money sent back after tuition), including how much is borrowed",
+  ),
+  tool(
+    "plan_refund",
+    "Estimate a plan for a refund: essentials, emergency fund, returning unused loan money within 120 days, saving the rest. Read-only.",
+    {
+      refund_id: { type: "string" },
+      monthly_living: { type: "number" },
+      months_until_next: { type: "number" },
+      current_savings: { type: "number" },
+      years_until_repayment: { type: "number" },
+    },
+  ),
+  tool(
+    "get_portfolio",
+    "Read the practice portfolio (virtual money, real prices): value, gain, positions, rules",
+  ),
+  tool("get_stock_news", "Read recent news for practice-list symbols", {
+    symbols: { type: "array", items: { type: "string" } },
+  }),
+  tool(
+    "practice_trade",
+    'Propose a practice trade with virtual money; amount is dollars, or "all" to sell a whole position',
+    {
+      symbol: { type: "string" },
+      side: { type: "string", enum: ["buy", "sell"] },
+      amount: { type: ["number", "string"] },
+    },
+    ["symbol", "side", "amount"],
+  ),
 ];

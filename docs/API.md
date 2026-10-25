@@ -53,6 +53,8 @@ Keys are personal: each one acts as the user who created it. Brix stores only a 
 | `reminders:write` | Create and delete reminders. |
 | `cards:read` | List single-use cards (masked; never card numbers). |
 | `news:read` | Read subscription news about your merchants. |
+| `refunds:read` | Read school refunds and their plans. |
+| `practice:read` | Read the practice portfolio (virtual money). |
 
 `GET /me` works with any valid key.
 
@@ -72,6 +74,8 @@ Keys are personal: each one acts as the user who created it. Brix stores only a 
 | DELETE | `/reminders/{id}` | `reminders:write` | Delete a reminder that hasn't been sent. |
 | GET | `/cards` | `cards:read` | Single-use cards, last four digits only. |
 | GET | `/news` | `news:read` | Recent pricing and renewal news about the user's top merchants. |
+| GET | `/refunds` | `refunds:read` | School refunds with the borrowed part, the 120-day return date and any saved plan. |
+| GET | `/practice` | `practice:read` | The practice portfolio (virtual money): value, gain vs. VOO, positions, auto-invest rules, recent orders. `portfolio` is `null` until the user starts one. |
 
 ### Objects
 

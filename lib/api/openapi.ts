@@ -283,6 +283,24 @@ export const operations: Operation[] = [
       },
     },
   },
+  {
+    method: "get",
+    path: "/refunds",
+    scope: "refunds:read",
+    summary: "List refunds",
+    description:
+      "School refunds (aid left after tuition) Brix detected or the user added, with any saved plan. `loan_amount` is the borrowed part; federal Direct Loan money can be returned within 120 days without interest.",
+    spec: { responses: { 200: json(listOf("Refund")), ...errors(403) } },
+  },
+  {
+    method: "get",
+    path: "/practice",
+    scope: "practice:read",
+    summary: "Practice portfolio",
+    description:
+      "The user's paper-trading portfolio: virtual cash, positions at live prices, gain compared with the S&P 500 (VOO), auto-invest rules, and recent orders. No real money is involved. `null` when the user hasn't started one.",
+    spec: { responses: { 200: json(ref("Practice")), ...errors(403) } },
+  },
 ];
 
 const errorResponse = (description: string) => ({
@@ -439,6 +457,53 @@ export function openApiDocument(origin: string) {
             published_at: { type: "string", format: "date-time" },
             merchant: { type: "string" },
             why_it_matters: { type: "string" },
+          },
+        },
+        Refund: {
+          type: "object",
+          properties: {
+            object: { const: "refund" },
+            id: { type: "string" },
+            amount: { type: "number" },
+            received_on: { type: "string", format: "date" },
+            source: { enum: ["plaid", "manual"] },
+            funding: {
+              enum: ["loan", "grant", "scholarship", "mixed", "unknown"],
+            },
+            loan_amount: { type: ["number", "null"] },
+            status: { enum: ["new", "planned", "dismissed"] },
+            return_by: { type: ["string", "null"], format: "date" },
+            plan: {
+              type: ["array", "null"],
+              items: {
+                type: "object",
+                properties: {
+                  step: { type: "string" },
+                  label: { type: "string" },
+                  amount: { type: "number" },
+                },
+              },
+            },
+          },
+        },
+        Practice: {
+          type: "object",
+          properties: {
+            object: { const: "practice_portfolio" },
+            virtual_money: { const: true },
+            portfolio: {
+              type: ["object", "null"],
+              properties: {
+                cash: { type: "number" },
+                total: { type: "number" },
+                gain: { type: "number" },
+                gain_pct: { type: "number" },
+                benchmark_pct: { type: ["number", "null"] },
+                positions: { type: "array", items: { type: "object" } },
+                rules: { type: "array", items: { type: "object" } },
+                orders: { type: "array", items: { type: "object" } },
+              },
+            },
           },
         },
         Identity: {

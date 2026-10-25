@@ -11,6 +11,9 @@ export const SCOPES = {
   "reminders:write": "Create and delete reminders.",
   "cards:read": "List single-use cards (masked; never card numbers).",
   "news:read": "Read subscription news about your merchants.",
+  "refunds:read": "Read school refunds and their plans.",
+  "practice:read":
+    "Read the practice portfolio (virtual money): value, positions, rules, orders.",
 } as const;
 export type Scope = keyof typeof SCOPES;
 export const isScope = (s: unknown): s is Scope =>
