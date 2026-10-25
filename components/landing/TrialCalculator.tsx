@@ -108,8 +108,18 @@ export default function TrialCalculator() {
   const { semester, year, headsUps } = estimate(trials, price, months);
   const shownYear = useTween(year);
   const shownSemester = useTween(semester);
-  // A fixed $800 scale keeps typical answers readable; bigger ones fill the bar.
-  const barPct = Math.max(2, Math.min(100, (year / 800) * 100));
+  const ceiling = Math.max(50, Math.ceil(year / 100) * 100);
+  const chart = { left: 52, right: 454, top: 24, bottom: 210 };
+  const x = (month: number) =>
+    chart.left + (month / months) * (chart.right - chart.left);
+  const y = (amount: number) =>
+    chart.bottom - (amount / ceiling) * (chart.bottom - chart.top);
+  const series = (cohorts: number) =>
+    Array.from(
+      { length: months + 1 },
+      (_, month) => `${x(month)},${y(trials * price * month * cohorts)}`,
+    ).join(" ");
+  const ticks = [...new Set([0, Math.ceil(months / 2), months])];
 
   return (
     <div className="calc" data-buddy-mood="thinking">
@@ -160,28 +170,80 @@ export default function TrialCalculator() {
           per school year · {money(shownSemester)} a semester
         </span>
 
-        <div className="calc__compare" aria-hidden="true">
-          <div className="calc__row">
-            <span>Without Brix</span>
-            <span className="calc__bar">
-              <i style={{ width: `${barPct}%` }} />
+        <figure className="calc-chart" aria-labelledby={`${id}-chart-title`}>
+          <figcaption id={`${id}-chart-title`}>
+            The longer it runs, the more it adds up.
+          </figcaption>
+          <svg
+            viewBox="0 0 480 254"
+            role="img"
+            aria-labelledby={`${id}-chart-desc`}
+          >
+            <title id={`${id}-chart-desc`}>
+              {`${trials} trials at ${money(price)} per month cost ${money(semester)} per semester, or ${money(year)} across two semesters, after ${months} paid months each.`}
+            </title>
+            {[0, 0.5, 1].map((fraction) => (
+              <g key={fraction}>
+                <line
+                  className="calc-chart__grid"
+                  x1={chart.left}
+                  x2={chart.right}
+                  y1={y(ceiling * fraction)}
+                  y2={y(ceiling * fraction)}
+                />
+                <text
+                  className="calc-chart__label"
+                  x={chart.left - 10}
+                  y={y(ceiling * fraction) + 4}
+                  textAnchor="end"
+                >
+                  {money(ceiling * fraction)}
+                </text>
+              </g>
+            ))}
+            <polygon
+              className="calc-chart__area"
+              points={`${chart.left},${chart.bottom} ${series(SEMESTERS)} ${chart.right},${chart.bottom}`}
+            />
+            <polyline
+              className="calc-chart__line calc-chart__line--semester"
+              points={series(1)}
+            />
+            <polyline className="calc-chart__line" points={series(SEMESTERS)} />
+            <circle
+              className="calc-chart__point"
+              cx={x(months)}
+              cy={y(year)}
+              r="5"
+            />
+            {ticks.map((month) => (
+              <text
+                className="calc-chart__label"
+                key={month}
+                x={x(month)}
+                y="234"
+                textAnchor="middle"
+              >
+                {month}
+              </text>
+            ))}
+          </svg>
+          <div className="calc-chart__axis">Paid months per trial</div>
+          <div className="calc-chart__legend">
+            <span>
+              <i />
+              Two semesters
             </span>
-            <b>{money(shownYear)}</b>
-          </div>
-          <div className="calc__row calc__row--with">
-            <span>With Brix</span>
-            <span className="calc__pings">
-              {Array.from({ length: Math.min(headsUps, 40) }, (_, i) => (
-                <i key={i} />
-              ))}
+            <span>
+              <i />
+              One semester
             </span>
-            <b>{headsUps} heads-ups</b>
           </div>
-        </div>
+        </figure>
 
         <p className="calc__with">
-          Brix reminds you 7 days and 2 days before each trial ends. That’s{" "}
-          {headsUps} heads-ups a year, so every charge is one you chose.
+          {headsUps} reminders across two semesters. More chances to decide
+          before a trial bills.
         </p>
         <p className="calc__formula">
           {trials} {trials === 1 ? "trial" : "trials"} × ${price}/mo × {months}{" "}
@@ -190,7 +252,8 @@ export default function TrialCalculator() {
         </p>
       </div>
       <p className="calc__note">
-        Estimate for illustration. Your numbers depend on your trials.
+        Illustration, not a savings promise. Assumes the same trials each
+        semester and the selected number of paid months per trial.
       </p>
     </div>
   );

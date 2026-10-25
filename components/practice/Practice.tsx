@@ -135,10 +135,8 @@ export default function Practice({ request }: { request: RequestFn }) {
   return (
     <div className="practice">
       <p className="practice-disclaimer" role="note">
-        Practice mode: virtual money, real prices delayed up to 15 minutes
-        {view.sample ? " (sample prices in the demo)" : ""}. Educational, not
-        investment advice. Brix isn&apos;t a broker and never places real
-        trades.
+        Practice with virtual money. Quotes may be delayed; sample data is
+        labeled. Educational only. Brix never places real trades.
       </p>
       {error && (
         <p className="alert alert--error" role="alert">
@@ -180,68 +178,71 @@ function Start({
 }) {
   const start = view.suggestedStart;
   return (
-    <section className="card form-card practice-start">
-      <TrendingUp size={28} />
-      <h2>Learn investing without risking a dollar.</h2>
-      <p>
-        Buy and sell real US stocks and index funds at real prices with virtual
-        money. Set up auto-invest the way long-term investors do, and see how
-        you compare with the S&amp;P 500.
-      </p>
-      <form
-        className="practice-start__form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const f = new FormData(e.currentTarget);
-          const fromRefund = f.get("from") === "refund" && start?.refundId;
-          void run(async () => {
-            await request(
-              "/api/practice",
-              "POST",
-              fromRefund
-                ? { refundId: start!.refundId }
-                : { startingCash: Number(f.get("cash")) },
-            );
-          }, "Your practice portfolio is ready.");
-        }}
-      >
-        {start?.refundId && (
+    <div className="practice-intro-grid">
+      <section className="card form-card practice-start">
+        <TrendingUp size={28} />
+        <h2>Learn investing without risking a dollar.</h2>
+        <p>
+          Buy and sell real US stocks and index funds at real prices with
+          virtual money. Set up auto-invest the way long-term investors do, and
+          see how you compare with the S&amp;P 500.
+        </p>
+        <form
+          className="practice-start__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const f = new FormData(e.currentTarget);
+            const fromRefund = f.get("from") === "refund" && start?.refundId;
+            void run(async () => {
+              await request(
+                "/api/practice",
+                "POST",
+                fromRefund
+                  ? { refundId: start!.refundId }
+                  : { startingCash: Number(f.get("cash")) },
+              );
+            }, "Your practice portfolio is ready.");
+          }}
+        >
+          {start?.refundId && (
+            <label className="scope-option">
+              <input type="radio" name="from" value="refund" defaultChecked />
+              <span>
+                <strong>Practice with my refund amount</strong>
+                <small>
+                  {usd(start.amount)} in virtual money, the same size as your
+                  school refund.
+                </small>
+              </span>
+            </label>
+          )}
           <label className="scope-option">
-            <input type="radio" name="from" value="refund" defaultChecked />
+            <input
+              type="radio"
+              name="from"
+              value="custom"
+              defaultChecked={!start?.refundId}
+            />
             <span>
-              <strong>Practice with my refund amount</strong>
-              <small>
-                {usd(start.amount)} in virtual money, the same size as your
-                school refund.
-              </small>
+              <strong>Choose an amount</strong>
+              <input
+                name="cash"
+                type="number"
+                min="100"
+                max="100000"
+                step="100"
+                defaultValue={1000}
+                aria-label="Starting virtual money"
+              />
             </span>
           </label>
-        )}
-        <label className="scope-option">
-          <input
-            type="radio"
-            name="from"
-            value="custom"
-            defaultChecked={!start?.refundId}
-          />
-          <span>
-            <strong>Choose an amount</strong>
-            <input
-              name="cash"
-              type="number"
-              min="100"
-              max="100000"
-              step="100"
-              defaultValue={1000}
-              aria-label="Starting virtual money"
-            />
-          </span>
-        </label>
-        <button className="btn btn--primary" disabled={busy}>
-          Start practicing
-        </button>
-      </form>
-    </section>
+          <button className="btn btn--primary" disabled={busy}>
+            Start practicing
+          </button>
+        </form>
+      </section>
+      <MarketSnapshot request={request} />
+    </div>
   );
 }
 
@@ -318,6 +319,8 @@ function Portfolio({
           <p>Realized gain: {usd(p.realized)}</p>
         </div>
       </section>
+
+      <AllocationChart portfolio={p} sample={view.sample} />
 
       <div className="practice-columns">
         <section className="card" aria-labelledby="holdings">
@@ -703,5 +706,242 @@ function Portfolio({
         )}
       </section>
     </>
+  );
+}
+
+function MarketSnapshot({ request }: { request: RequestFn }) {
+  const [quotes, setQuotes] = useState<Record<string, Quote> | null>(null);
+  const [group, setGroup] = useState<"funds" | "stocks">("funds");
+  const symbols =
+    group === "funds"
+      ? ["VOO", "VTI", "QQQ", "VXUS", "BND"]
+      : ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL"];
+  const query = symbols.join(",");
+  useEffect(() => {
+    let active = true;
+    void request<{ quotes: Record<string, Quote> }>(
+      `/api/market/quote?symbols=${query}`,
+    )
+      .then((result) => {
+        if (active) setQuotes(result.quotes);
+      })
+      .catch(() => {
+        if (active) setQuotes({});
+      });
+    return () => {
+      active = false;
+    };
+  }, [request, query]);
+  const rows = symbols.map((symbol) => {
+    const quote = quotes?.[symbol];
+    const change =
+      quote &&
+      Number.isFinite(quote.price) &&
+      Number.isFinite(quote.previousClose) &&
+      quote.previousClose > 0
+        ? (quote.price / quote.previousClose - 1) * 100
+        : null;
+    return { symbol, quote, change };
+  });
+  const available = rows.filter((row) => row.change !== null);
+  const scale = Math.max(1, ...available.map((row) => Math.abs(row.change!)));
+  const sample = rows.some((row) => row.quote?.sample);
+  return (
+    <section
+      className="card practice-chart"
+      aria-labelledby="market-chart-title"
+    >
+      <div className="card-head">
+        <div>
+          <span className="practice-chart__eyebrow">Explore the market</span>
+          <h2 id="market-chart-title">A day in the market</h2>
+        </div>
+        <span className="practice-chart__tag">
+          {sample ? "Sample prices" : "Quote snapshot"}
+        </span>
+      </div>
+      <div
+        className="segmented practice-chart__tabs"
+        role="group"
+        aria-label="Chart securities"
+      >
+        <button
+          type="button"
+          aria-pressed={group === "funds"}
+          className={group === "funds" ? "is-active" : undefined}
+          onClick={() => {
+            if (group !== "funds") {
+              setGroup("funds");
+              setQuotes(null);
+            }
+          }}
+        >
+          Index funds
+        </button>
+        <button
+          type="button"
+          aria-pressed={group === "stocks"}
+          className={group === "stocks" ? "is-active" : undefined}
+          onClick={() => {
+            if (group !== "stocks") {
+              setGroup("stocks");
+              setQuotes(null);
+            }
+          }}
+        >
+          Stocks
+        </button>
+      </div>
+      <p className="practice-chart__caption">
+        Latest quote compared with the previous close.
+      </p>
+      <ul
+        className="practice-market-bars"
+        aria-label="Price changes in percent"
+      >
+        {rows.map(({ symbol, quote, change }) => (
+          <li key={symbol}>
+            <div className="practice-market-bars__label">
+              <strong>{symbol}</strong>
+              <small>
+                {quote
+                  ? usd(quote.price)
+                  : quotes === null
+                    ? "Loading…"
+                    : "Unavailable"}
+              </small>
+            </div>
+            <div className="practice-market-bars__track" aria-hidden="true">
+              {change !== null && (
+                <span
+                  className={change < 0 ? "is-negative" : "is-positive"}
+                  style={{
+                    width: `${(Math.abs(change) / scale) * 50}%`,
+                    left: `${change < 0 ? 50 - (Math.abs(change) / scale) * 50 : 50}%`,
+                  }}
+                />
+              )}
+            </div>
+            <strong
+              className={`practice-market-bars__value ${change === null ? "" : tone(change) || ""}`}
+            >
+              {change === null ? "—" : pct(change)}
+            </strong>
+          </li>
+        ))}
+      </ul>
+      <div className="practice-chart__axis" aria-hidden="true">
+        <span>−{scale.toFixed(1)}%</span>
+        <span>0</span>
+        <span>+{scale.toFixed(1)}%</span>
+      </div>
+      <p className="practice-chart__footnote">
+        {sample
+          ? "Fixed demo quotes. These are not live market moves."
+          : "Quotes may be delayed. Closed markets show the latest available session."}
+        {quotes !== null && !available.length
+          ? " No price changes are available right now."
+          : ""}
+      </p>
+    </section>
+  );
+}
+
+const ALLOCATION_COLORS = [
+  "#43705a",
+  "#c8462a",
+  "#80662e",
+  "#6b7891",
+  "#897b8e",
+  "#aaa596",
+];
+function AllocationChart({
+  portfolio: p,
+  sample,
+}: {
+  portfolio: NonNullable<View["portfolio"]>;
+  sample?: boolean;
+}) {
+  const holdings = [...p.positions]
+    .filter((position) => Number.isFinite(position.value) && position.value > 0)
+    .sort((a, b) => b.value - a.value);
+  const items = [
+    { label: "Virtual cash", value: Math.max(0, p.cash) },
+    ...holdings
+      .slice(0, 4)
+      .map((position) => ({ label: position.symbol, value: position.value })),
+    ...(holdings.length > 4
+      ? [
+          {
+            label: "Other holdings",
+            value: holdings
+              .slice(4)
+              .reduce((sum, position) => sum + position.value, 0),
+          },
+        ]
+      : []),
+  ].filter((item) => item.value > 0);
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  const missingPrices = p.positions.some((position) => position.price === null);
+  return (
+    <section
+      className="card practice-chart practice-allocation"
+      aria-labelledby="allocation-title"
+    >
+      <div className="card-head">
+        <div>
+          <span className="practice-chart__eyebrow">Your virtual money</span>
+          <h2 id="allocation-title">Portfolio allocation</h2>
+        </div>
+        <span className="practice-chart__tag">
+          {sample ? "Sample valuation" : "Current allocation"}
+        </span>
+      </div>
+      {total > 0 ? (
+        <>
+          <div className="practice-allocation__bar" aria-hidden="true">
+            {items.map((item, index) => (
+              <span
+                key={item.label}
+                style={{
+                  width: `${(item.value / total) * 100}%`,
+                  background: ALLOCATION_COLORS[index],
+                }}
+              />
+            ))}
+          </div>
+          <ul
+            className="practice-allocation__legend"
+            aria-label="Portfolio allocation by value"
+          >
+            {items.map((item, index) => (
+              <li key={item.label}>
+                <span className="practice-allocation__label">
+                  <i
+                    aria-hidden="true"
+                    style={{ background: ALLOCATION_COLORS[index] }}
+                  />
+                  {item.label}
+                </span>
+                <strong>{((item.value / total) * 100).toFixed(1)}%</strong>
+                <small>{usd(item.value)}</small>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="muted">
+          Allocation appears when your portfolio has a value.
+        </p>
+      )}
+      <p className="practice-chart__footnote">
+        {!holdings.length
+          ? "All cash for now. Your first practice trade will appear here."
+          : "Each segment shows its share of your portfolio value."}
+        {missingPrices
+          ? " Some quotes are unavailable; those holdings use their cost basis."
+          : ""}
+      </p>
+    </section>
   );
 }

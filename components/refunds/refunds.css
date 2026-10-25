@@ -213,3 +213,14 @@
 .refund-more[open] summary {
   margin-bottom: var(--space-3);
 }
+/* The countdown drops under the title when the row is too narrow. */
+.refund-head {
+  flex-wrap: wrap;
+}
+.refund-head > div:first-child {
+  min-width: 0;
+  flex: 1 1 240px;
+}
+.countdown {
+  flex: none;
+}

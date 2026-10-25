@@ -34,9 +34,10 @@ test.describe("desktop shell", () => {
     await expect(shell).toHaveAttribute("data-sidebar", "collapsed");
     await page.mouse.move(900, 500);
     await expect(sidebar).toHaveAttribute("data-collapsed", "true");
+    // Measure only after the width transition settles.
     await expect
       .poll(async () => (await sidebar.boundingBox())?.width)
-      .toBeLessThan(90);
+      .toBe(80);
     // The toggle sits on the logo row, not below it.
     const brand = await sidebar.locator(".sidebar-brand").boundingBox();
     const toggle = await page
@@ -49,28 +50,25 @@ test.describe("desktop shell", () => {
     // Labels stay as accessible names in the rail.
     await expect(sidebar.getByRole("link", { name: "Overview" })).toBeVisible();
 
-    // Hover peeks it open as an overlay without moving the page; leaving collapses it.
+    // Hover and focus never resize the rail or shift the page.
     const mainLeft = async () =>
       (await page.locator(".app-main").boundingBox())!.x;
     await expect.poll(mainLeft).toBe(80);
     await sidebar.getByRole("link", { name: "Overview" }).hover();
-    await expect(sidebar).toHaveAttribute("data-peek", "true");
-    await expect
-      .poll(async () => (await sidebar.boundingBox())?.width)
-      .toBeGreaterThan(200);
-    expect(await mainLeft()).toBe(80);
-    await expect(shell).toHaveAttribute("data-sidebar", "collapsed");
-    await page.mouse.move(900, 500);
-    await expect(sidebar).toHaveAttribute("data-peek", "false");
+    await page.waitForTimeout(300);
     await expect(sidebar).toHaveAttribute("data-collapsed", "true");
+    expect((await sidebar.boundingBox())!.width).toBe(80);
+    expect(await mainLeft()).toBe(80);
+    await sidebar.getByRole("link", { name: "Settings" }).focus();
+    await expect(sidebar).toHaveAttribute("data-collapsed", "true");
+    expect((await sidebar.boundingBox())!.width).toBe(80);
+    // The collapse control straddles the divider in either state.
+    const rail = (await sidebar.boundingBox())!;
+    expect(
+      Math.abs(toggle!.x + toggle!.width / 2 - (rail.x + rail.width)),
+    ).toBeLessThanOrEqual(2);
 
-    // A quick pass over the rail doesn't trigger it.
-    await sidebar.getByRole("link", { name: "Settings" }).hover();
-    await page.mouse.move(900, 500);
-    await page.waitForTimeout(250);
-    await expect(sidebar).toHaveAttribute("data-peek", "false");
-
-    // Clicking the toggle while peeking pins it open, and that persists.
+    // Only an explicit toggle expands the rail, and that choice persists.
     await page.getByRole("button", { name: "Expand sidebar" }).click();
     await expect(shell).toHaveAttribute("data-sidebar", "expanded");
     await page.mouse.move(900, 500);

@@ -71,7 +71,10 @@ test("help launcher opens, minimizes with Escape and closes", async ({
 
 test("quick-reply chips are not clipped on hover", async ({ page }) => {
   await page.goto("/");
-  const scroller = page.locator(".bot-demo--inline .chat__chips");
+  await page.getByRole("button", { name: "Open Brix help" }).click();
+  const scroller = page
+    .getByRole("dialog", { name: "Brix help" })
+    .locator(".chat__chips");
   await scroller.scrollIntoViewIfNeeded();
   const chip = scroller.locator(".chip").first();
   await expect(chip).toBeVisible();

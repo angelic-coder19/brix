@@ -106,7 +106,7 @@ test("compact overview and setup strip with real progress", async ({
   expect(h).toBeLessThan(page.viewportSize()!.width > 800 ? 140 : 320);
 
   const strip = page.getByRole("region", { name: "Finish setting up" });
-  await expect(strip).toContainText(/\d of 5 done/);
+  await expect(strip).toContainText(/Setup \d\/5/);
   await expect(
     strip.getByRole("list", { name: "Setup steps" }).getByRole("listitem"),
   ).toHaveCount(5);

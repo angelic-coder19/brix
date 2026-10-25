@@ -52,12 +52,9 @@ export default function Refunds({
       <section className="card refunds-intro">
         <GraduationCap size={26} />
         <div>
-          <h2>Got a refund from school?</h2>
+          <h2>Plan your school refund</h2>
           <p>
-            Leftover aid often includes <strong>borrowed money</strong>. Federal
-            loan money you return within 120 days is cancelled with no interest
-            or fees, and scholarship money spent on rent can be taxable. Brix
-            helps you plan it before it disappears.
+            Set aside essentials, identify borrowed money, and plan what’s left.
           </p>
         </div>
         <button

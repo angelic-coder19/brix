@@ -40,7 +40,7 @@ export default function GiftCards({
           <p>
             {active.length
               ? `${usd(total)} unspent across ${active.length} card${active.length === 1 ? "" : "s"}. Brix reminds you before any expire.`
-              : "Billions in gift card balances go unspent every year. Add yours and Brix reminds you to use them."}
+              : "Keep your balances handy. Get a reminder before they expire."}
           </p>
         </div>
         <button
