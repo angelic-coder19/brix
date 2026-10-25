@@ -32,6 +32,7 @@ import {
   Settings,
   Plus,
   Bell,
+  Hourglass,
   MessageCircle,
   X,
   ShieldCheck,
@@ -63,6 +64,7 @@ import { BrixMark } from "@/components/brand/BrixMark";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { VirtualCard } from "@/components/brand/VirtualCard";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
+import { AppSearch, type SearchResult } from "@/components/shell/AppSearch";
 import {
   AppSidebar,
   useSidebarState,
@@ -225,17 +227,18 @@ function BuddyCard({
               ? "Glad I could help!"
               : "Ask what bills next, or tell me what to cancel.";
   return (
-    <button
-      type="button"
-      className={`card card--muted buddy-card buddy-card--${chat.mood}`}
-      onClick={onOpen}
-      aria-label={`Talk with Brix. ${typeof line === "string" ? line : ""}`}
-    >
-      <span className="buddy-card__bubble" aria-live="polite">
-        {line}
-      </span>
-      <BrixBuddy mood={chat.mood} scale={0.56} decorative />
-    </button>
+    <section className={`card card--accent ask-card ask-card--${chat.mood}`} aria-labelledby="ask-title">
+      <div className="ask-card__head">
+        <BrixMark mood={chat.mood} decorative className="ask-card__mark" />
+        <div>
+          <h2 id="ask-title">Ask Brix</h2>
+          <p aria-live="polite">{line}</p>
+        </div>
+      </div>
+      <button type="button" className="btn btn--block" onClick={onOpen}>
+        Open chat <ArrowUpRight size={17} />
+      </button>
+    </section>
   );
 }
 
@@ -301,6 +304,12 @@ export default function BrixApp({ view }: { view: View }) {
     [],
   );
 
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (!q) return;
+    const t = setTimeout(() => setSearch(q.slice(0, 100)), 0);
+    return () => clearTimeout(t);
+  }, []);
   const refresh = useCallback(async () => {
     try {
       const next = await request<ClientState>("/api/state");
@@ -390,9 +399,40 @@ export default function BrixApp({ view }: { view: View }) {
       c.merchant.toLowerCase().includes(search.trim().toLowerCase()),
   );
   const name = state?.user.displayName || user?.displayName || "";
-  const openCards = (state?.cards ?? []).filter(
-    (c) => c.state === "OPEN",
-  ).length;
+  const upcomingTotal = upcoming.reduce((sum, c) => sum + c.amount, 0);
+  const setupSteps = [
+    { label: "Account", done: !!state },
+    { label: "Your name", done: !!state?.user.displayName },
+    {
+      label: "Bank",
+      done: (state?.charges ?? []).some((c) => c.source === "plaid") || demo,
+    },
+    { label: "First trial", done: (state?.charges ?? []).some((c) => c.kind === "trial") },
+    {
+      label: "Reminders",
+      done: !!(state?.user.whatsappOptIn || state?.user.callOptIn),
+    },
+  ];
+  const setupDone = setupSteps.filter((st) => st.done).length;
+  const setupNext = setupSteps.find((st) => !st.done);
+  const searchPages = useMemo(
+    () => [
+      ...nav.map((n) => ({ href: n.href, label: n.label })),
+      { href: "settings", label: "Settings" },
+      { href: "onboarding", label: "Setup guide" },
+    ],
+    [],
+  );
+  const openResult = (r: SearchResult) => {
+    if (r.type === "page") router.push(r.href);
+    else if (r.type === "charge") {
+      setFilter("all");
+      setSearch(r.charge.merchant);
+      router.push(`/subscriptions?q=${encodeURIComponent(r.charge.merchant)}`);
+    } else if (r.type === "card") router.push(`/cards#card-${r.card.id}`);
+    else router.push("/dashboard#recent-activity");
+  };
+  const openCards = (state?.cards ?? []).filter((c) => c.state === "OPEN").length;
   const navGroups: NavGroup[] = [
     {
       label: "Money",
@@ -470,6 +510,13 @@ export default function BrixApp({ view }: { view: View }) {
                 view.charAt(0).toUpperCase() + view.slice(1)}
             </strong>
           </span>
+          <AppSearch
+            pages={searchPages}
+            charges={state?.charges ?? []}
+            cards={state?.cards ?? []}
+            events={state?.events ?? []}
+            onSelect={openResult}
+          />
           <div className="topbar__actions">
             <span className="badge badge--green read-only">
               <ShieldCheck size={14} /> Read-only & secure
@@ -642,23 +689,30 @@ export default function BrixApp({ view }: { view: View }) {
               {view === "dashboard" && (
                 <>
                   {setupPending && (
-                    <section
-                      className="card setup-strip"
-                      aria-label="Finish setting up"
-                    >
-                      <div>
+                    <section className="card setup-strip" aria-label="Finish setting up">
+                      <div className="setup-strip__text">
                         <strong>Finish setting up Brix</strong>
                         <span>
-                          Name, bank, a first trial and reminders. About two
-                          minutes, and you can skip any step.
+                          {setupDone} of {setupSteps.length} done
+                          {setupNext ? ` · Next: ${setupNext.label.toLowerCase()}` : ""}
                         </span>
                       </div>
+                      <ol className="setup-strip__dots" aria-label="Setup steps">
+                        {setupSteps.map((st) => (
+                          <li key={st.label} data-done={st.done ? "true" : "false"}>
+                            <span className="sr-only">
+                              {st.label}: {st.done ? "done" : "to do"}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
                       <div className="setup-strip__actions">
-                        <Link href="/onboarding" className="btn btn--primary">
-                          Continue setup <ArrowRight size={16} />
+                        <Link href="/onboarding" className="btn btn--primary btn--sm">
+                          Continue setup <ArrowRight size={15} />
                         </Link>
                         <button
-                          className="btn btn--ghost"
+                          className="icon-btn"
+                          aria-label="Dismiss setup"
                           onClick={() => {
                             try {
                               localStorage.setItem(ONBOARDED_KEY, "1");
@@ -666,70 +720,65 @@ export default function BrixApp({ view }: { view: View }) {
                             setSetupPending(false);
                           }}
                         >
-                          Dismiss
+                          <X size={16} />
                         </button>
                       </div>
                     </section>
                   )}
-                  <section className="summary-grid" aria-label="Summary">
-                    <div className="card stat-card">
-                      <div className="stat-card__label">
-                        Monthly recurring <Layers3 size={18} />
-                      </div>
-                      <div className="stat-card__value">
+                  <section className="card summary-row" aria-label="Summary">
+                    <div className="summary-stat summary-stat--lead">
+                      <span className="summary-stat__label">
+                        <Layers3 size={14} aria-hidden /> Monthly recurring
+                      </span>
+                      <span className="summary-stat__value">
                         {money(monthly)}
-                        <small>/ mo</small>
-                      </div>
-                      <p>
+                        <small>/mo</small>
+                      </span>
+                      <span className="summary-stat__sub">
                         Across {subscriptionCount}{" "}
-                        {subscriptionCount === 1
-                          ? "subscription"
-                          : "subscriptions"}
-                        , not counting anything marked to cancel.
-                      </p>
-                      <div className="stat-card__footer">
-                        <span>
-                          {trialCount
-                            ? `${trialCount} free ${trialCount === 1 ? "trial" : "trials"} to keep an eye on`
-                            : "No free trials to keep an eye on"}
-                        </span>
-                        <Link
-                          href="/subscriptions"
-                          className="icon-btn"
-                          aria-label="See all charges"
-                        >
-                          <ArrowUpRight size={19} />
-                        </Link>
-                      </div>
+                        {subscriptionCount === 1 ? "subscription" : "subscriptions"}
+                      </span>
                     </div>
-                    <div className="card card--green stat-card">
-                      <div className="stat-card__label">
-                        Charges you avoided <ShieldCheck size={18} />
-                      </div>
-                      <div className="stat-card__value">{money(saved)}</div>
-                      <p>
-                        Estimated from your actions. Marking to cancel still
-                        needs a visit to the merchant.
-                      </p>
-                      <div className="stat-card__footer">
-                        <span>
-                          {
-                            state.charges.filter(
-                              (c) => c.status === "to_cancel",
-                            ).length
-                          }{" "}
-                          marked to cancel
-                        </span>
-                        <Link
-                          href="/subscriptions"
-                          className="icon-btn"
-                          aria-label="Review charges marked to cancel"
-                        >
-                          <ArrowUpRight size={19} />
-                        </Link>
-                      </div>
+                    <div className="summary-stat">
+                      <span className="summary-stat__label">
+                        <Bell size={14} aria-hidden /> Next 14 days
+                      </span>
+                      <span className="summary-stat__value">
+                        {money(upcomingTotal)}
+                      </span>
+                      <span className="summary-stat__sub">
+                        {upcoming.length}{" "}
+                        {upcoming.length === 1 ? "charge" : "charges"} coming up
+                      </span>
                     </div>
-                    <BuddyCard chat={chat} onOpen={() => setChatOpen(true)} />
+                    <div className="summary-stat">
+                      <span className="summary-stat__label">
+                        <Hourglass size={14} aria-hidden /> Free trials
+                      </span>
+                      <span className="summary-stat__value">{trialCount}</span>
+                      <span className="summary-stat__sub">
+                        {trialCount
+                          ? `${trialCount} free ${trialCount === 1 ? "trial" : "trials"} to keep an eye on`
+                          : "None right now"}
+                      </span>
+                    </div>
+                    <div className="summary-stat summary-stat--good">
+                      <span className="summary-stat__label">
+                        <ShieldCheck size={14} aria-hidden /> Charges avoided
+                      </span>
+                      <span className="summary-stat__value">{money(saved)}</span>
+                      <span className="summary-stat__sub">
+                        {state.charges.filter((c) => c.status === "to_cancel").length}{" "}
+                        marked to cancel
+                      </span>
+                    </div>
+                    <Link
+                      href="/subscriptions"
+                      className="icon-btn summary-row__link"
+                      aria-label="See all charges"
+                    >
+                      <ArrowUpRight size={18} />
+                    </Link>
                   </section>
                   <div className="dash-columns">
                     <section className="card">
@@ -764,24 +813,11 @@ export default function BrixApp({ view }: { view: View }) {
                       </Link>
                     </section>
                     <aside className="right-column">
-                      <div className="card card--accent ask-card">
-                        <MessageCircle size={24} />
-                        <h2>Ask Brix</h2>
-                        <p>
-                          “What’s my next charge?”
-                          <br />
-                          “Remind me before Spotify renews.”
-                        </p>
-                        <button
-                          className="btn btn--block"
-                          onClick={() => setChatOpen(true)}
-                        >
-                          Open chat <ArrowUpRight size={17} />
-                        </button>
-                      </div>
+                      <BuddyCard chat={chat} onOpen={() => setChatOpen(true)} />
                       <MerchantNews request={request} />
                       <section
                         className="card activity"
+                        id="recent-activity"
                         aria-labelledby="activity-title"
                       >
                         <div className="card-head">
@@ -934,7 +970,7 @@ export default function BrixApp({ view }: { view: View }) {
                   <div className="card-list">
                     {state.cards.length ? (
                       state.cards.map((c) => (
-                        <article className="card-item" key={c.id}>
+                        <article className="card-item" key={c.id} id={`card-${c.id}`}>
                           <VirtualCard
                             purpose={c.purpose}
                             last4={c.last4}
