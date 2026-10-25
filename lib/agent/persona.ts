@@ -13,6 +13,29 @@ export type BuddyMood =
   | "concerned"
   | "error";
 
+export const BUDDY_MOODS: readonly BuddyMood[] = [
+  "idle",
+  "listening",
+  "thinking",
+  "talking",
+  "happy",
+  "celebrate",
+  "concerned",
+  "error",
+];
+
+/** How each mood reads to a screen reader; shared by BrixBuddy and BrixMark. */
+export const MOOD_LABEL: Record<BuddyMood, string> = {
+  idle: "relaxed",
+  listening: "listening closely",
+  thinking: "thinking",
+  talking: "talking",
+  happy: "happy",
+  celebrate: "celebrating",
+  concerned: "concerned about an upcoming charge",
+  error: "a little confused",
+};
+
 /** Reactions a user can tap back onto Brix's messages. */
 export const TAPBACKS = ["❤️", "👍", "😂", "😮", "🙏", "👎"] as const;
 export type Tapback = (typeof TAPBACKS)[number];

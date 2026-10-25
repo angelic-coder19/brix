@@ -3,129 +3,117 @@ import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
-  BellRing,
-  CalendarClock,
   CreditCard,
-  Landmark,
   MessageCircle,
-  MousePointerClick,
   PhoneCall,
   Plus,
-  Radar,
-  Scissors,
   ShieldCheck,
-  Snowflake,
-  Sparkles,
-  Globe,
+  Trash2,
 } from "lucide-react";
 import BrixBuddy from "@/components/brix/BrixBuddy";
 import BotDemo from "@/components/landing/BotDemo";
-import Counter from "@/components/landing/Counter";
+import { Browser, Phone } from "@/components/landing/Devices";
 import HeroBuddy from "@/components/landing/HeroBuddy";
-import MobileMenu from "@/components/landing/MobileMenu";
+import HelpLauncher from "@/components/landing/HelpLauncher";
+import HeroNotice from "@/components/landing/HeroNotice";
+import LandingHeader from "@/components/landing/LandingHeader";
+import Marquee from "@/components/landing/Marquee";
 import Reveal from "@/components/landing/Reveal";
 import TrialCalculator from "@/components/landing/TrialCalculator";
-import {
-  BarChart,
-  CardStack,
-  Donut,
-  FloatingChip,
-  LineChart,
-  PhoneMockup,
-} from "@/components/landing/Visuals";
+import { CardStack } from "@/components/landing/Visuals";
+import { BrandMark } from "@/components/ui/MerchantLogo";
+import type { BrandSlug } from "@/lib/brands";
 import "./landing.css";
+import { BrixMark } from "@/components/brand/BrixMark";
 
 const links = [
-  { href: "#features", label: "Features" },
+  { href: "#product", label: "Product" },
   { href: "#how", label: "How it works" },
-  { href: "#demo", label: "Live demo" },
+  { href: "#demo", label: "Try the bot" },
   { href: "#faq", label: "FAQ" },
 ];
 
-const features = [
-  {
-    icon: Radar,
-    title: "Finds what repeats",
-    text: "Link a bank with Plaid (read-only) and Brix spots subscriptions and recurring charges for you.",
-  },
-  {
-    icon: CalendarClock,
-    title: "Trial radar",
-    text: "Add a free trial in seconds. Brix keeps the end date in view so it never quietly turns into a bill.",
-  },
-  {
-    icon: BellRing,
-    title: "Heads-ups that land",
-    text: "Reminders 7 days and 2 days before a charge, in the app or on WhatsApp if you opt in.",
-  },
-  {
-    icon: Scissors,
-    title: "Mark to cancel",
-    text: "Flag a charge and get the merchant’s cancel link. You make the final call on their site.",
-  },
+const tracked: BrandSlug[] = [
+  "spotify",
+  "netflix",
+  "youtube",
+  "icloud",
+  "duolingo",
+  "notion",
+  "applemusic",
+  "max",
+];
+
+const facts = [
+  { n: "7 & 2", unit: "days", text: "before a renewal or trial end, Brix sends a reminder." },
+  { n: "14", unit: "days", text: "of upcoming charges on the overview, sorted by date." },
+  { n: "$0", unit: "", text: "is what Brix can move. Plaid access is read-only." },
+  { n: "1", unit: "yes", text: "from you before any action. No yes, nothing happens." },
+];
+
+const extras = [
   {
     icon: CreditCard,
     title: "One-time cards",
-    text: "Spin up a single-use sandbox card with a hard limit for that next trial you want to try.",
+    text: "Make a single-use card with a hard limit for a trial you want to try. Sandbox only in this build.",
   },
   {
-    icon: MessageCircle,
-    title: "Talk anywhere",
-    text: "Ask on the web, text on WhatsApp, or call. Same buddy, same memory, every channel.",
+    icon: PhoneCall,
+    title: "Call it",
+    text: "Ring Brix and ask what’s due. Card requests by voice also need your 4-digit PIN in the app.",
+  },
+  {
+    icon: Trash2,
+    title: "Leave any time",
+    text: "Disconnect your bank or delete everything Brix stored from Settings. One button each.",
   },
 ];
 
 const steps = [
   {
-    icon: Landmark,
-    title: "Give Brix a look",
-    text: "Connect a bank securely through Plaid. Access is read-only, always.",
+    title: "Link a bank, or don’t",
+    text: "Connect through Plaid with read-only access, or skip it and add trials by hand.",
   },
   {
-    icon: BellRing,
-    title: "Get a heads-up",
-    text: "See the next 14 days at a glance and add trials before they bill.",
+    title: "Brix lists what repeats",
+    text: "Recurring charges show up with their next date and amount. Trials show their end date.",
   },
   {
-    icon: MousePointerClick,
-    title: "Make your call",
-    text: "Set a reminder or mark to cancel. Brix asks for your yes first.",
+    title: "You get a heads-up",
+    text: "7 days and 2 days before each charge, in the app, on WhatsApp or by phone.",
   },
   {
-    icon: PhoneCall,
-    title: "Ask from anywhere",
-    text: "Keep the conversation going on WhatsApp or with a quick call.",
+    title: "Keep it or drop it",
+    text: "Tell Brix to remind you again or mark it to cancel. It asks first, then links you to the merchant’s cancel page.",
   },
 ];
 
 const faqs = [
   {
     q: "Can Brix move my money?",
-    a: "No. Brix connects with read-only access through Plaid. It can read recurring charges, but it can’t pay, transfer, or cancel anything on its own.",
+    a: "No. Brix connects through Plaid with read-only access. It can see recurring charges, but it can’t pay, transfer, or cancel anything by itself.",
   },
   {
     q: "Does Brix cancel subscriptions for me?",
-    a: "Brix flags a charge as “marked to cancel” and gives you the merchant’s cancellation link. You finish the cancellation on the merchant’s site, so nothing happens without you.",
+    a: "It marks the charge as “to cancel” and gives you the merchant’s cancellation page. You finish on the merchant’s site, so nothing is cancelled without you.",
   },
   {
-    q: "Why does Brix ask me to confirm everything?",
-    a: "Every action is saved as a proposal first, then waits for a separate yes from you. Voice requests for cards also need your PIN in the app.",
+    q: "Why does it keep asking me to confirm?",
+    a: "Every action is saved as a proposal and waits for a separate yes. If you send yes twice, it still only runs once. Voice requests for cards also need your PIN.",
   },
   {
     q: "Are the one-time cards real?",
-    a: "They are sandbox cards for this prototype, so they can’t spend real money. They show how a single-use card with a hard limit keeps a trial from surprising you.",
+    a: "Not yet. They’re sandbox cards, so they can’t spend money. They show how a single-use card with a limit keeps a trial from rolling into a bill.",
   },
   {
     q: "How do WhatsApp and phone reminders work?",
-    a: "Verify your phone, join the WhatsApp sandbox, and switch on the channels you want in Settings. You can turn them off any time.",
+    a: "Verify your number, join the WhatsApp sandbox, then switch on the channels you want in Settings. Turn them off whenever you like.",
   },
   {
     q: "Can I delete my data?",
-    a: "Yes. Settings lets you disconnect your bank or delete your Brix data entirely, whenever you want.",
+    a: "Yes. Settings has a button to disconnect your bank and another to delete your Brix data entirely.",
   },
 ];
-
-const builtWith = ["Plaid", "Twilio", "Vapi", "Firebase", "Anthropic", "Next.js"];
 
 export default function Home() {
   return (
@@ -133,294 +121,220 @@ export default function Home() {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <header className="lp-nav">
-        <div className="container lp-nav__inner">
-          <Link href="/" className="wordmark" aria-label="Brix home">
-            <span className="brand-block" />
-            brix<span className="brand-period">.</span>
-          </Link>
-          <nav className="lp-nav__links" aria-label="Main">
-            {links.map((l) => (
-              <a key={l.href} href={l.href}>
-                {l.label}
-              </a>
-            ))}
-          </nav>
-          <div className="lp-nav__actions">
-            <Link href="/dashboard" className="lp-nav__signin">
-              Sign in
-            </Link>
-            <Link
-              href="/dashboard"
-              className="btn btn--dark btn--pill lp-nav__cta"
-              data-buddy-mood="happy"
-            >
-              Try the demo <ArrowUpRight size={16} />
-            </Link>
-            <MobileMenu links={links} />
-          </div>
-        </div>
-      </header>
+      <LandingHeader links={links} />
 
       <main id="main">
         <section className="hero container">
           <div className="hero__copy">
-            <a href="#channels" className="pill-new">
-              <span className="badge badge--solid">New</span>
-              Talk to Brix on WhatsApp or by phone
-              <ArrowRight size={15} />
-            </a>
             <h1>
-              Keep your money.{" "}
-              <span className="serif hero__accent">Lose the surprises.</span>
+              Catch the charge <span className="accent-text hero__accent">before it catches you.</span>
             </h1>
             <p className="hero__lead">
-              Free trials. Forgotten subscriptions. Brix is the friendly money
-              buddy that catches the little charges before they become a big
-              deal, and never moves a cent on its own.
+              Brix tracks your subscriptions and free trials, and reminds you before they bill.
             </p>
             <div className="hero__ctas">
-              <Link
-                href="/dashboard"
-                className="btn btn--primary btn--lg btn--pill"
-                data-buddy-mood="happy"
-              >
-                Try the live demo <ArrowRight size={18} />
+              <Link href="/dashboard" className="btn btn--primary btn--lg" data-buddy-mood="happy">
+                Open the demo <ArrowRight size={18} />
               </Link>
-              <a href="#how" className="btn btn--lg btn--pill">
-                See how it works
+              <a href="#how" className="btn btn--lg btn--ghost hero__how">
+                How it works
               </a>
             </div>
-            <div className="proof">
-              <div className="proof__avatars" aria-hidden="true">
-                <span style={{ background: "#f5e6dd", color: "#a9321d" }}>M</span>
-                <span style={{ background: "#edf1e7", color: "#43705a" }}>J</span>
-                <span style={{ background: "#f3ecd8", color: "#80662e" }}>A</span>
-                <span style={{ background: "#e0e9f1", color: "#40648a" }}>
-                  <Plus size={14} />
-                </span>
-              </div>
-              <p>
-                <strong>Made by students, for students</strong>
-                <br />
-                HackPSU Fall 2026 · FNB Challenge entry
-              </p>
-            </div>
+            <p className="hero__note">
+              <ShieldCheck size={16} /> Read-only bank access. Brix never moves money.
+            </p>
           </div>
           <div className="hero__visual">
-            <div className="hero__orbit" aria-hidden="true" />
-            <PhoneMockup />
+            <Phone
+              src="/screens/dashboard-mobile-393.webp"
+              alt="The Brix overview on a phone: $62.94 a month in recurring charges, with Spotify, Netflix and Adobe coming up"
+              preload
+              sizes="(max-width: 640px) 62vw, 300px"
+              className="hero__phone hero__phone--main"
+            />
+            <Phone
+              src="/screens/chat-confirm-mobile-393.webp"
+              alt="Brix chat asking you to reply yes before it marks Spotify to cancel"
+              sizes="(max-width: 640px) 48vw, 250px"
+              className="hero__phone hero__phone--side"
+            />
+            <HeroNotice />
             <div className="hero__buddy">
               <HeroBuddy />
             </div>
-            <FloatingChip
-              icon="bell"
-              title="Spotify renews in 2 days"
-              sub="$11.99 · tap to set a reminder"
-              className="hero__chip hero__chip--a"
-              mood="concerned"
-            />
-            <FloatingChip
-              icon="check"
-              title="Notion AI trial flagged"
-              sub="Ends Nov 5 · you’re covered"
-              className="hero__chip hero__chip--b"
-              mood="celebrate"
-            />
-            <FloatingChip
-              icon="shield"
-              title="Read-only bank access"
-              className="hero__chip hero__chip--c"
-              mood="happy"
-            />
           </div>
         </section>
 
-        <section className="built container" aria-label="Built with">
-          <span>Built with</span>
-          <ul>
-            {builtWith.map((b) => (
-              <li key={b}>{b}</li>
+        <section className="tracked container" aria-labelledby="tracked-title">
+          <p id="tracked-title">Recognizes the subscriptions you already pay for</p>
+          <Marquee
+            label="Subscriptions Brix recognizes"
+            items={tracked.map((slug) => ({ key: slug, node: <BrandMark slug={slug} size={26} /> }))}
+          />
+        </section>
+
+        <section className="facts container" data-reveal data-reveal-stagger aria-label="How Brix works, in numbers">
+          {facts.map((f) => (
+            <div key={f.text}>
+              <strong>
+                {f.n}
+                {f.unit && <small> {f.unit}</small>}
+              </strong>
+              <p>{f.text}</p>
+            </div>
+          ))}
+        </section>
+
+        <section id="product" className="section container" aria-labelledby="product-title">
+          <div className="section-head section-head--split" data-reveal>
+            <h2 id="product-title">What Brix does, screen by screen.</h2>
+            <p>
+              These are captures of the demo you can open right now. Same sample account, same
+              buttons.
+            </p>
+          </div>
+
+          <article className="row" data-reveal>
+            <div className="row__copy">
+              <span className="row__num">01</span>
+              <h3>Every charge that repeats, in one list</h3>
+              <p>
+                Link a bank and Brix pulls recurring charges from Plaid. Started a trial? Add the
+                name, end date and price in three fields. Each line shows when it bills next and
+                what it costs.
+              </p>
+              <ul className="row__list">
+                <li>Monthly total across subscriptions</li>
+                <li>Trials tagged with their end date</li>
+                <li>Real merchant names, not bank codes</li>
+              </ul>
+            </div>
+            <Browser
+              src="/screens/dashboard-desktop-1680.webp"
+              alt="The Brix overview in a browser, listing a Notion trial ending Oct 28 above Spotify and Netflix renewals"
+              url="usebrix.app/dashboard"
+              className="row__media"
+            />
+          </article>
+
+          <article className="row row--flip" data-reveal>
+            <div className="row__copy">
+              <span className="row__num">02</span>
+              <h3>Cancel by chat, after you say yes</h3>
+              <p>
+                Tap Cancel on a charge or type “cancel Spotify”. Brix saves it as a proposal and
+                waits. Reply yes and it marks the charge, logs it, and hands you the merchant’s
+                cancel link. Reply no and nothing changes.
+              </p>
+              <ul className="row__list">
+                <li>Proposals run once, even if you send yes twice</li>
+                <li>Brix reacts to your messages, and you can react back</li>
+              </ul>
+            </div>
+            <div className="row__media row__phones">
+              <Phone
+                src="/screens/chat-confirm-mobile-393.webp"
+                alt="Brix asks: Mark Spotify ($11.99) to cancel? Reply yes to confirm"
+                sizes="(max-width: 640px) 46vw, 260px"
+              />
+              <Phone
+                src="/screens/chat-cancelled-mobile-393.webp"
+                alt="After replying yes, Brix confirms Spotify is marked to cancel and links the cancellation page"
+                sizes="(max-width: 640px) 46vw, 260px"
+              />
+            </div>
+          </article>
+
+          <article className="row" data-reveal>
+            <div className="row__copy">
+              <span className="row__num">03</span>
+              <h3>Reminders that reach you</h3>
+              <p>
+                A week out, then two days out. Brix posts the reminder in the app, and if you opt
+                in, texts it on WhatsApp or calls you. Answer with “remind me again” or “cancel”.
+              </p>
+            </div>
+            <div className="row__media row__photo">
+              <Image
+                src="/images/paying-at-home.webp"
+                alt="A young woman at home checking her phone with a bank card in her hand"
+                width={1600}
+                height={900}
+                sizes="(max-width: 900px) 100vw, 640px"
+              />
+              <div className="wa-bubble" data-buddy-mood="concerned">
+                <span className="wa-bubble__from">Brix · WhatsApp</span>
+                Heads-up: your Notion trial ends in 2 days. After that it’s $10.00/mo. Keep it or
+                cancel?
+                <time>9:41</time>
+              </div>
+            </div>
+          </article>
+
+          <ul className="extras" data-reveal data-reveal-stagger>
+            {extras.map((e) => (
+              <li key={e.title} className="card card--interactive extra">
+                <span className="extra__icon">
+                  <e.icon size={20} />
+                </span>
+                <h3>{e.title}</h3>
+                <p>{e.text}</p>
+              </li>
             ))}
           </ul>
         </section>
 
-        <section className="stats container" data-reveal aria-label="Brix by the numbers">
-          <div>
-            <strong>
-              <Counter value={0} prefix="$" />
-            </strong>
-            <span>Money Brix can move. Ever.</span>
-          </div>
-          <div>
-            <strong>
-              <Counter value={14} />
-            </strong>
-            <span>Days of look-ahead on every charge</span>
-          </div>
-          <div>
-            <strong>
-              <Counter value={2} />
-            </strong>
-            <span>Heads-ups per charge, at 7 and 2 days out</span>
-          </div>
-          <div>
-            <strong>
-              <Counter value={3} />
-            </strong>
-            <span>Ways to reach Brix: web, WhatsApp, voice</span>
-          </div>
-        </section>
-
-        <section id="features" className="section container" data-reveal>
-          <div className="section-head section-head--center">
-            <span className="eyebrow">What Brix does</span>
-            <h2>Everything you need to stay ahead of the little charges.</h2>
-            <p>
-              No spreadsheets. No financial jargon. Just a friendly heads-up
-              when it matters.
-            </p>
-          </div>
-          <div className="feature-grid">
-            {features.map((f) => (
-              <article className="feature card" key={f.title}>
-                <span className="feature__icon">
-                  <f.icon size={22} />
-                </span>
-                <h3>{f.title}</h3>
-                <p>{f.text}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
         <section className="night" aria-labelledby="night-title">
-          <div className="container">
-            <div className="night__head" data-reveal>
-              <div>
-                <span className="eyebrow night__eyebrow">Safe by design</span>
-                <h2 id="night-title">
-                  Try anything.{" "}
-                  <span className="serif">Get charged for nothing</span> you
-                  didn’t choose.
-                </h2>
-              </div>
+          <div className="container night__grid">
+            <div className="night__copy" data-reveal>
+              <h2 id="night-title">Nothing happens without your yes.</h2>
               <p>
-                Single-use cards with a hard limit, reminders before every
-                renewal, and a buddy that always asks first. Your bank stays
-                read-only the whole time.
+                Brix can read and remind. It can’t pay, transfer or cancel on its own. Here’s what
+                happens when you ask it to drop a charge:
               </p>
+              <ol className="night__flow" data-reveal data-reveal-stagger>
+                <li>
+                  <span>
+                    <b>Brix proposes.</b> “Mark Spotify ($11.99) to cancel?”
+                  </span>
+                </li>
+                <li>
+                  <span>
+                    <b>You reply yes.</b> Anything else, and nothing changes.
+                  </span>
+                </li>
+                <li>
+                  <span>
+                    <b>It’s logged.</b> You finish on Spotify’s own cancel page.
+                  </span>
+                </li>
+              </ol>
             </div>
-            <div className="night__stage" data-reveal>
-              <div className="night__rings" aria-hidden="true" />
-              <div className="night__chips night__chips--left" aria-hidden="true">
-                <span className="action-chip">
-                  <BellRing size={16} /> Remind me
-                </span>
-                <span className="action-chip action-chip--accent">
-                  <Scissors size={16} /> Mark to cancel
-                </span>
-              </div>
-              <CardStack />
-              <div className="night__chips night__chips--right" aria-hidden="true">
-                <span className="action-chip">
-                  <Snowflake size={16} /> Closes after one use
-                </span>
-                <span className="action-chip">
-                  <ShieldCheck size={16} /> $10 hard limit
-                </span>
-              </div>
-            </div>
-            <p className="night__note">Sandbox cards in this prototype. No real money.</p>
-          </div>
-        </section>
-
-        <section className="section container" aria-labelledby="bento-title">
-          <div className="section-head" data-reveal>
-            <span className="eyebrow">At a glance</span>
-            <h2 id="bento-title">Your money, brick by brick.</h2>
-            <p>The dashboard turns scattered charges into a calm, clear picture.</p>
-          </div>
-          <div className="bento" data-reveal>
-            <article className="bento__item bento__item--wide card">
-              <div className="bento__text">
-                <h3>Recurring spend, month by month</h3>
-                <p>See what repeats and watch it shrink as you trim.</p>
-              </div>
-              <BarChart />
-            </article>
-            <article className="bento__item card card--accent">
-              <div className="bento__text">
-                <h3>Charges you avoided</h3>
-                <p>Estimated from what you marked to cancel.</p>
-              </div>
-              <LineChart />
-            </article>
-            <article className="bento__item card card--green">
-              <div className="bento__text">
-                <h3>Subscriptions vs trials</h3>
-                <p>
-                  <span className="legend legend--a" /> Subscriptions{" "}
-                  <span className="legend legend--b" /> Trials
-                </p>
-              </div>
-              <Donut />
-            </article>
-            <article className="bento__item bento__item--photo card">
+            <div className="night__media" data-reveal>
               <Image
-                src="/images/student-cafe.webp"
-                alt="A student smiling at her phone in a sunny campus cafe"
-                fill
-                sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 400px"
-                className="bento__img"
+                src="/images/card-and-phone.webp"
+                alt="A student holding a bank card and a phone"
+                width={1600}
+                height={900}
+                sizes="(max-width: 900px) 100vw, 560px"
+                className="night__photo"
               />
-              <div className="bento__caption">
-                <Sparkles size={16} /> “Spotify renews Friday. Want a reminder?”
-              </div>
-            </article>
-            <article className="bento__item card bento__upcoming">
-              <h3>This week</h3>
-              <ul>
-                <li>
-                  <span className="merchant-icon" data-tone="1">S</span>
-                  Spotify <b>$11.99</b>
-                </li>
-                <li>
-                  <span className="merchant-icon" data-tone="0">N</span>
-                  Netflix <b>$15.49</b>
-                </li>
-                <li>
-                  <span className="merchant-icon" data-tone="5">N</span>
-                  Notion AI trial <b>$10.00</b>
-                </li>
-              </ul>
-            </article>
+              <CardStack />
+            </div>
           </div>
-          <p className="sample-note">Charts and amounts above are sample data.</p>
         </section>
 
         <section id="demo" className="section demo" aria-labelledby="demo-title">
           <div className="container demo__grid">
             <div className="demo__copy" data-reveal>
-              <span className="eyebrow">Live demo</span>
-              <h2 id="demo-title">Meet your Brix. It reacts like a real buddy.</h2>
+              <span className="eyebrow">Try the bot</span>
+              <h2 id="demo-title">Talk to Brix right here.</h2>
               <p>
-                Brix listens while you type, thinks while it checks your
-                charges, and cheers when you dodge one. React to its messages
-                with a tapback and it reacts right back.
+                This preview runs on sample data. Ask what’s coming up, or tell it to cancel
+                something. Watch its face: it listens while you type, thinks while it checks, and
+                cheers when you skip a charge.
               </p>
-              <ul className="ticks">
-                <li>
-                  <ShieldCheck size={18} /> Always asks before acting
-                </li>
-                <li>
-                  <BellRing size={18} /> Gets concerned when a charge is close
-                </li>
-                <li>
-                  <Sparkles size={18} /> Celebrates every charge you skip
-                </li>
-              </ul>
-              <Link href="/dashboard" className="btn btn--primary btn--pill">
+              <Link href="/dashboard" className="btn btn--primary">
                 Open the full demo <ArrowRight size={17} />
               </Link>
             </div>
@@ -431,13 +345,9 @@ export default function Home() {
         </section>
 
         <section className="section container calc-section" aria-labelledby="calc-title">
-          <div className="section-head" data-reveal>
-            <span className="eyebrow">Do the math</span>
-            <h2 id="calc-title">What do forgotten free trials really cost?</h2>
-            <p>
-              Slide to match your habits. Small charges add up faster than you
-              think.
-            </p>
+          <div className="section-head section-head--split" data-reveal>
+            <h2 id="calc-title">What do forgotten trials cost you?</h2>
+            <p>Move the sliders to match your semester.</p>
           </div>
           <div data-reveal>
             <TrialCalculator />
@@ -447,33 +357,23 @@ export default function Home() {
         <section id="how" className="section container how" aria-labelledby="how-title">
           <div className="how__media" data-reveal>
             <Image
-              src="/images/desk-flatlay.webp"
-              alt="A tidy desk with a laptop, a planner, and a phone showing a reminder"
-              width={1152}
-              height={864}
+              src="/images/laptop-window.webp"
+              alt="Someone typing on a laptop at a wooden desk by a window"
+              width={1600}
+              height={1067}
               sizes="(max-width: 900px) 100vw, 520px"
               className="how__img"
-            />
-            <FloatingChip
-              icon="bell"
-              title="Heads-up: Adobe in 7 days"
-              sub="Sent in the app"
-              className="how__chip"
             />
           </div>
           <div data-reveal>
             <span className="eyebrow">How it works</span>
-            <h2 id="how-title">
-              A little more aware. <span className="serif">A lot more in control.</span>
-            </h2>
-            <ol className="steps">
+            <h2 id="how-title">Four steps, about two minutes.</h2>
+            <ol className="steps" data-reveal data-reveal-stagger>
               {steps.map((s, i) => (
                 <li key={s.title}>
-                  <span className="steps__num">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="steps__num">{i + 1}</span>
                   <div>
-                    <h3>
-                      <s.icon size={18} /> {s.title}
-                    </h3>
+                    <h3>{s.title}</h3>
                     <p>{s.text}</p>
                   </div>
                 </li>
@@ -482,48 +382,50 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="channels" className="section container channels" aria-labelledby="channels-title">
+        <section id="channels" className="section container channels channels--flip" aria-labelledby="channels-title">
           <div className="channels__photo" data-reveal>
             <Image
-              src="/images/campus-friends.webp"
-              alt="Three friends laughing as they walk across an autumn campus"
+              src="/images/friends-cafe.webp"
+              alt="Four friends at a cafe table laughing at something on a phone"
               fill
-              sizes="(max-width: 900px) 100vw, 1200px"
+              sizes="(max-width: 1240px) 100vw, 1200px"
               className="channels__img"
             />
-            <div className="channels__overlay">
-              <span className="eyebrow night__eyebrow">Made for your life</span>
-              <h2 id="channels-title">Same buddy. Wherever you are.</h2>
-            </div>
           </div>
-          <div className="channels__grid" data-reveal>
-            <article className="card card--pad">
-              <Globe size={22} />
-              <h3>On the web</h3>
-              <p>“What’s coming up this week?”</p>
-            </article>
-            <article className="card card--pad">
-              <MessageCircle size={22} />
-              <h3>On WhatsApp</h3>
-              <p>“Remind me before my trial ends.”</p>
-            </article>
-            <article className="card card--pad">
-              <PhoneCall size={22} />
-              <h3>On a call</h3>
-              <p>“Mark Netflix to cancel.”</p>
-            </article>
+          <div className="channels__body" data-reveal>
+            <h2 id="channels-title">Same Brix in every channel.</h2>
+            <dl className="channels__list">
+              <div>
+                <dt>
+                  <MessageCircle size={18} /> Web
+                </dt>
+                <dd>“What’s coming up this week?”</dd>
+              </div>
+              <div>
+                <dt>
+                  <BrandMark slug="whatsapp" size={17} /> WhatsApp
+                </dt>
+                <dd>“Remind me before my trial ends.”</dd>
+              </div>
+              <div>
+                <dt>
+                  <PhoneCall size={18} /> Phone
+                </dt>
+                <dd>“Mark Netflix to cancel.”</dd>
+              </div>
+            </dl>
           </div>
         </section>
 
         <section id="faq" className="section container faq" aria-labelledby="faq-title">
           <div className="section-head" data-reveal>
-            <span className="eyebrow">FAQ</span>
-            <h2 id="faq-title">Good questions, honest answers.</h2>
+            <h2 id="faq-title">Questions</h2>
             <p>
-              Still curious? <Link href="/dashboard" className="text-link">Try the demo</Link> and ask Brix yourself.
+              Anything else? <Link href="/dashboard" className="text-link">Open the demo</Link> and
+              ask Brix.
             </p>
           </div>
-          <div className="faq__list" data-reveal>
+          <div className="faq__list" data-reveal data-reveal-stagger>
             {faqs.map((f, i) => (
               <details key={f.q} name="faq" open={i === 0}>
                 <summary>
@@ -538,25 +440,22 @@ export default function Home() {
 
         <section className="container" aria-labelledby="cta-title">
           <div className="final-cta" data-reveal>
-            <div className="final-cta__buddy" aria-hidden="true">
-              <BrixBuddy mood="happy" scale={0.55} decorative />
-            </div>
-            <div className="final-cta__buddy final-cta__buddy--left" aria-hidden="true">
-              <BrixBuddy mood="listening" scale={0.42} decorative follow={false} />
-            </div>
             <div className="final-cta__inner">
               <h2 id="cta-title">
-                Ready to meet <span className="serif">your Brix?</span>
+                Find out what you’re paying for <span className="accent-text">in two minutes.</span>
               </h2>
-              <p>Explore the sandbox with sample charges. No sign-up, no real money.</p>
+              <p>The demo opens with a sample account. No sign-up, no card, no real money.</p>
               <div className="hero__ctas">
-                <Link href="/dashboard" className="btn btn--dark btn--lg btn--pill">
-                  Try the live demo <ArrowRight size={18} />
+                <Link href="/dashboard" className="btn btn--primary btn--lg">
+                  Open the demo <ArrowRight size={18} />
                 </Link>
-                <a href="#features" className="btn btn--lg btn--pill">
-                  Explore features
+                <a href="#product" className="final-cta__link">
+                  See the product <ArrowUpRight size={16} />
                 </a>
               </div>
+            </div>
+            <div className="final-cta__buddy" aria-hidden="true">
+              <BrixBuddy mood="happy" scale={0.62} decorative />
             </div>
           </div>
         </section>
@@ -566,13 +465,10 @@ export default function Home() {
         <div className="container lp-footer__grid">
           <div className="lp-footer__brand">
             <Link href="/" className="wordmark">
-              <span className="brand-block" />
+              <BrixMark className="brand-mark" />
               brix<span className="brand-period">.</span>
             </Link>
-            <p>Your money, brick by brick. A friendly assistant for college students.</p>
-            <span className="badge badge--green">
-              <ShieldCheck size={14} /> Read-only. Never moves money.
-            </span>
+            <p>Tracks subscriptions and free trials for college students. Never moves money.</p>
           </div>
           <nav aria-label="Product">
             <h3>Product</h3>
@@ -583,24 +479,31 @@ export default function Home() {
           </nav>
           <nav aria-label="Learn">
             <h3>Learn</h3>
-            <a href="#features">Features</a>
+            <a href="#product">Product</a>
             <a href="#how">How it works</a>
-            <a href="#demo">Live demo</a>
+            <a href="#demo">Try the bot</a>
             <a href="#faq">FAQ</a>
             <Link href="/developers">Developer API</Link>
           </nav>
           <div>
             <h3>Project</h3>
-            <p>Made at HackPSU Fall 2026 for the FNB Challenge.</p>
-            <p>Built with {builtWith.join(", ")}.</p>
+            <p>Built at HackPSU Fall 2026 for the FNB Challenge.</p>
+            <p>Plaid, Twilio, Vapi, Firebase and Anthropic under the hood.</p>
           </div>
         </div>
         <div className="container lp-footer__bottom">
-          <span>© 2026 Brix. Not a bank. Brix never moves your money.</span>
-          <span>Sample data on this page is for illustration only.</span>
+          <span>© 2026 Brix. Not a bank.</span>
+          <span>
+            Photos from{" "}
+            <a href="https://unsplash.com" rel="noreferrer" target="_blank">
+              Unsplash
+            </a>{" "}
+            (Vitaly Gariev, Christin Hume). Logos belong to their owners.
+          </span>
         </div>
       </footer>
       <Reveal />
+      <HelpLauncher />
     </div>
   );
 }

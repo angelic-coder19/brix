@@ -58,7 +58,7 @@
   /* Type */
   --font-sans: var(--font-figtree), "Figtree", system-ui, -apple-system,
     "Segoe UI", Arial, sans-serif;
-  --font-serif: var(--font-instrument), "Instrument Serif", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
   --text-xs: 12px;
   --text-sm: 13px;
   --text-base: 15px;
@@ -76,6 +76,8 @@
   --shadow-sm: 0 1px 2px #3730240f;
   --shadow-md: 0 8px 30px #3730240f;
   --shadow-lg: 0 24px 70px #3730241f;
+  --shadow-card: 0 1px 0 #ffffffb3 inset, 0 1px 2px #3730240d, 0 2px 8px -4px #3730241a;
+  --shadow-card-hover: 0 1px 0 #ffffffb3 inset, 0 2px 4px #37302412, 0 14px 30px -14px #37302433;
   --shadow-brick: 0 3px 0 var(--color-line-strong);
   --shadow-brick-accent: 0 3px 0 #96341f;
 
@@ -206,11 +208,9 @@ p {
 .skip-link:focus {
   top: var(--space-4);
 }
-.serif {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.02em;
+/* Accent phrase inside a heading: same family, set apart by color only. */
+.accent-text {
+  color: var(--color-accent-ink);
 }
 .muted {
   color: var(--color-muted);
@@ -238,16 +238,78 @@ p {
 .brand-period {
   color: var(--color-accent);
 }
-.brand-block {
+/* The Brix mark (components/brand/BrixMark.tsx), sized to the wordmark text */
+.brand-mark {
   display: inline-block;
-  width: 0.7em;
-  height: 0.64em;
-  background: var(--color-accent);
-  border-radius: 0.18em;
-  box-shadow: inset -0.1em -0.1em 0 var(--color-accent-strong);
-  transform: rotate(-9deg);
-  margin-right: 0.28em;
+  width: 1.02em;
+  height: 0.94em;
+  margin-right: 0.2em;
   flex-shrink: 0;
+  vertical-align: -0.12em;
+}
+
+/* Live mark (chat launchers): small, calm motions per mood */
+.brix-mark__body,
+.brix-mark__eyes,
+.brix-mark__mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.brix-mark--idle .brix-mark__eyes,
+.brix-mark--concerned .brix-mark__eyes {
+  animation: mark-blink 5s infinite;
+}
+.brix-mark--listening .brix-mark__body {
+  animation: mark-lean 1.6s var(--ease-out) infinite alternate;
+}
+.brix-mark--thinking .brix-mark__eyes {
+  animation: mark-ponder 1.8s ease-in-out infinite alternate;
+}
+.brix-mark--talking .brix-mark__mouth {
+  animation: mark-talk 0.32s ease-in-out infinite alternate;
+}
+.brix-mark--happy .brix-mark__body {
+  animation: mark-nod 0.9s var(--ease-out) 2;
+}
+.brix-mark--celebrate .brix-mark__body {
+  animation: mark-hop 0.7s var(--ease-out) infinite;
+}
+.brix-mark--error .brix-mark__body {
+  animation: mark-shake 0.45s ease-in-out 2;
+}
+@keyframes mark-blink {
+  0%, 92%, 100% { transform: none; }
+  95% { transform: scaleY(0.1); }
+}
+@keyframes mark-lean {
+  to { transform: rotate(4deg); }
+}
+@keyframes mark-ponder {
+  from { transform: translateX(-1.5px); }
+  to { transform: translateX(1px) translateY(-0.5px); }
+}
+@keyframes mark-talk {
+  from { transform: scaleY(0.45); }
+  to { transform: scaleY(1); }
+}
+@keyframes mark-nod {
+  50% { transform: translateY(1.5px); }
+}
+@keyframes mark-hop {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-4px) rotate(-4deg); }
+  70% { transform: translateY(0) scaleY(0.94); }
+}
+@keyframes mark-shake {
+  25% { transform: translateX(-1.5px); }
+  75% { transform: translateX(1.5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brix-mark__body,
+  .brix-mark__eyes,
+  .brix-mark__mouth {
+    animation: none !important;
+  }
 }
 
 /* ---------- Eyebrow & badges ---------- */
@@ -255,19 +317,13 @@ p {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  letter-spacing: 0;
   color: var(--color-accent-ink);
 }
 .eyebrow::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 2px;
-  background: currentColor;
-  transform: rotate(-9deg);
+  content: none;
 }
 .eyebrow--plain::before {
   display: none;
@@ -351,15 +407,22 @@ p {
   transition:
     transform 0.15s var(--ease-out),
     box-shadow 0.15s var(--ease-out),
-    background-color 0.15s;
+    background-color 0.15s,
+    border-color 0.15s;
 }
 .btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 0 var(--btn-depth);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 var(--btn-depth);
+  background: color-mix(in srgb, var(--btn-bg) 92%, var(--btn-fg));
 }
 .btn:active:not(:disabled) {
   transform: translateY(2px);
   box-shadow: 0 1px 0 var(--btn-depth);
+  transition-duration: 0.05s;
+}
+.btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
 }
 .btn--primary {
   --btn-bg: var(--color-accent);
@@ -415,6 +478,9 @@ p {
   background: var(--color-surface-2);
   color: var(--color-accent-ink);
 }
+.icon-btn:active {
+  background: var(--color-surface-3);
+}
 .icon-btn--outline {
   border: 1px solid var(--color-line);
   background: var(--color-surface);
@@ -438,6 +504,19 @@ p {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+/* Cards that are links or buttons get a real hover: border darkens, shadow grows. */
+.card--interactive {
+  transition:
+    border-color 0.18s var(--ease-out),
+    box-shadow 0.18s var(--ease-out),
+    transform 0.18s var(--ease-out);
+}
+.card--interactive:hover {
+  border-color: var(--color-line-strong);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
 }
 .card--pad {
   padding: var(--space-6);
@@ -653,23 +732,10 @@ input[type="range"] {
   flex-direction: column;
   padding: var(--space-6);
   border-radius: var(--radius-xl);
-  background:
-    radial-gradient(120% 90% at 100% 0%, #c8462a55 0%, transparent 55%),
-    linear-gradient(145deg, #34342b, #292920);
+  background: linear-gradient(160deg, #34342b, #24241c);
   color: var(--color-night-text);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 1px 0 #ffffff14 inset, 0 18px 40px #1a1a1240;
   overflow: hidden;
-}
-.virtual-card::after {
-  content: "";
-  position: absolute;
-  right: -40px;
-  bottom: -60px;
-  width: 180px;
-  height: 180px;
-  border-radius: 40px;
-  background: #c8462a33;
-  transform: rotate(-9deg);
 }
 .virtual-card__top {
   display: flex;
@@ -723,5 +789,32 @@ input[type="range"] {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+}
+
+/* Merchant tiles with real brand marks */
+.merchant-logo {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  font-weight: 750;
+  line-height: 1;
+}
+.merchant-logo--initial {
+  border-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .card--interactive {
+    transition: none;
+  }
+  .btn:hover:not(:disabled),
+  .btn:active:not(:disabled),
+  .card--interactive:hover {
+    transform: none;
   }
 }

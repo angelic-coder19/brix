@@ -61,7 +61,7 @@ function respond(
     const charge = SAMPLE.find((c) => c.merchant === pending.merchant)!;
     if (pending.kind === "cancel")
       return {
-        reply: `${charge.merchant} is marked to cancel. 🎉 Finish on their site and you'll skip ${"$" + charge.amount.toFixed(2)} this month.`,
+        reply: `${charge.merchant} is marked to cancel. Finish on their site and you'll skip ${"$" + charge.amount.toFixed(2)} this month.`,
         outcome: "confirmed",
         action: "mark_to_cancel",
         mood: "celebrate",
@@ -141,7 +141,16 @@ function respond(
   };
 }
 
-export default function BotDemo() {
+export default function BotDemo({
+  variant = "inline",
+  label = "Brix chat preview with sample data",
+  onMoodChange,
+}: {
+  variant?: "inline" | "panel";
+  /** Called whenever Brix's mood changes (the help launcher mirrors it). */
+  onMoodChange?: (mood: BuddyMood) => void;
+  label?: string;
+} = {}) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -154,6 +163,9 @@ export default function BotDemo() {
   const id = useRef(0);
   const list = useRef<HTMLDivElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    onMoodChange?.(mood);
+  }, [mood, onMoodChange]);
   useEffect(() => {
     const pending = timers.current;
     return () => pending.forEach(clearTimeout);
@@ -215,13 +227,15 @@ export default function BotDemo() {
     : ["What's coming up?", "Mark Netflix to cancel", "Remind me about Spotify", "How much have I saved?"];
 
   return (
-    <div className="bot-demo">
-      <div className="bot-demo__stage" aria-hidden="true">
-        <BrixBuddy mood={mood} scale={0.62} decorative />
-      </div>
+    <div className={`bot-demo bot-demo--${variant}`}>
+      {variant === "inline" && (
+        <div className="bot-demo__stage" aria-hidden="true">
+          <BrixBuddy mood={mood} scale={0.62} decorative />
+        </div>
+      )}
       <section
-        className={`chat chat--inline chat--${mood}`}
-        aria-label="Brix chat preview with sample data"
+        className={`chat chat--inline chat--${variant} chat--${mood}`}
+        aria-label={label}
       >
         <header className="chat__header">
           <span className="chat__avatar">

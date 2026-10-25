@@ -11,6 +11,7 @@ test("trial and cancellation work through the dashboard with explicit confirmati
 }) => {
   await page.goto("/dashboard");
   await expect(page.getByText("Spotify", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Across 6 subscriptions/)).toBeVisible();
   await page
     .getByRole("button", { name: "Add a free trial", exact: true })
     .click();
@@ -42,6 +43,11 @@ test("trial and cancellation work through the dashboard with explicit confirmati
   expect(
     state.events.filter((e: { type: string }) => e.type === "marked_cancel"),
   ).toHaveLength(1);
+  // The summary drops the cancelled charge from both the count and the total.
+  await page.keyboard.press("Escape");
+  await expect(page.getByText(/Across 5 subscriptions/)).toBeVisible();
+  await expect(page.getByText("$50.95")).toBeVisible();
+  await expect(page.getByText(/1 free trial to keep an eye on/)).toBeVisible();
 });
 
 test("mobile landing and dashboard fit the viewport", async ({ page }) => {
