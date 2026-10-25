@@ -55,6 +55,7 @@ import {
 import type { Charge } from "@/lib/types";
 import { summarizeCharges } from "@/lib/summary";
 import "./app.css";
+import { BrixMark } from "@/components/brand/BrixMark";
 
 export type View =
   | "dashboard"
@@ -364,7 +365,7 @@ export default function BrixApp({ view }: { view: View }) {
       </a>
       <aside className="sidebar" aria-label="Brix navigation">
         <Link href="/" className="wordmark">
-          <span className="brand-block" />
+          <BrixMark className="brand-mark" />
           brix<span className="brand-period">.</span>
         </Link>
         <div className="sidebar-caption">Subscriptions &amp; trials</div>
@@ -422,7 +423,7 @@ export default function BrixApp({ view }: { view: View }) {
       <div className="app-main">
         <header className="topbar">
           <Link href="/" className="wordmark wordmark--sm topbar__brand">
-            <span className="brand-block" />
+            <BrixMark className="brand-mark" />
             brix<span className="brand-period">.</span>
           </Link>
           <span className="topbar__crumbs">
@@ -1046,7 +1047,7 @@ export default function BrixApp({ view }: { view: View }) {
           aria-label="Ask Brix"
         >
           <span className="chat-launcher__face">
-            <BrixBuddy mood={chat.mood} scale={0.17} decorative follow={false} />
+            <BrixMark className="chat-launcher__mark" />
           </span>
           <span className="chat-launcher__label">Ask Brix</span>
           {chat.mood === "concerned" && <span className="chat-launcher__dot" />}

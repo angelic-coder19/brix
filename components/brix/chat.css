@@ -258,7 +258,9 @@
   display: flex;
   gap: var(--space-2);
   overflow-x: auto;
-  padding: 0 var(--space-4) var(--space-3);
+  /* Room above and below so hover/focus rings are never clipped by the scroller. */
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  scroll-padding-inline: var(--space-4);
   scrollbar-width: none;
 }
 .chip {
@@ -273,12 +275,19 @@
   transition:
     border-color 0.15s,
     color 0.15s,
-    transform 0.15s;
+    background-color 0.15s;
 }
 .chip:hover {
   border-color: var(--color-accent);
+  background: var(--color-accent-soft);
   color: var(--color-accent-ink);
-  transform: translateY(-1px);
+}
+.chip:active {
+  background: #efd5c7;
+}
+.chip:focus-visible {
+  outline: 2px solid var(--color-accent-strong);
+  outline-offset: -2px;
 }
 .chat__composer {
   display: flex;
@@ -368,7 +377,28 @@
   transition: transform 0.2s var(--ease-spring);
 }
 .chat-launcher:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px -12px #29292066;
+}
+.chat-launcher:active {
+  transform: translateY(1px);
+}
+.chat-launcher:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+@keyframes chat-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chat,
+  .chat-launcher,
+  .chat-launcher__dot {
+    animation: none;
+    transition: none;
+  }
 }
 .chat-launcher__face {
   display: grid;
@@ -379,8 +409,9 @@
   background: var(--color-accent-soft);
   overflow: hidden;
 }
-.chat-launcher__face .buddy {
-  margin: 6px 0 0 2px;
+.chat-launcher__mark {
+  width: 32px;
+  height: 30px;
 }
 .chat-launcher__dot {
   width: 9px;
@@ -399,19 +430,29 @@
   }
 }
 @media (max-width: 700px) {
+  /* Bottom sheet on phones */
   .chat {
-    right: 12px;
-    left: 12px;
+    right: 0;
+    left: 0;
     width: auto;
     max-width: none;
-    bottom: 84px;
-    height: calc(100dvh - 110px);
+    bottom: 0;
+    height: min(86dvh, 720px);
+    max-height: none;
+    z-index: 60;
+    border-bottom: 0;
+    border-radius: 20px 20px 0 0;
+    animation: chat-sheet-in 0.3s var(--ease-out);
   }
   .chat--inline {
     left: auto;
     right: auto;
     bottom: auto;
+    z-index: auto;
     height: 500px;
+    border-bottom: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-xl);
+    animation: none;
   }
   .chat-launcher {
     right: var(--space-4);

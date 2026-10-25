@@ -141,7 +141,13 @@ function respond(
   };
 }
 
-export default function BotDemo() {
+export default function BotDemo({
+  variant = "inline",
+  label = "Brix chat preview with sample data",
+}: {
+  variant?: "inline" | "panel";
+  label?: string;
+} = {}) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -215,13 +221,15 @@ export default function BotDemo() {
     : ["What's coming up?", "Mark Netflix to cancel", "Remind me about Spotify", "How much have I saved?"];
 
   return (
-    <div className="bot-demo">
-      <div className="bot-demo__stage" aria-hidden="true">
-        <BrixBuddy mood={mood} scale={0.62} decorative />
-      </div>
+    <div className={`bot-demo bot-demo--${variant}`}>
+      {variant === "inline" && (
+        <div className="bot-demo__stage" aria-hidden="true">
+          <BrixBuddy mood={mood} scale={0.62} decorative />
+        </div>
+      )}
       <section
-        className={`chat chat--inline chat--${mood}`}
-        aria-label="Brix chat preview with sample data"
+        className={`chat chat--inline chat--${variant} chat--${mood}`}
+        aria-label={label}
       >
         <header className="chat__header">
           <span className="chat__avatar">

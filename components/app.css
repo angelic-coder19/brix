@@ -516,7 +516,7 @@
   padding: var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--color-surface-2);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
 }
 .connected {
   display: flex;
@@ -820,4 +820,53 @@
   .skeleton {
     animation: none;
   }
+}
+
+/* ---------- Card polish ---------- */
+.stat-card__value {
+  font-variant-numeric: tabular-nums;
+}
+.card-head {
+  border-bottom: 1px solid var(--color-line);
+}
+.card-head + .charge-row {
+  border-top: 0;
+}
+.charge-row {
+  transition: background-color 0.15s;
+}
+.charge-row:hover {
+  background: color-mix(in srgb, var(--color-surface-2) 55%, transparent);
+}
+.charge-row:hover .merchant-logo {
+  border-color: var(--color-line-strong);
+}
+.buddy-card {
+  box-shadow: none;
+  transition:
+    border-color 0.18s var(--ease-out),
+    background-color 0.18s;
+}
+.buddy-card:hover {
+  background: var(--color-surface-3);
+}
+.buddy-card:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+.card-foot-link {
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.card-foot-link:hover {
+  background: var(--color-surface-2);
+  color: var(--color-accent-ink);
+}
+.card > .charge-row:first-child {
+  border-top: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.card > .charge-row:last-child {
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }

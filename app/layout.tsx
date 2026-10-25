@@ -1,17 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree, Instrument_Serif } from "next/font/google";
+import { Figtree } from "next/font/google";
 import "./globals.css";
 
 const figtree = Figtree({
   subsets: ["latin"],
   variable: "--font-figtree",
-  display: "swap",
-});
-const instrument = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  style: "italic",
-  variable: "--font-instrument",
   display: "swap",
 });
 
@@ -65,7 +58,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${figtree.variable} ${instrument.variable}`}>
+    <html lang="en" className={figtree.variable}>
       <body>{children}</body>
     </html>
   );

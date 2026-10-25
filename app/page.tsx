@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   CreditCard,
-  Landmark,
   MessageCircle,
   PhoneCall,
   Plus,
@@ -15,13 +14,17 @@ import BrixBuddy from "@/components/brix/BrixBuddy";
 import BotDemo from "@/components/landing/BotDemo";
 import { Browser, Phone } from "@/components/landing/Devices";
 import HeroBuddy from "@/components/landing/HeroBuddy";
-import MobileMenu from "@/components/landing/MobileMenu";
+import HelpLauncher from "@/components/landing/HelpLauncher";
+import HeroNotice from "@/components/landing/HeroNotice";
+import LandingHeader from "@/components/landing/LandingHeader";
+import Marquee from "@/components/landing/Marquee";
 import Reveal from "@/components/landing/Reveal";
 import TrialCalculator from "@/components/landing/TrialCalculator";
 import { CardStack } from "@/components/landing/Visuals";
 import { BrandMark } from "@/components/ui/MerchantLogo";
 import type { BrandSlug } from "@/lib/brands";
 import "./landing.css";
+import { BrixMark } from "@/components/brand/BrixMark";
 
 const links = [
   { href: "#product", label: "Product" },
@@ -118,85 +121,44 @@ export default function Home() {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <header className="lp-nav">
-        <div className="container lp-nav__inner">
-          <Link href="/" className="wordmark" aria-label="Brix home">
-            <span className="brand-block" />
-            brix<span className="brand-period">.</span>
-          </Link>
-          <nav className="lp-nav__links" aria-label="Main">
-            {links.map((l) => (
-              <a key={l.href} href={l.href}>
-                {l.label}
-              </a>
-            ))}
-          </nav>
-          <div className="lp-nav__actions">
-            <Link href="/dashboard" className="lp-nav__signin">
-              Sign in
-            </Link>
-            <Link href="/dashboard" className="btn btn--dark lp-nav__cta" data-buddy-mood="happy">
-              Open the demo
-            </Link>
-            <MobileMenu links={links} />
-          </div>
-        </div>
-      </header>
+      <LandingHeader links={links} />
 
       <main id="main">
         <section className="hero container">
           <div className="hero__copy">
-            <p className="hero__kicker">Subscription and free-trial tracker for students</p>
             <h1>
-              Catch the charge <span className="serif hero__accent">before it catches you.</span>
+              Catch the charge <span className="accent-text hero__accent">before it catches you.</span>
             </h1>
             <p className="hero__lead">
-              Brix finds the recurring charges on your bank account, keeps every free-trial end
-              date in view, and reminds you a week and two days before anything bills. Want out?
-              Tell the Brix bot. It asks for a yes, then sends you to the cancel page.
+              Brix tracks your subscriptions and free trials, and reminds you before they bill.
             </p>
             <div className="hero__ctas">
               <Link href="/dashboard" className="btn btn--primary btn--lg" data-buddy-mood="happy">
                 Open the demo <ArrowRight size={18} />
               </Link>
-              <a href="#how" className="text-link hero__how">
+              <a href="#how" className="btn btn--lg btn--ghost hero__how">
                 How it works
               </a>
             </div>
-            <ul className="hero__facts">
-              <li>
-                <ShieldCheck size={16} /> Read-only bank access via Plaid
-              </li>
-              <li>
-                <MessageCircle size={16} /> Reminders in the app, WhatsApp or by phone
-              </li>
-              <li>
-                <Landmark size={16} /> Demo uses sample data, no sign-up
-              </li>
-            </ul>
+            <p className="hero__note">
+              <ShieldCheck size={16} /> Read-only bank access. Brix never moves money.
+            </p>
           </div>
           <div className="hero__visual">
             <Phone
-              src="/screens/dashboard-mobile.webp"
-              alt="The Brix overview on a phone: $62.94 a month in recurring charges, and Spotify, Netflix and Adobe coming up"
+              src="/screens/dashboard-mobile-393.webp"
+              alt="The Brix overview on a phone: $62.94 a month in recurring charges, with Spotify, Netflix and Adobe coming up"
               preload
-              sizes="(max-width: 640px) 64vw, 300px"
+              sizes="(max-width: 640px) 62vw, 300px"
               className="hero__phone hero__phone--main"
             />
             <Phone
-              src="/screens/chat-confirm-mobile.webp"
-              alt="Chat with the Brix bot asking you to reply yes before it marks Spotify to cancel"
-              sizes="(max-width: 640px) 50vw, 250px"
+              src="/screens/chat-confirm-mobile-393.webp"
+              alt="Brix chat asking you to reply yes before it marks Spotify to cancel"
+              sizes="(max-width: 640px) 48vw, 250px"
               className="hero__phone hero__phone--side"
             />
-            <div className="hero__notice" data-buddy-mood="concerned">
-              <span className="hero__notice-app">
-                <span className="brand-block" /> Brix
-                <time>now</time>
-              </span>
-              <strong>Spotify renews Friday</strong>
-              <span>$11.99 from checking. Reply “remind” or “cancel”.</span>
-            </div>
+            <HeroNotice />
             <div className="hero__buddy">
               <HeroBuddy />
             </div>
@@ -205,16 +167,13 @@ export default function Home() {
 
         <section className="tracked container" aria-labelledby="tracked-title">
           <p id="tracked-title">Recognizes the subscriptions you already pay for</p>
-          <ul>
-            {tracked.map((slug) => (
-              <li key={slug}>
-                <BrandMark slug={slug} size={26} />
-              </li>
-            ))}
-          </ul>
+          <Marquee
+            label="Subscriptions Brix recognizes"
+            items={tracked.map((slug) => ({ key: slug, node: <BrandMark slug={slug} size={26} /> }))}
+          />
         </section>
 
-        <section className="facts container" data-reveal aria-label="How Brix works, in numbers">
+        <section className="facts container" data-reveal data-reveal-stagger aria-label="How Brix works, in numbers">
           {facts.map((f) => (
             <div key={f.text}>
               <strong>
@@ -251,7 +210,7 @@ export default function Home() {
               </ul>
             </div>
             <Browser
-              src="/screens/dashboard-desktop.webp"
+              src="/screens/dashboard-desktop-1680.webp"
               alt="The Brix overview in a browser, listing a Notion trial ending Oct 28 above Spotify and Netflix renewals"
               url="usebrix.app/dashboard"
               className="row__media"
@@ -274,12 +233,12 @@ export default function Home() {
             </div>
             <div className="row__media row__phones">
               <Phone
-                src="/screens/chat-confirm-mobile.webp"
+                src="/screens/chat-confirm-mobile-393.webp"
                 alt="Brix asks: Mark Spotify ($11.99) to cancel? Reply yes to confirm"
                 sizes="(max-width: 640px) 46vw, 260px"
               />
               <Phone
-                src="/screens/chat-cancelled-mobile.webp"
+                src="/screens/chat-cancelled-mobile-393.webp"
                 alt="After replying yes, Brix confirms Spotify is marked to cancel and links the cancellation page"
                 sizes="(max-width: 640px) 46vw, 260px"
               />
@@ -312,10 +271,12 @@ export default function Home() {
             </div>
           </article>
 
-          <ul className="extras" data-reveal>
+          <ul className="extras" data-reveal data-reveal-stagger>
             {extras.map((e) => (
-              <li key={e.title}>
-                <e.icon size={20} />
+              <li key={e.title} className="card card--interactive extra">
+                <span className="extra__icon">
+                  <e.icon size={20} />
+                </span>
                 <h3>{e.title}</h3>
                 <p>{e.text}</p>
               </li>
@@ -331,7 +292,7 @@ export default function Home() {
                 Brix can read and remind. It can’t pay, transfer or cancel on its own. Here’s what
                 happens when you ask it to drop a charge:
               </p>
-              <ol className="night__flow">
+              <ol className="night__flow" data-reveal data-reveal-stagger>
                 <li>
                   <span>
                     <b>Brix proposes.</b> “Mark Spotify ($11.99) to cancel?”
@@ -407,7 +368,7 @@ export default function Home() {
           <div data-reveal>
             <span className="eyebrow">How it works</span>
             <h2 id="how-title">Four steps, about two minutes.</h2>
-            <ol className="steps">
+            <ol className="steps" data-reveal data-reveal-stagger>
               {steps.map((s, i) => (
                 <li key={s.title}>
                   <span className="steps__num">{i + 1}</span>
@@ -421,7 +382,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="channels" className="section container channels" aria-labelledby="channels-title">
+        <section id="channels" className="section container channels channels--flip" aria-labelledby="channels-title">
           <div className="channels__photo" data-reveal>
             <Image
               src="/images/friends-cafe.webp"
@@ -464,7 +425,7 @@ export default function Home() {
               ask Brix.
             </p>
           </div>
-          <div className="faq__list" data-reveal>
+          <div className="faq__list" data-reveal data-reveal-stagger>
             {faqs.map((f, i) => (
               <details key={f.q} name="faq" open={i === 0}>
                 <summary>
@@ -481,7 +442,7 @@ export default function Home() {
           <div className="final-cta" data-reveal>
             <div className="final-cta__inner">
               <h2 id="cta-title">
-                Find out what you’re paying for <span className="serif">in two minutes.</span>
+                Find out what you’re paying for <span className="accent-text">in two minutes.</span>
               </h2>
               <p>The demo opens with a sample account. No sign-up, no card, no real money.</p>
               <div className="hero__ctas">
@@ -504,7 +465,7 @@ export default function Home() {
         <div className="container lp-footer__grid">
           <div className="lp-footer__brand">
             <Link href="/" className="wordmark">
-              <span className="brand-block" />
+              <BrixMark className="brand-mark" />
               brix<span className="brand-period">.</span>
             </Link>
             <p>Tracks subscriptions and free trials for college students. Never moves money.</p>
@@ -541,6 +502,7 @@ export default function Home() {
         </div>
       </footer>
       <Reveal />
+      <HelpLauncher />
     </div>
   );
 }
