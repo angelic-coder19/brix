@@ -93,7 +93,7 @@ export default function HelpLauncher() {
           ref={launcher}
           type="button"
           className="chat-launcher help-launcher"
-          aria-label="Open Brix help"
+          aria-label="Questions? Open Brix help"
           aria-expanded={false}
           onClick={() => setState("open")}
         >

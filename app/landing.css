@@ -1274,6 +1274,9 @@
   .hero__notice {
     left: 0;
   }
+  .hero__buddy .buddy {
+    --buddy-scale: 0.6 !important;
+  }
   .row,
   .row--flip,
   .demo__grid,
