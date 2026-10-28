@@ -2684,3 +2684,10 @@
 .device-phone__status--dark {
   color: #f7f5ef;
 }
+
+/* Grow strip: reuses the steps list; only the pricing line is new. */
+.grow__pricing {
+  margin: var(--space-6) 0 0;
+  font-size: var(--text-md);
+  color: var(--color-ink-soft);
+}

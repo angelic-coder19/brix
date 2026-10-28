@@ -39,7 +39,12 @@ import {
   TrendingUp,
   Code2,
   BookOpen,
+  Briefcase,
+  EyeOff,
+  RotateCcw,
 } from "lucide-react";
+import { MoneyPicture } from "./MoneyPicture";
+import { brokerHomes } from "@/lib/market/brokers";
 import BrixBuddy from "./brix/BrixBuddy";
 import MerchantLogo from "./ui/MerchantLogo";
 import BrixChat from "./brix/BrixChat";
@@ -177,9 +182,12 @@ function NextDecisionCard({
 function ChargeRow({
   charge: c,
   onAsk,
+  onHide,
 }: {
   charge: Charge;
   onAsk: (message: string) => void;
+  /** Charges page only: hide a row the bank wrongly called a subscription. */
+  onHide?: () => void;
 }) {
   const live = c.status === "active" || c.status === "trial";
   return (
@@ -250,6 +258,19 @@ function ChargeRow({
             <Scissors size={15} />
             <span className="charge-action-label">Cancel</span>
           </button>
+          {onHide && (
+            <button
+              className="btn btn--sm"
+              title={`${c.merchant} isn't a subscription`}
+              aria-label={`${c.merchant} isn't a subscription`}
+              onClick={onHide}
+            >
+              <EyeOff size={15} />
+              <span className="charge-action-label">
+                This isn&apos;t a subscription
+              </span>
+            </button>
+          )}
         </div>
       )}
     </article>
@@ -421,8 +442,10 @@ export default function BrixApp() {
   const upcoming = active
     .filter((c) => c.nextDate >= today && c.nextDate <= horizon)
     .sort((a, b) => a.nextDate.localeCompare(b.nextDate));
+  const hidden = charges.filter((c) => c.notSubscription);
   const visible = charges.filter(
     (c) =>
+      !c.notSubscription &&
       (filter === "all" || c.kind === filter) &&
       c.merchant.toLowerCase().includes(search.trim().toLowerCase()),
   );
@@ -812,6 +835,13 @@ export default function BrixApp() {
               )}
               {view === "dashboard" && (
                 <>
+                  <MoneyPicture
+                    state={state}
+                    request={request}
+                    action={action}
+                    busy={busy}
+                    now={now}
+                  />
                   <div className="overview-status">
                     <NextDecisionCard
                       decision={nextDecision(state)}
@@ -913,8 +943,6 @@ export default function BrixApp() {
                       </Link>
                     </section>
                     <aside className="right-column">
-                      <CardShowcase />
-                      <MerchantNews request={request} />
                       <section
                         className="card activity"
                         id="recent-activity"
@@ -950,6 +978,10 @@ export default function BrixApp() {
                         )}
                       </section>
                     </aside>
+                  </div>
+                  <div className="dash-secondary">
+                    <CardShowcase />
+                    <MerchantNews request={request} />
                   </div>
                 </>
               )}
@@ -987,7 +1019,21 @@ export default function BrixApp() {
                   </div>
                   <section className="card" aria-label="Charges">
                     {visible.map((c) => (
-                      <ChargeRow key={c.id} charge={c} onAsk={ask} />
+                      <ChargeRow
+                        key={c.id}
+                        charge={c}
+                        onAsk={ask}
+                        onHide={() =>
+                          void action(async () => {
+                            await request(`/api/charges/${c.id}`, "PATCH", {
+                              notSubscription: true,
+                            });
+                            setNotice(
+                              `${c.merchant} is hidden from your subscriptions.`,
+                            );
+                          })
+                        }
+                      />
                     ))}
                     {!visible.length && (
                       <div className="empty-state">
@@ -1005,6 +1051,34 @@ export default function BrixApp() {
                       </div>
                     )}
                   </section>
+                  {hidden.length > 0 && (
+                    <details className="card hidden-charges">
+                      <summary>
+                        Not subscriptions ({hidden.length} hidden)
+                      </summary>
+                      {hidden.map((c) => (
+                        <div className="hidden-charges__row" key={c.id}>
+                          <span>
+                            {c.merchant} · {money(c.amount)}
+                          </span>
+                          <button
+                            className="btn btn--sm"
+                            disabled={busy}
+                            onClick={() =>
+                              void action(async () => {
+                                await request(`/api/charges/${c.id}`, "PATCH", {
+                                  notSubscription: false,
+                                });
+                                setNotice(`${c.merchant} is back on your list.`);
+                              })
+                            }
+                          >
+                            <RotateCcw size={15} /> Put back
+                          </button>
+                        </div>
+                      ))}
+                    </details>
+                  )}
                   <p className="footnote">
                     <ShieldCheck size={15} /> “Mark to cancel” flags a charge.
                     You finish cancellation on the merchant’s website.
@@ -1013,27 +1087,6 @@ export default function BrixApp() {
               )}
               {view === "cards" && (
                 <div className="cards-page">
-                  <div className="cards-studios">
-                    <CardStudio
-                      busy={busy}
-                      onCreate={(card) =>
-                        action(async () => {
-                          const result = await request<{ eventId?: string }>(
-                            "/api/cards",
-                            "POST",
-                            card,
-                          );
-                          setChatOpen(true);
-                          if (result.eventId) chat.stream(result.eventId);
-                        })
-                      }
-                    />
-                    <GiftCardStudio
-                      request={request}
-                      action={action}
-                      busy={busy}
-                    />
-                  </div>
                   <div className="card wallet">
                     <section
                       className="wallet-group"
@@ -1140,6 +1193,27 @@ export default function BrixApp() {
                       busy={busy}
                     />
                   </div>
+                  <div className="cards-studios">
+                    <CardStudio
+                      busy={busy}
+                      onCreate={(card) =>
+                        action(async () => {
+                          const result = await request<{ eventId?: string }>(
+                            "/api/cards",
+                            "POST",
+                            card,
+                          );
+                          setChatOpen(true);
+                          if (result.eventId) chat.stream(result.eventId);
+                        })
+                      }
+                    />
+                    <GiftCardStudio
+                      request={request}
+                      action={action}
+                      busy={busy}
+                    />
+                  </div>
                 </div>
               )}
               {view === "refunds" && (
@@ -1162,6 +1236,43 @@ export default function BrixApp() {
               )}
               {view === "settings" && (
                 <div className="settings-stack">
+                  <form
+                    className="card form-card settings"
+                    aria-labelledby="profile-title"
+                    key={`profile-${state.user.displayName}`}
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const f = new FormData(e.currentTarget);
+                      void action(async () => {
+                        await request("/api/settings", "PATCH", {
+                          displayName: String(f.get("displayName") ?? ""),
+                        });
+                        setNotice("Your name is saved.");
+                      });
+                    }}
+                  >
+                    <h2 id="profile-title">Your profile</h2>
+                    <label className="field">
+                      Your name
+                      <input
+                        name="displayName"
+                        type="text"
+                        maxLength={100}
+                        required
+                        defaultValue={state.user.displayName}
+                        autoComplete="name"
+                      />
+                    </label>
+                    {state.user.email && (
+                      <p className="muted">
+                        Signed in as {state.user.email}. Your email comes from
+                        your sign-in and can&apos;t be changed here.
+                      </p>
+                    )}
+                    <button className="btn btn--primary" disabled={busy}>
+                      Save name <Check size={17} />
+                    </button>
+                  </form>
                   <form
                     className="card form-card settings"
                     key={`${state.user.whatsappOptIn}-${state.user.callOptIn}`}
@@ -1672,6 +1783,36 @@ function Connect({
         <div className="setup-note">
           <ShieldCheck size={18} /> Sandbox connection. No real bank credentials
           needed.
+        </div>
+      </section>
+      <section className="card form-card">
+        <span className="step-number">04</span>
+        <Briefcase size={26} />
+        <h2>Brokerage</h2>
+        <p>
+          Brix doesn&apos;t log in to or trade in a brokerage account. Open your
+          broker, then log real purchases yourself to see them next to practice.
+        </p>
+        <div className="button-row">
+          {brokerHomes().map((b) => (
+            <a
+              key={b.broker}
+              className="btn btn--sm"
+              href={b.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${b.broker} (new tab, real money)`}
+            >
+              {b.broker} <ArrowUpRight size={15} />
+            </a>
+          ))}
+        </div>
+        <Link href="/practice#real-holdings" className="text-link">
+          Log a real purchase <ArrowRight size={16} />
+        </Link>
+        <div className="setup-note">
+          <ShieldCheck size={18} /> Self-reported. Brix never moves money or
+          places trades.
         </div>
       </section>
     </div>

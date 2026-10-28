@@ -16,6 +16,11 @@ export interface Charge {
   logoUrl?: string;
   /** Merchant website domain from Plaid, used for a site icon fallback. */
   website?: string;
+  /**
+   * The student said this row is not a subscription (bank-data noise). It is
+   * kept as cancelled so no total, reminder, or tool counts it.
+   */
+  notSubscription?: boolean;
 }
 export interface Reminder {
   id: string;
@@ -82,6 +87,19 @@ export interface AppState {
   /** Optional so accounts created before refunds existed still load. */
   refunds?: Refund[];
   giftCards?: GiftCard[];
+  /** Money the student says comes in, for the Overview money picture. */
+  income?: IncomeSource[];
+}
+export type IncomeKind =
+  "paycheck" | "refund" | "scholarship" | "side_hustle" | "other";
+export type IncomeFrequency = "once" | "weekly" | "biweekly" | "monthly";
+export interface IncomeSource {
+  id: string;
+  kind: IncomeKind;
+  amount: number;
+  frequency: IncomeFrequency;
+  /** For "once": the day it arrived, so it counts only in that month. */
+  receivedOn: string;
 }
 /** A store gift card the student owns; unspent balances are easy to forget. */
 export interface GiftCard {

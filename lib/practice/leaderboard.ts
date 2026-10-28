@@ -108,7 +108,9 @@ export async function leaderboard(uid: string) {
           sample: true,
         }))
       : [];
-  const ranked = [...real, ...samples]
+  // Only real students are ranked. Sample players are listed apart, unranked
+  // (rank 0), so nobody mistakes a made-up player for a real person.
+  const ranked = real
     .sort((a, b) => b.coins - a.coins || b.gainPct - a.gainPct)
     .map((row, i) => {
       const { uid: owner, ...rest } = row as typeof row & { uid?: string };
@@ -117,7 +119,12 @@ export async function leaderboard(uid: string) {
   const top = ranked.slice(0, 10);
   const you = ranked.find((r) => r.you);
   return {
-    entries: you && you.rank > 10 ? [...top, you] : top,
+    entries: [
+      ...(you && you.rank > 10 ? [...top, you] : top),
+      ...samples
+        .sort((a, b) => b.coins - a.coins)
+        .map((s) => ({ ...s, rank: 0 })),
+    ],
     players: real.length,
     hasSamples: samples.length > 0,
   };

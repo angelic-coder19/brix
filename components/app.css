@@ -2229,3 +2229,94 @@
     flex-wrap: wrap;
   }
 }
+
+/* Overview money picture: first block, built from the summary-row stats. */
+.money-picture {
+  margin-bottom: 16px;
+}
+.money-picture .card-head {
+  padding-bottom: var(--space-3);
+}
+.money-picture__row {
+  margin-bottom: 0;
+  border-top: 1px solid var(--color-line);
+  border-radius: 0;
+}
+.money-in {
+  padding: var(--space-4) var(--space-6) var(--space-5);
+  border-top: 1px solid var(--color-line);
+  font-size: var(--text-sm);
+}
+.money-in summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.money-in[open] {
+  display: grid;
+  gap: var(--space-3);
+}
+.money-in__list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.money-in__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-line);
+}
+.money-in__form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+.money-in .muted {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+/* Secondary Overview content, below the decisions and the charge list. */
+.dash-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+  margin-top: var(--space-6);
+}
+.hidden-charges {
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--text-sm);
+}
+.hidden-charges summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.hidden-charges__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+}
+/* Four connection cards: phone and WhatsApp, then bank beside brokerage. */
+.connect-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 760px) {
+  .money-in {
+    padding-inline: var(--space-4);
+  }
+  .money-in__form,
+  .dash-secondary,
+  .connect-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hidden-charges {
+    padding-inline: var(--space-4);
+  }
+}
