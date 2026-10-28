@@ -14,6 +14,9 @@ import type { RequestFn } from "../brix/useBrixChat";
 import type { AutoRule, Order } from "@/lib/practice/engine";
 import type { Quote } from "@/lib/market/quotes";
 import type { Security } from "@/lib/market/universe";
+import { brokerLinks } from "@/lib/market/brokers";
+import type { CoachCheck } from "@/lib/practice/coach";
+import type { RealHolding } from "@/lib/practice/real";
 import { Leaderboard, PriceChart } from "./PracticeInsights";
 import "./practice.css";
 
@@ -118,6 +121,7 @@ function Term({ label, tip }: { label: string; tip: string }) {
 export default function Practice({ request }: { request: RequestFn }) {
   const [view, setView] = useState<View | null>(null),
     [news, setNews] = useState<Headline[] | null>(null),
+    [lines, setLines] = useState<Record<string, string>>({}),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false);
@@ -148,6 +152,14 @@ export default function Practice({ request }: { request: RequestFn }) {
     )
       .then((r) => alive && setNews(r.headlines))
       .catch(() => alive && setNews([]));
+    // One line per headline about the student's own position. Optional:
+    // when it fails, headlines simply show on their own.
+    if (holdings)
+      void request<{ lines: Record<string, string> }>(
+        `/api/market/news/lines?symbols=${encodeURIComponent(holdings)}`,
+      )
+        .then((r) => alive && setLines(r.lines))
+        .catch(() => {});
     return () => {
       alive = false;
     };
@@ -197,6 +209,7 @@ export default function Practice({ request }: { request: RequestFn }) {
         <Portfolio
           view={view}
           news={news}
+          lines={lines}
           busy={busy}
           run={run}
           request={request}
@@ -296,12 +309,14 @@ function Start({
 function Portfolio({
   view,
   news,
+  lines,
   busy,
   run,
   request,
 }: {
   view: View;
   news: Headline[] | null;
+  lines: Record<string, string>;
   busy: boolean;
   run: Run;
   request: RequestFn;
@@ -421,6 +436,7 @@ function Portfolio({
                   : ""}{" "}
                 with fake money?
               </p>
+              <CoachCard request={request} trade={review} />
               <div className="button-row">
                 <button
                   className="btn btn--primary"
@@ -497,6 +513,7 @@ function Portfolio({
                     : "Loading the price…"}
                 </small>
               </label>
+              <TakeLive symbol={symbol} />
               <button className="btn btn--primary" disabled={busy}>
                 Review order
               </button>
@@ -534,6 +551,7 @@ function Portfolio({
                         <th scope="row">
                           {pos.symbol}
                           <small>{pos.name}</small>
+                          <TakeLive symbol={pos.symbol} />
                         </th>
                         <td>{pos.shares}</td>
                         <td>
@@ -727,6 +745,8 @@ function Portfolio({
 
       <AllocationChart portfolio={p} sample={view.sample} />
 
+      <RealHoldings request={request} universe={sorted} />
+
       <section className="card news-card" aria-labelledby="stock-news">
         <h3 id="stock-news">
           <Newspaper size={17} /> News on your holdings
@@ -740,6 +760,9 @@ function Portfolio({
                 <a href={h.url} target="_blank" rel="noopener noreferrer">
                   {h.title} <ExternalLink size={13} aria-hidden />
                 </a>
+                {lines[h.url] && (
+                  <p className="news-line">{lines[h.url]}</p>
+                )}
                 <small>
                   {h.symbol} · {h.source} ·{" "}
                   {new Date(h.publishedAt).toLocaleDateString("en-US", {
@@ -820,6 +843,347 @@ function Portfolio({
         )}
       </section>
     </>
+  );
+}
+
+/** Plain links to the same ticker on a broker's site. Brix never trades. */
+function TakeLive({ symbol }: { symbol: string }) {
+  return (
+    <small className="take-live">
+      Take this live:{" "}
+      {brokerLinks(symbol).map((b, i) => (
+        <span key={b.broker}>
+          {i > 0 && " · "}
+          <a
+            href={b.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open ${symbol} on ${b.broker} (new tab, real money)`}
+          >
+            {b.broker}
+          </a>
+        </span>
+      ))}
+    </small>
+  );
+}
+
+/** Explains the pending trade before Confirm. Never blocks the order. */
+function CoachCard({
+  request,
+  trade,
+}: {
+  request: RequestFn;
+  trade: { symbol: string; side: "buy" | "sell"; amount: number };
+}) {
+  const key = `${trade.side}|${trade.symbol}|${trade.amount}`;
+  const [result, setResult] = useState<{
+    key: string;
+    check: CoachCheck | null;
+  } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void request<CoachCheck>("/api/practice/coach", "POST", trade)
+      .then((check) => alive && setResult({ key, check }))
+      .catch(() => alive && setResult({ key, check: null }));
+    return () => {
+      alive = false;
+    };
+    // The key captures every field of the trade.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request, key]);
+  const shown = result?.key === key ? result : null;
+  const check = shown?.check;
+  return (
+    <div className="coach" role="region" aria-label="Coach check">
+      <h3>
+        Coach check <small className="term-real">explains, never advises</small>
+      </h3>
+      {!shown ? (
+        <p className="muted" role="status">
+          Checking this trade…
+        </p>
+      ) : !check ? (
+        <p className="muted">Coach check unavailable</p>
+      ) : (
+        <>
+          {check.available ? (
+            <>
+              {check.bet && (
+                <p>
+                  <strong>What you&apos;re betting on</strong>
+                  {check.bet}
+                </p>
+              )}
+              {check.risk && (
+                <p>
+                  <strong>What could go wrong</strong>
+                  {check.risk}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="muted">Coach check unavailable</p>
+          )}
+          <p>
+            <strong>
+              How your mix changes{" "}
+              <small className="term-real">Allocation</small>
+            </strong>
+            {check.allocation}
+          </p>
+          <p>
+            <strong>What if it drops 20%</strong>
+            {check.whatIf}
+          </p>
+          <ul className="msg__sources" aria-label="Where this came from">
+            {check.sources.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+interface RealView {
+  holdings: (RealHolding & {
+    name: string;
+    price: number | null;
+    cost: number;
+    value: number | null;
+    gain: number | null;
+  })[];
+  totals: { cost: number; value: number; gain: number };
+  sample?: boolean;
+}
+
+/** Real purchases the student logged. Never part of practice totals. */
+function RealHoldings({
+  request,
+  universe,
+}: {
+  request: RequestFn;
+  universe: Security[];
+}) {
+  const [data, setData] = useState<RealView | null>(null);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const today = new Date().toISOString().slice(0, 10);
+  const load = useCallback(
+    () =>
+      request<RealView>("/api/practice/real-holdings")
+        .then(setData)
+        .catch((e: Error) => setError(e.message)),
+    [request],
+  );
+  useEffect(() => {
+    const first = setTimeout(() => void load(), 0);
+    return () => clearTimeout(first);
+  }, [load]);
+  async function act(work: () => Promise<unknown>, done: string) {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await work();
+      await load();
+      setNotice(done);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section
+      className="card form-card practice-real"
+      aria-labelledby="real-holdings"
+    >
+      <h2 id="real-holdings">
+        My real holdings <small className="term-real">Self-reported</small>
+      </h2>
+      <p className="practice-disclaimer" role="note">
+        Self-reported. Brix does not verify these with your broker.
+      </p>
+      {error && (
+        <p className="alert alert--error" role="alert">
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p className="alert alert--success" role="status">
+          {notice}
+        </p>
+      )}
+      {!data ? (
+        <p className="muted" role="status">
+          Loading…
+        </p>
+      ) : data.holdings.length ? (
+        <>
+          <div
+            className="table-wrap"
+            tabIndex={0}
+            role="region"
+            aria-label="Real holdings table"
+          >
+            <table className="practice-table">
+              <thead>
+                <tr>
+                  <th scope="col">Ticker</th>
+                  <th scope="col">Shares</th>
+                  <th scope="col">Paid</th>
+                  <th scope="col">Value now</th>
+                  <th scope="col">Up / down</th>
+                  <th scope="col">
+                    <span className="sr-only">Remove</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.holdings.map((h) => (
+                  <tr key={h.id}>
+                    <th scope="row">
+                      {h.symbol}
+                      <small>
+                        {h.broker ? `${h.broker} · ` : ""}
+                        {new Date(`${h.boughtOn}T12:00:00Z`).toLocaleDateString(
+                          "en-US",
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            timeZone: "UTC",
+                          },
+                        )}
+                      </small>
+                    </th>
+                    <td>{h.shares}</td>
+                    <td>
+                      {usd(h.cost)}
+                      <small>at {usd(h.pricePaid)}</small>
+                    </td>
+                    <td>
+                      {h.value === null ? "—" : usd(h.value)}
+                      <small>
+                        {h.price ? `at ${usd(h.price)}` : "price not loading"}
+                      </small>
+                    </td>
+                    <td className={h.gain === null ? undefined : tone(h.gain)}>
+                      {h.gain === null ? "—" : usd(h.gain)}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        aria-label={`Remove ${h.symbol} purchase`}
+                        disabled={busy}
+                        onClick={() =>
+                          void act(
+                            () =>
+                              request(
+                                `/api/practice/real-holdings/${h.id}`,
+                                "DELETE",
+                              ),
+                            "Purchase removed.",
+                          )
+                        }
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted">
+            Worth {usd(data.totals.value)} now, {usd(data.totals.cost)} paid (
+            <span className={tone(data.totals.gain)}>
+              {usd(data.totals.gain)}
+            </span>
+            ). Kept apart from your practice money, the leaderboard and coins.
+            {data.sample ? " Demo prices are samples." : ""}
+          </p>
+        </>
+      ) : (
+        <p className="muted">
+          Bought something for real? Log it here to see what it&apos;s worth
+          now.
+        </p>
+      )}
+      <form
+        className="rule-form"
+        aria-label="Log a real purchase"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const form = e.currentTarget,
+            f = new FormData(form);
+          void act(async () => {
+            await request("/api/practice/real-holdings", "POST", {
+              symbol: f.get("symbol"),
+              shares: Number(f.get("shares")),
+              pricePaid: Number(f.get("pricePaid")),
+              boughtOn: f.get("boughtOn"),
+              broker: f.get("broker"),
+            });
+            form.reset();
+          }, "Purchase logged.");
+        }}
+      >
+        <label className="field">
+          Ticker
+          <select name="symbol" defaultValue="VOO">
+            {universe.map((s) => (
+              <option key={s.symbol} value={s.symbol}>
+                {s.symbol}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          Shares
+          <input
+            name="shares"
+            type="number"
+            min="0.000001"
+            step="any"
+            required
+          />
+        </label>
+        <label className="field">
+          Price paid per share
+          <input
+            name="pricePaid"
+            type="number"
+            min="0.01"
+            step="0.01"
+            required
+          />
+        </label>
+        <label className="field">
+          Date
+          <input
+            name="boughtOn"
+            type="date"
+            max={today}
+            defaultValue={today}
+            required
+          />
+        </label>
+        <label className="field">
+          Broker
+          <input name="broker" type="text" maxLength={40} placeholder="Optional" />
+        </label>
+        <button className="btn" disabled={busy}>
+          Log a real purchase
+        </button>
+      </form>
+    </section>
   );
 }
 

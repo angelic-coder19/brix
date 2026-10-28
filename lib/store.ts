@@ -5,6 +5,7 @@ import { adminDb } from "./firebase/admin";
 import { isDemo, HttpError } from "./auth";
 import type { AppState, UserSecret } from "./types";
 import type { Portfolio } from "./practice/engine";
+import type { RealHolding } from "./practice/real";
 const folder =
   process.env.BRIX_TEST_STORAGE === "true"
     ? path.join(process.cwd(), ".data", "browser-tests")
@@ -224,7 +225,7 @@ export async function registerPhone(uid: string, phone: string) {
 export async function deleteData(uid: string) {
   const state = await getState(uid);
   if (isDemo()) {
-    for (const suffix of ["state", "secret", "portfolio"])
+    for (const suffix of ["state", "secret", "portfolio", "real"])
       await unlink(filename(uid, suffix)).catch(() => {});
     return;
   }
@@ -232,6 +233,7 @@ export async function deleteData(uid: string) {
   await db.recursiveDelete(db.doc(`users/${uid}`));
   await db.doc(`secrets/${uid}`).delete();
   await db.doc(`portfolios/${uid}`).delete();
+  await db.doc(`realHoldings/${uid}`).delete();
   if (state.user.phoneE164)
     await db.doc(`phoneIndex/${state.user.phoneE164}`).delete();
 }
@@ -276,4 +278,38 @@ export async function listPortfolioOwners(): Promise<string[]> {
   return (await adminDb().collection("portfolios").select().get()).docs.map(
     (d) => d.id,
   );
+}
+
+// Self-reported real holdings live apart from the practice portfolio so they
+// can never mix with practice totals, the benchmark, or the leaderboard.
+export async function getRealHoldings(uid: string): Promise<RealHolding[]> {
+  if (isDemo()) return (await localRead<RealHolding[]>(uid, "real")) ?? [];
+  return (
+    ((await adminDb().doc(`realHoldings/${uid}`).get()).data()?.holdings as
+      | RealHolding[]
+      | undefined) ?? []
+  );
+}
+/** Atomically reads, changes, and writes the real holdings list. */
+export async function updateRealHoldings<T>(
+  uid: string,
+  updater: (holdings: RealHolding[]) => { holdings: RealHolding[]; result: T },
+): Promise<T> {
+  if (isDemo())
+    return locked(`${uid}-real`, async () => {
+      const { holdings, result } = updater(
+        (await localRead<RealHolding[]>(uid, "real")) ?? [],
+      );
+      await localWrite(uid, "real", holdings);
+      return result;
+    });
+  const ref = adminDb().doc(`realHoldings/${uid}`);
+  return adminDb().runTransaction(async (tx) => {
+    const current =
+      ((await tx.get(ref)).data()?.holdings as RealHolding[] | undefined) ?? [];
+    const { holdings, result } = updater(current);
+    if (holdings.length) tx.set(ref, { holdings });
+    else tx.delete(ref);
+    return result;
+  });
 }
