@@ -61,11 +61,11 @@ test("practice: start from the refund, buy, set a stop, auto-invest, sell, reset
   await expect(page.locator(".alert--error")).toContainText("must be below");
   await page.getByLabel("Stop-loss price for VOO").fill("500");
   await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText("Saved stops for VOO.")).toBeVisible();
+  await expect(page.getByText("Guardrails saved for VOO.")).toBeVisible();
 
   await page
     .locator(".rule-form")
-    .getByRole("button", { name: "Add rule" })
+    .getByRole("button", { name: "Turn on auto-invest" })
     .click();
   await expect(page.getByText("$25.00 of VOO")).toBeVisible();
   const job = await request.post("/api/jobs/practice");
@@ -81,10 +81,10 @@ test("practice: start from the refund, buy, set a stop, auto-invest, sell, reset
   });
   expect((await sold.json()).order.status).toBe("filled");
   await page.reload();
-  await expect(page.getByText(/Many people start/)).toBeVisible();
+  await expect(page.getByText(/Lots of people start/)).toBeVisible();
 
-  await page.getByRole("button", { name: "Reset portfolio" }).click();
-  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await page.getByRole("button", { name: "Start over" }).click();
+  await page.getByRole("button", { name: "Start over", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: /Learn investing/ }),
   ).toBeVisible();

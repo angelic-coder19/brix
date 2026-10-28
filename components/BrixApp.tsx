@@ -132,7 +132,7 @@ const titles: Record<View, [string, string]> = {
   refunds: ["Refunds", "Give your school refund a plan."],
   practice: [
     "Invest",
-    "Real prices, virtual money. Learn before you risk anything.",
+    "Real prices, fake money. Learn the moves before you risk a dollar.",
   ],
   connect: [
     "Connections",

@@ -231,6 +231,9 @@ export function PriceChart({
           </div>
         )}
       </div>
+      <p className="practice-line__explain">
+        How the price moved over time. Hover or tap to see any day.
+      </p>
       <p className="practice-chart__footnote">
         {shown?.sample
           ? "Sample history for the demo. Not real market data."
@@ -269,7 +272,7 @@ export function Leaderboard({ request }: { request: RequestFn }) {
         <Trophy size={22} aria-hidden />
         <div>
           <h2 id="leaderboard-title">Leaderboard</h2>
-          <p>Earn Brix coins for trading, auto-investing and growing.</p>
+          <p>Stack Brix coins by showing up, not by getting lucky.</p>
         </div>
       </div>
       {board ? (
@@ -315,9 +318,8 @@ export function Leaderboard({ request }: { request: RequestFn }) {
         </p>
       )}
       <p className="practice-chart__footnote">
-        100 coins to start, 10 per trade, 50 per active auto-invest rule, 20 per
-        percent gained. Losses never cost coins. Only first names and initials
-        are shown.
+        Start: 100 · Trade: +10 · Auto-invest rule: +50 · Each 1% gained: +20 ·
+        Losses never cost coins. Only first names and initials are shown.
         {board?.hasSamples &&
           " Sample players fill the board until more students join."}
       </p>
