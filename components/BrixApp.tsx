@@ -52,6 +52,7 @@ import DeveloperKeys from "./DeveloperKeys";
 import MerchantNews from "./MerchantNews";
 import { OverviewNews } from "./OverviewNews";
 import { EmailConnect } from "./EmailConnect";
+import { HEADING_ASIDE_ID, HeadingAside } from "./ui/HeadingAside";
 import { merchantDomain } from "@/lib/merchant-domains";
 import { HeaderTrain, MarketTicker } from "./shell/MarketTicker";
 import GoogleOneTap, { disableGoogleAutoSelect } from "./GoogleOneTap";
@@ -614,6 +615,7 @@ export default function BrixApp() {
               <h1>{titles[view][0]}</h1>
               <p>{titles[view][1]}</p>
             </div>
+            <div className="page-heading__aside" id={HEADING_ASIDE_ID} />
             {(view === "dashboard" || view === "subscriptions") &&
               !needsSignIn && (
                 <div className="page-heading__actions">
@@ -668,10 +670,19 @@ export default function BrixApp() {
                     </section>
                   )}
                   {view === "dashboard" ? (
-                    <Link href="/practice" className="btn btn--primary">
-                      <TrendingUp size={18} />
-                      Make a move
-                    </Link>
+                    <nav
+                      className="page-heading__moves"
+                      aria-label="Your next moves"
+                    >
+                      <Link href="/practice" className="btn btn--primary">
+                        <TrendingUp size={18} />
+                        Make a move
+                      </Link>
+                      <Link href="/refunds" className="btn">
+                        <GraduationCap size={18} />
+                        Plan my refund
+                      </Link>
+                    </nav>
                   ) : (
                     <button
                       className="btn btn--primary"
@@ -869,36 +880,6 @@ export default function BrixApp() {
               )}
               {view === "dashboard" && (
                 <>
-                  <section
-                    className="overview-moves"
-                    aria-label="Your next moves"
-                  >
-                    <Link href="/practice">
-                      <TrendingUp size={26} />
-                      <span>
-                        <strong>Build your investing reps</strong>
-                        <small>
-                          Practice trades. Real market context. Your pace.
-                        </small>
-                      </span>
-                      <ArrowUpRight size={20} />
-                    </Link>
-                    <Link href="/refunds">
-                      <GraduationCap size={26} />
-                      <span>
-                        <strong>Make that refund last</strong>
-                        <small>Essentials first. Then your next move.</small>
-                      </span>
-                      <ArrowUpRight size={20} />
-                    </Link>
-                  </section>
-                  <div className="overview-status">
-                    <NextDecisionCard
-                      decision={nextDecision(state)}
-                      onAsk={ask}
-                    />
-                  </div>
-                  <OverviewNews request={request} />
                   <MoneyPicture
                     state={state}
                     request={request}
@@ -907,7 +888,7 @@ export default function BrixApp() {
                     now={now}
                   />
                   <section
-                    className="card summary-row"
+                    className="card summary-row summary-row--tiles"
                     aria-label="Wallet snapshot"
                   >
                     <div className="summary-stat summary-stat--lead">
@@ -969,6 +950,13 @@ export default function BrixApp() {
                       <ArrowUpRight size={18} />
                     </Link>
                   </section>
+                  <div className="overview-status">
+                    <NextDecisionCard
+                      decision={nextDecision(state)}
+                      onAsk={ask}
+                    />
+                  </div>
+                  <OverviewNews request={request} />
                   <div className="dash-columns">
                     <section
                       className="card wallet-glance"
@@ -1297,7 +1285,6 @@ export default function BrixApp() {
                 />
               )}
               {view === "practice" && <Practice request={request} />}
-              {view === "connect" && <EmailConnect request={request} />}
               {view === "connect" && (
                 <Connect
                   request={request}
@@ -1305,6 +1292,7 @@ export default function BrixApp() {
                   state={state}
                   busy={busy}
                   setNotice={setNotice}
+                  lead={<EmailConnect request={request} />}
                 />
               )}
               {view === "settings" && (
@@ -1413,22 +1401,24 @@ export default function BrixApp() {
               )}
               {view === "developer" && (
                 <div className="settings-stack">
-                  <section
-                    className="card developer-intro"
-                    aria-labelledby="build-title"
-                  >
-                    <BookOpen size={22} aria-hidden />
-                    <div>
-                      <h2 id="build-title">Build on Brix</h2>
-                      <p>
-                        Scoped, revocable keys for your charges, refunds and
-                        practice portfolio.
-                      </p>
-                    </div>
-                    <Link href="/developers" className="btn btn--sm">
-                      API docs <ArrowUpRight size={15} />
-                    </Link>
-                  </section>
+                  <HeadingAside>
+                    <section
+                      className="card developer-intro heading-card"
+                      aria-labelledby="build-title"
+                    >
+                      <BookOpen size={22} aria-hidden />
+                      <div>
+                        <h2 id="build-title">Build on Brix</h2>
+                        <p>
+                          Scoped, revocable keys for your charges, refunds and
+                          practice portfolio.
+                        </p>
+                      </div>
+                      <Link href="/developers" className="btn btn--sm">
+                        API docs <ArrowUpRight size={15} />
+                      </Link>
+                    </section>
+                  </HeadingAside>
                   <DeveloperKeys request={request} />
                 </div>
               )}
@@ -1659,12 +1649,15 @@ function Connect({
   state,
   busy,
   setNotice,
+  lead,
 }: {
   request: RequestFn;
   action: (work: () => Promise<void>) => Promise<void>;
   state: ClientState | null;
   busy: boolean;
   setNotice: (s: string) => void;
+  /** Shares the first row with the phone card. */
+  lead?: React.ReactNode;
 }) {
   const [linkToken, setLinkToken] = useState<string | null>(null),
     [verificationId, setVerificationId] = useState(""),
@@ -1694,6 +1687,7 @@ function Connect({
     voice = process.env.NEXT_PUBLIC_VAPI_PHONE_NUMBER;
   return (
     <div className="connect-grid">
+      {lead}
       <section className="card form-card">
         <span className="step-number">01</span>
         <Phone size={26} />

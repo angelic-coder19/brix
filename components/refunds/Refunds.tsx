@@ -12,6 +12,7 @@ import {
 import type { ClientState, RequestFn } from "../brix/useBrixChat";
 import type { Refund } from "@/lib/types";
 import "./refunds.css";
+import { HeadingAside } from "../ui/HeadingAside";
 
 const usd = (n: number) =>
   `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -50,22 +51,25 @@ export default function Refunds({
 
   return (
     <div className="refunds">
-      <section className="card refunds-intro">
-        <GraduationCap size={26} />
-        <div>
-          <h2>Plan your school refund</h2>
-          <p>
-            Set aside essentials, identify borrowed money, and plan what’s left.
-          </p>
-        </div>
-        <button
-          className="btn"
-          type="button"
-          onClick={() => setAdding((v) => !v)}
-        >
-          <Plus size={16} /> Add a refund
-        </button>
-      </section>
+      <HeadingAside>
+        <section className="card refunds-intro heading-card">
+          <GraduationCap size={24} />
+          <div>
+            <h2>Plan your school refund</h2>
+            <p>
+              Set aside essentials, identify borrowed money, and plan what’s
+              left.
+            </p>
+          </div>
+          <button
+            className="btn btn--sm"
+            type="button"
+            onClick={() => setAdding((v) => !v)}
+          >
+            <Plus size={16} /> Add a refund
+          </button>
+        </section>
+      </HeadingAside>
 
       {adding && (
         <form

@@ -42,7 +42,12 @@ test("practice: start from the refund, buy, set a stop, auto-invest, sell, reset
   await expect(page.locator(".practice-disclaimer").first()).toContainText(
     "virtual money",
   );
-  await expect(page.locator(".stat-card__value").first()).toHaveText(
+  await expect(
+    page
+      .getByRole("region", { name: "Portfolio summary" })
+      .locator(".glance-tile__value")
+      .first(),
+  ).toHaveText(
     "$1,850.00",
   );
 
