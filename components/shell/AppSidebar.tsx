@@ -21,6 +21,8 @@ export type NavItem = {
   label: string;
   icon: ComponentType<{ size?: number; "aria-hidden"?: boolean }>;
   badge?: { value: number; label: string };
+  /** Sub-pages, listed under the item while you're in that section. */
+  children?: NavItem[];
 };
 export type NavGroup = { label: string; items: NavItem[] };
 
@@ -117,6 +119,7 @@ function useSidebarMood(view: string) {
 
 export function AppSidebar({
   view,
+  path,
   groups,
   collapsed,
   onToggle,
@@ -129,6 +132,7 @@ export function AppSidebar({
   onSignOut,
 }: {
   view: string;
+  path?: string;
   groups: NavGroup[];
   collapsed: boolean;
   onToggle: () => void;
@@ -208,12 +212,32 @@ export function AppSidebar({
 
   const item = (n: NavItem) => {
     const active = view === n.href;
+    const link = navLink(n, active, active && !n.children);
+    if (!n.children || !active) return link;
+    return (
+      <div className="nav-section" key={n.href}>
+        {link}
+        <div className="nav-sub" role="group" aria-label={`${n.label} sections`}>
+          {n.children.map((c) => {
+            const here = path === `/${c.href}`;
+            return navLink(c, here, here, true);
+          })}
+        </div>
+      </div>
+    );
+  };
+  const navLink = (
+    n: NavItem,
+    active: boolean,
+    current: boolean,
+    sub = false,
+  ) => {
     return (
       <Link
         href={`/${n.href}`}
         key={n.href}
-        className={active ? "nav-item is-active" : "nav-item"}
-        aria-current={active ? "page" : undefined}
+        className={`nav-item${sub ? " nav-item--sub" : ""}${active ? " is-active" : ""}`}
+        aria-current={current ? "page" : undefined}
         data-tip={n.label}
         data-nav={n.href}
         title={collapsed ? n.label : undefined}

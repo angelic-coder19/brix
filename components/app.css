@@ -2680,7 +2680,7 @@
 }
 /* This month: header, then four compact tiles inside the card. */
 .money-picture__row.summary-row--tiles {
-  padding: 0 16px 16px;
+  padding: 14px 16px 16px;
   border-top: 0;
 }
 .money-picture .card-head {
@@ -2703,4 +2703,56 @@
     flex: 0 0 auto;
     width: 100%;
   }
+}
+
+/* Overview tiles: a soft colour wash and tinted edge per tile, no grid. */
+.summary-row--tiles .summary-stat {
+  --tile-accent: var(--color-accent-ink);
+  --tile-wash: var(--color-accent-soft);
+  padding: 12px 16px 13px;
+  border-color: color-mix(in srgb, var(--tile-accent) 18%, var(--color-line));
+  background:
+    radial-gradient(90% 120% at 100% 0%, var(--tile-wash), transparent 70%),
+    linear-gradient(180deg, var(--color-surface), color-mix(in srgb, var(--tile-wash) 35%, var(--color-surface)));
+  box-shadow: 0 1px 0 #ffffff inset, 0 6px 16px -12px #29292040;
+}
+.summary-row--tiles .summary-stat + .summary-stat {
+  border-left-color: color-mix(in srgb, var(--tile-accent) 18%, var(--color-line));
+}
+.summary-row--tiles .summary-stat::after {
+  display: none;
+}
+.summary-row--tiles .summary-stat__label svg {
+  box-sizing: content-box;
+  padding: 4px;
+  border-radius: 6px;
+  color: var(--tile-accent);
+  background: color-mix(in srgb, var(--tile-accent) 12%, var(--color-surface));
+}
+.summary-row--tiles .summary-stat:nth-child(4n + 2) {
+  --tile-accent: var(--color-green);
+  --tile-wash: var(--color-green-soft);
+}
+.summary-row--tiles .summary-stat:nth-child(4n + 3) {
+  --tile-accent: var(--color-warn);
+  --tile-wash: var(--color-warn-soft);
+}
+.summary-row--tiles .summary-stat:nth-child(4n + 4) {
+  --tile-accent: #3e5a70;
+  --tile-wash: #e6edf2;
+}
+.money-picture__row.summary-row--tiles .summary-stat--lead {
+  --tile-accent: #f6b79c;
+  border-color: var(--color-night);
+  background:
+    radial-gradient(110% 130% at 100% 0%, #c8462a73, transparent 62%),
+    var(--color-night);
+  box-shadow: 0 8px 20px -12px #292920a0;
+}
+.money-picture__row .summary-stat--lead .summary-stat__label svg {
+  background: #f7f5ef1a;
+}
+/* This month's tiles sit under the header without a divider line. */
+.money-picture .card-head {
+  border-bottom: 0;
 }

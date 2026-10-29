@@ -262,3 +262,43 @@ test("invest shows a price line and a leaderboard", async ({ page }) => {
     page.getByRole("img", { name: /VOO closing prices/ }),
   ).toBeVisible();
 });
+
+test("invest splits into trade, copy trading and real money pages", async ({
+  page,
+  request,
+}) => {
+  await request.post("/api/practice", { data: { startingCash: 1000 } });
+  await page.goto("/dashboard");
+  await expect(page.getByText(/Across 6 subscriptions/)).toBeVisible();
+  // Each page starts at the top, even after scrolling the last one.
+  await page.mouse.wheel(0, 1500);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(0);
+  const tabs = page.getByRole("navigation", { name: "Invest sections" });
+  await page.goto("/practice");
+  await expect(tabs.getByRole("link", { name: "Trade" })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(
+    page.getByRole("heading", { name: /Make a move/ }),
+  ).toBeVisible();
+  await page.mouse.wheel(0, 1200);
+  await tabs.getByRole("link", { name: "Copy trading" }).click();
+  await expect(page).toHaveURL(/\/practice\/copy$/);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBe(0);
+  await expect(
+    page.getByRole("heading", { name: /Copy a vibe/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Make a move/ })).toHaveCount(
+    0,
+  );
+  await tabs.getByRole("link", { name: "Real money" }).click();
+  await expect(page).toHaveURL(/\/practice\/real$/);
+  await expect(page.locator("#real-holdings")).toBeVisible();
+
+  // The term bubble sits above the sticky header, never under it.
+  await page.getByRole("button", { name: "What's S&P 500?" }).first().hover();
+  const tip = await page.locator(".term__tip").boundingBox();
+  const bar = await page.locator(".topbar").boundingBox();
+  expect(tip!.y).toBeGreaterThanOrEqual(bar!.y + bar!.height);
+});

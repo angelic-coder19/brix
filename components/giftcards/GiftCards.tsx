@@ -117,13 +117,11 @@ export function GiftCardStudio({
         }}
       >
         <GiftFace merchant={merchant || "Your store"} />
-        <div className="studio-fields">
-          <span className="giftface__kind">Gift card</span>
+        <div className="studio-fields studio-fields--three">
           <label className="field">
-            <span className="sr-only">Store</span>
+            Store
             <input
               name="merchant"
-              aria-label="Store"
               required
               maxLength={60}
               value={merchant}
@@ -132,10 +130,9 @@ export function GiftCardStudio({
             />
           </label>
           <label className="field">
-            <span aria-hidden>$</span>
+            Balance (USD)
             <input
               name="balance"
-              aria-label="Balance (USD)"
               type="number"
               inputMode="decimal"
               min="0.01"
@@ -146,10 +143,9 @@ export function GiftCardStudio({
             />
           </label>
           <label className="field">
-            <small>Expires (optional)</small>
+            Expires (optional)
             <input
               name="expiresOn"
-              aria-label="Expires (optional)"
               type="date"
               min={new Date().toISOString().slice(0, 10)}
             />

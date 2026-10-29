@@ -756,12 +756,10 @@
   outline-offset: 2px;
 }
 .term__tip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  z-index: 30;
+  position: fixed;
+  z-index: 200;
   width: max-content;
-  max-width: min(260px, 80vw);
+  max-width: min(260px, calc(100vw - 16px));
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--color-ink);
@@ -770,16 +768,13 @@
   font-size: var(--text-xs);
   font-weight: 500;
   line-height: 1.4;
-  letter-spacing: 0;
   white-space: normal;
   text-align: left;
-  /* display: none, not just hidden, so a closed bubble never widens the page. */
-  display: none;
   pointer-events: none;
+  transform: translateY(-100%);
 }
-.term:hover .term__tip,
-.term:focus-within .term__tip {
-  display: block;
+.term__tip--below {
+  transform: none;
 }
 
 /* Coach check in the review step, real holdings, and news one-liners.
@@ -1066,4 +1061,111 @@
   .practice-hero .practice-line__empty {
     height: 300px;
   }
+}
+
+/* Invest tiles: short, with an icon chip and a soft colour wash. */
+.practice-glance {
+  align-items: start;
+}
+.practice-glance .glance-tile {
+  --tile-accent: var(--color-muted);
+  --tile-wash: var(--color-surface-2);
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  row-gap: 0;
+  padding: 9px 12px 10px;
+  border-color: color-mix(in srgb, var(--tile-accent) 18%, var(--color-line));
+  background:
+    radial-gradient(90% 120% at 100% 0%, var(--tile-wash), transparent 70%),
+    linear-gradient(180deg, var(--color-surface), color-mix(in srgb, var(--tile-wash) 35%, var(--color-surface)));
+  box-shadow: 0 1px 0 #ffffff inset, 0 6px 16px -12px #29292040;
+}
+.practice-glance .glance-tile::after {
+  display: none;
+}
+.practice-glance .glance-tile > :not(.glance-tile__icon) {
+  grid-column: 1;
+}
+.glance-tile__icon {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--tile-accent);
+  background: color-mix(in srgb, var(--tile-accent) 12%, var(--color-surface));
+}
+.practice-glance .glance-tile__value {
+  font-size: 18px;
+  line-height: 1.25;
+}
+.practice-glance .glance-tile--blue {
+  --tile-accent: #3e5a70;
+  --tile-wash: #e6edf2;
+}
+.practice-glance .glance-tile--green {
+  --tile-accent: var(--color-green);
+  --tile-wash: var(--color-green-soft);
+}
+.practice-glance .glance-tile--warm {
+  --tile-accent: var(--color-warn);
+  --tile-wash: var(--color-warn-soft);
+}
+/* The lead tile is dark with a warm glow, like "Left" on the overview. */
+.practice-glance .glance-tile--lead {
+  --tile-accent: #f6b79c;
+  border-color: var(--color-night);
+  background:
+    radial-gradient(110% 130% at 100% 0%, #c8462a73, transparent 62%),
+    var(--color-night);
+  box-shadow: 0 8px 20px -12px #292920a0;
+}
+.practice-glance .glance-tile--lead .glance-tile__label {
+  color: var(--color-night-muted);
+}
+.practice-glance .glance-tile--lead .glance-tile__value {
+  color: var(--color-night-text);
+}
+.practice-glance .glance-tile--lead .glance-tile__sub {
+  color: #e4e2d6;
+}
+.practice-glance .glance-tile--lead .glance-tile__sub.is-up {
+  color: #9fd3b4;
+}
+.practice-glance .glance-tile--lead .glance-tile__sub.is-down {
+  color: #f6a58f;
+}
+.practice-glance .glance-tile--lead .glance-tile__icon {
+  background: #f7f5ef1a;
+}
+/* Real money: the broker menu reads as a link, not a big button. */
+.glance-tile__links {
+  min-height: 0;
+  gap: 2px 10px;
+}
+.glance-tile__links .take-live__trigger.btn {
+  min-height: 0;
+  padding: 0;
+  gap: 3px;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--color-accent-ink);
+  font-size: 11px;
+  font-weight: 600;
+  transform: none;
+}
+.glance-tile__links .take-live__trigger.btn:hover {
+  text-decoration: underline;
+}
+.glance-tile__links .take-live__trigger svg {
+  width: 12px;
+  height: 12px;
+}
+/* Hero cards keep their own height instead of stretching to the tallest. */
+.practice-hero {
+  align-items: start;
 }

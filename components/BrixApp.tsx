@@ -15,8 +15,10 @@ import {
 import { usePlaidLink } from "react-plaid-link";
 import { getClientAuth } from "@/lib/firebase/client";
 import {
+  ArrowLeftRight,
   ArrowRight,
   ArrowUpRight,
+  Copy,
   Menu,
   LayoutDashboard,
   Layers3,
@@ -63,7 +65,7 @@ import { CardStudio } from "./cards/CardStudio";
 import "./cards/cards.css";
 import "./giftcards/giftcards.css";
 import { nextDecision, type NextDecision } from "@/lib/next-decision";
-import Practice from "./practice/Practice";
+import Practice, { type PracticeSection } from "./practice/Practice";
 import "./refunds/refunds.css";
 import {
   useBrixChat,
@@ -311,8 +313,17 @@ const VIEWS: View[] = [
 
 export default function BrixApp() {
   const router = useRouter();
-  const segment = usePathname().split("/")[1] as View;
+  const pathname = usePathname();
+  const segment = pathname.split("/")[1] as View;
   const view: View = VIEWS.includes(segment) ? segment : "dashboard";
+  const sub = pathname.split("/")[2];
+  const practiceSection: PracticeSection =
+    sub === "copy" || sub === "real" ? sub : "trade";
+  // The shell stays mounted between pages, so start each page at the top
+  // unless the link points at a spot on it.
+  useEffect(() => {
+    if (!window.location.hash) window.scrollTo(0, 0);
+  }, [pathname]);
   const sidebar = useSidebarState();
   const { setDrawerOpen } = sidebar;
   const closeDrawer = useCallback(() => setDrawerOpen(false), [setDrawerOpen]);
@@ -518,7 +529,16 @@ export default function BrixApp() {
       label: "Your money",
       items: [
         { ...nav[0] },
-        { href: "practice", label: "Invest", icon: TrendingUp },
+        {
+          href: "practice",
+          label: "Invest",
+          icon: TrendingUp,
+          children: [
+            { href: "practice", label: "Trade", icon: ArrowLeftRight },
+            { href: "practice/copy", label: "Copy trading", icon: Copy },
+            { href: "practice/real", label: "Real money", icon: Landmark },
+          ],
+        },
         {
           href: "refunds",
           label: "Refunds",
@@ -564,6 +584,7 @@ export default function BrixApp() {
       </a>
       <AppSidebar
         view={view === "cards" ? "subscriptions" : view}
+        path={pathname}
         groups={navGroups}
         collapsed={sidebar.collapsed}
         onToggle={sidebar.toggle}
@@ -731,6 +752,25 @@ export default function BrixApp() {
               </div>
             )}
           </div>
+          {view === "practice" && !needsSignIn && (
+            <nav className="wallet-tabs" aria-label="Invest sections">
+              {(
+                [
+                  ["trade", "/practice", "Trade"],
+                  ["copy", "/practice/copy", "Copy trading"],
+                  ["real", "/practice/real", "Real money"],
+                ] as const
+              ).map(([key, href, label]) => (
+                <Link
+                  key={key}
+                  href={href}
+                  aria-current={practiceSection === key ? "page" : undefined}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          )}
           {(view === "cards" || view === "subscriptions") && (
             <nav className="wallet-tabs" aria-label="Wallet sections">
               <Link
@@ -1284,7 +1324,9 @@ export default function BrixApp() {
                   busy={busy}
                 />
               )}
-              {view === "practice" && <Practice request={request} />}
+              {view === "practice" && (
+                <Practice request={request} section={practiceSection} />
+              )}
               {view === "connect" && (
                 <Connect
                   request={request}
@@ -1882,7 +1924,7 @@ function Connect({
             icon: <ArrowUpRight size={14} aria-hidden />,
           }))}
         />
-        <Link href="/practice#real-holdings" className="text-link">
+        <Link href="/practice/real" className="text-link">
           Log a real purchase <ArrowRight size={16} />
         </Link>
         <div className="setup-note">

@@ -1,13 +1,19 @@
 "use client";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import Link from "next/link";
 import {
+  Activity,
+  Briefcase,
   Copy,
   ExternalLink,
+  Landmark,
   Pause,
   Play,
   RotateCcw,
   Trash2,
   TrendingUp,
+  Wallet,
 } from "lucide-react";
 import { Dropdown } from "../ui/Dropdown";
 import { InvestingNews } from "./InvestingNews";
@@ -98,7 +104,11 @@ const TERMS = {
     "Short for take-profit. If the price rises to this, Brix sells and locks in the gain.",
 };
 // Matches the auto-invest form's defaults.
-const PLAN = { symbol: "VOO", amount: 25, cadence: "weekly" as AutoRule["cadence"] };
+const PLAN = {
+  symbol: "VOO",
+  amount: 25,
+  cadence: "weekly" as AutoRule["cadence"],
+};
 const today = () => new Date().toISOString().slice(0, 10);
 // The daily job only runs on weekday mornings, so a rule can show a date that
 // already passed until the next run picks it up.
@@ -116,19 +126,61 @@ const ordinal = (n: number) =>
 /** "every Tuesday", "every other Friday", "on the 3rd of each month". */
 function schedule(cadence: AutoRule["cadence"], from: string) {
   const d = new Date(`${from}T12:00:00Z`);
-  const day = d.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+  const day = d.toLocaleDateString("en-US", {
+    weekday: "long",
+    timeZone: "UTC",
+  });
   // Rules run on weekday mornings only, so a weekend date can't name the day.
   const weekend = d.getUTCDay() === 0 || d.getUTCDay() === 6;
-  if (cadence === "monthly") return `on the ${ordinal(d.getUTCDate())} of each month`;
+  if (cadence === "monthly")
+    return `on the ${ordinal(d.getUTCDate())} of each month`;
   if (weekend) return cadence === "weekly" ? "every week" : "every 2 weeks";
   return cadence === "weekly" ? `every ${day}` : `every other ${day}`;
 }
 
-/** A plain label with a "what's this?" bubble for the real term. */
+/**
+ * A plain label with a "what's this?" bubble for the real term. The bubble
+ * renders on <body> so sticky headers and clipped cards can't cover it, and
+ * opens below the term when there isn't room above.
+ */
 function Term({ label, tip }: { label: string; tip: string }) {
   const id = useId();
+  const ref = useRef<HTMLSpanElement>(null);
+  const [pos, setPos] = useState<{
+    x: number;
+    y: number;
+    below: boolean;
+  } | null>(null);
+  const show = () => {
+    const box = ref.current?.getBoundingClientRect();
+    if (!box) return;
+    const below = box.top < 160;
+    setPos({
+      x: Math.max(8, Math.min(box.left, window.innerWidth - 276)),
+      y: below ? box.bottom + 8 : box.top - 8,
+      below,
+    });
+  };
+  useEffect(() => {
+    if (!pos) return;
+    const hide = () => setPos(null);
+    window.addEventListener("scroll", hide, { passive: true, capture: true });
+    window.addEventListener("resize", hide);
+    return () => {
+      window.removeEventListener("scroll", hide, { capture: true });
+      window.removeEventListener("resize", hide);
+    };
+  }, [pos]);
   return (
-    <span className="term">
+    <span
+      className="term"
+      ref={ref}
+      onMouseEnter={show}
+      onMouseLeave={() => setPos(null)}
+      onFocus={show}
+      onBlur={() => setPos(null)}
+      onKeyDown={(e) => e.key === "Escape" && setPos(null)}
+    >
       {label}
       <button
         type="button"
@@ -138,14 +190,33 @@ function Term({ label, tip }: { label: string; tip: string }) {
       >
         ?
       </button>
-      <span role="tooltip" id={id} className="term__tip">
+      <span id={id} className="sr-only">
         {tip}
       </span>
+      {pos &&
+        createPortal(
+          <span
+            className={`term__tip${pos.below ? " term__tip--below" : ""}`}
+            aria-hidden="true"
+            style={{ left: pos.x, top: pos.y }}
+          >
+            {tip}
+          </span>,
+          document.body,
+        )}
     </span>
   );
 }
 
-export default function Practice({ request }: { request: RequestFn }) {
+export type PracticeSection = "trade" | "copy" | "real";
+
+export default function Practice({
+  request,
+  section = "trade",
+}: {
+  request: RequestFn;
+  section?: PracticeSection;
+}) {
   const [view, setView] = useState<View | null>(null),
     [news, setNews] = useState<Headline[] | null>(null),
     [lines, setLines] = useState<Record<string, string>>({}),
@@ -242,6 +313,7 @@ export default function Practice({ request }: { request: RequestFn }) {
           busy={busy}
           run={run}
           request={request}
+          section={section}
         />
       )}
     </div>
@@ -342,6 +414,7 @@ function Portfolio({
   busy,
   run,
   request,
+  section,
 }: {
   view: View;
   news: Headline[] | null;
@@ -349,6 +422,7 @@ function Portfolio({
   busy: boolean;
   run: Run;
   request: RequestFn;
+  section: PracticeSection;
 }) {
   const p = view.portfolio!;
   const copy = useCopyFlow({ request, run, cash: p.cash, busy });
@@ -417,13 +491,19 @@ function Portfolio({
       <HeadingAside>
         <section className="practice-glance" aria-label="Portfolio summary">
           <div className="glance-tile glance-tile--lead">
+            <span className="glance-tile__icon" aria-hidden="true">
+              <Briefcase size={14} />
+            </span>
             <span className="glance-tile__label">Your portfolio</span>
             <strong className="glance-tile__value">{usd(p.total)}</strong>
             <span className={`glance-tile__sub ${tone(p.gain) ?? ""}`}>
-              {usd(p.gain)} ({pct(p.gainPct)}) all time
+              {usd(p.gain)} ({pct(p.gainPct)})
             </span>
           </div>
-          <div className="glance-tile">
+          <div className="glance-tile glance-tile--blue">
+            <span className="glance-tile__icon" aria-hidden="true">
+              <Activity size={14} />
+            </span>
             <span className="glance-tile__label">
               You vs. the <Term label="S&P 500" tip={TERMS.sp500} />
             </span>
@@ -436,11 +516,14 @@ function Portfolio({
                 : lead >= 0.005
                   ? "You're ahead so far"
                   : lead <= -0.005
-                    ? "Most people trail it. That's the lesson"
+                    ? "Most people trail it"
                     : "Neck and neck"}
             </span>
           </div>
           <div className="glance-tile glance-tile--green">
+            <span className="glance-tile__icon" aria-hidden="true">
+              <Wallet size={14} />
+            </span>
             <span className="glance-tile__label">Cash to play with</span>
             <strong className="glance-tile__value">{usd(p.cash)}</strong>
             <span className="glance-tile__sub">
@@ -448,6 +531,9 @@ function Portfolio({
             </span>
           </div>
           <div className="glance-tile glance-tile--warm">
+            <span className="glance-tile__icon" aria-hidden="true">
+              <Landmark size={14} />
+            </span>
             <span className="glance-tile__label">Real money</span>
             <strong className="glance-tile__value">
               {real === null
@@ -460,523 +546,556 @@ function Portfolio({
             </strong>
             <span className="glance-tile__links">
               {brokerSymbol && (
-                <TakeLive symbol={brokerSymbol} label="Open in broker" compact />
+                <TakeLive
+                  symbol={brokerSymbol}
+                  label="Open in broker"
+                  compact
+                />
               )}
-              <a href="#real-holdings" className="practice-real-link">
+              <Link href="/practice/real" className="practice-real-link">
                 {real?.holdings.length
                   ? `${real.holdings.length} logged`
                   : "Log a purchase"}
-              </a>
+              </Link>
             </span>
           </div>
         </section>
       </HeadingAside>
 
-      <div className="practice-insights practice-hero">
-        <PriceChart
-          request={request}
-          symbols={p.positions.map((x) => x.symbol)}
-        />
-        <Leaderboard
-          request={request}
-          onCopy={(e) =>
-            e.mix &&
-            e.copyId &&
-            copy.open({
-              label: `${e.sample ? e.name.replace("Sample · ", "") : e.name}'s mix`,
-              mix: e.mix,
-              player: e.copyId,
-            })
-          }
-          share={{
-            on: !!p.shareMix,
-            busy,
-            onChange: (on) =>
-              void run(
-                async () => {
-                  await request("/api/practice", "PATCH", { shareMix: on });
-                },
-                on
-                  ? "Your mix is copyable now. Percentages only."
-                  : "Your mix is private again.",
-              ),
-          }}
-        />
-      </div>
-
-      <div className="practice-trade-row">
-        <section
-          className="card form-card trade-ticket"
-          aria-labelledby="trade"
-        >
-          <div className="trade-ticket__head">
-            <h2 id="trade">
-              Make a move <small className="term-real">Trade</small>
-            </h2>
-            {!review && (
-              <div className="segmented" role="group" aria-label="Buy or sell">
-                {(["buy", "sell"] as const).map((s) => (
-                  <button
-                    type="button"
-                    key={s}
-                    className={side === s ? "is-active" : undefined}
-                    aria-pressed={side === s}
-                    onClick={() => setSide(s)}
-                  >
-                    {s === "buy" ? "Buy" : "Sell"}
-                  </button>
-                ))}
-              </div>
-            )}
+      {section === "trade" && (
+        <>
+          <div className="practice-insights practice-hero">
+            <PriceChart
+              request={request}
+              symbols={p.positions.map((x) => x.symbol)}
+            />
+            <AllocationChart portfolio={p} sample={view.sample} />
           </div>
-          {review ? (
-            <div
-              className="trade-review"
-              role="group"
-              aria-label="Review order"
+          <div className="practice-trade-row">
+            <section
+              className="card form-card trade-ticket"
+              aria-labelledby="trade"
             >
-              <p>
-                {review.side === "buy" ? "Buy" : "Sell"}{" "}
-                <strong>{usd(review.amount)}</strong> of{" "}
-                <strong>{review.symbol}</strong>
-                {quoteFor(review.symbol)
-                  ? ` at about ${usd(quoteFor(review.symbol)!.price)} a share`
-                  : ""}{" "}
-                with fake money?
-              </p>
-              <CoachCard
-                request={request}
-                trade={review}
-                name={
-                  view.universe.find((s) => s.symbol === review.symbol)?.name ??
-                  review.symbol
-                }
-                price={quoteFor(review.symbol)?.price ?? null}
-                cash={p.cash}
-                invested={p.invested}
-                held={
-                  p.positions.find((x) => x.symbol === review.symbol)?.value ?? 0
-                }
-              />
-              <div className="button-row">
-                <button
-                  className="btn btn--primary"
-                  disabled={busy}
-                  onClick={() =>
-                    void run(async () => {
-                      const { order } = await request<{ order: Order }>(
-                        "/api/practice/orders",
-                        "POST",
-                        {
-                          ...review,
-                          clientKey,
-                        },
-                      );
-                      setReview(null);
-                      setAmount("100");
-                      setClientKey(crypto.randomUUID());
-                      if (order.status !== "filled")
-                        throw new Error(order.reason || "Order not filled.");
-                    }, "Order filled.")
-                  }
-                >
-                  Confirm
-                </button>
-                <button
-                  className="btn"
-                  disabled={busy}
-                  onClick={() => setReview(null)}
-                >
-                  Back
-                </button>
+              <div className="trade-ticket__head">
+                <h2 id="trade">
+                  Make a move <small className="term-real">Trade</small>
+                </h2>
+                {!review && (
+                  <div
+                    className="segmented"
+                    role="group"
+                    aria-label="Buy or sell"
+                  >
+                    {(["buy", "sell"] as const).map((s) => (
+                      <button
+                        type="button"
+                        key={s}
+                        className={side === s ? "is-active" : undefined}
+                        aria-pressed={side === s}
+                        onClick={() => setSide(s)}
+                      >
+                        {s === "buy" ? "Buy" : "Sell"}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+              {review ? (
+                <div
+                  className="trade-review"
+                  role="group"
+                  aria-label="Review order"
+                >
+                  <p>
+                    {review.side === "buy" ? "Buy" : "Sell"}{" "}
+                    <strong>{usd(review.amount)}</strong> of{" "}
+                    <strong>{review.symbol}</strong>
+                    {quoteFor(review.symbol)
+                      ? ` at about ${usd(quoteFor(review.symbol)!.price)} a share`
+                      : ""}{" "}
+                    with fake money?
+                  </p>
+                  <CoachCard
+                    request={request}
+                    trade={review}
+                    name={
+                      view.universe.find((s) => s.symbol === review.symbol)
+                        ?.name ?? review.symbol
+                    }
+                    price={quoteFor(review.symbol)?.price ?? null}
+                    cash={p.cash}
+                    invested={p.invested}
+                    held={
+                      p.positions.find((x) => x.symbol === review.symbol)
+                        ?.value ?? 0
+                    }
+                  />
+                  <div className="button-row">
+                    <button
+                      className="btn btn--primary"
+                      disabled={busy}
+                      onClick={() =>
+                        void run(async () => {
+                          const { order } = await request<{ order: Order }>(
+                            "/api/practice/orders",
+                            "POST",
+                            {
+                              ...review,
+                              clientKey,
+                            },
+                          );
+                          setReview(null);
+                          setAmount("100");
+                          setClientKey(crypto.randomUUID());
+                          if (order.status !== "filled")
+                            throw new Error(
+                              order.reason || "Order not filled.",
+                            );
+                        }, "Order filled.")
+                      }
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      className="btn"
+                      disabled={busy}
+                      onClick={() => setReview(null)}
+                    >
+                      Back
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    setReview({ symbol, side, amount: Number(amount) });
+                  }}
+                >
+                  <div className="field">
+                    <span className="trade-ticket__label">
+                      <label htmlFor={symbolId}>Symbol</label>
+                      <small className="muted">
+                        New here? Try an <Term label="ETF" tip={TERMS.etf} />{" "}
+                        like VOO.
+                      </small>
+                    </span>
+                    <Dropdown
+                      id={symbolId}
+                      label="Symbol"
+                      value={symbol}
+                      onChange={setSymbol}
+                      options={sorted.map((s) => ({
+                        value: s.symbol,
+                        label: `${s.symbol} · ${s.name}`,
+                      }))}
+                    />
+                  </div>
+                  <label className="field">
+                    Amount (USD)
+                    <input
+                      name="amount"
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      required
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                    />
+                    <small className="muted">
+                      {price
+                        ? `One share costs about ${usd(price)}`
+                        : "Loading the price…"}
+                    </small>
+                  </label>
+                  <button className="btn btn--primary" disabled={busy}>
+                    Review order
+                  </button>
+                  <RealBuy
+                    symbol={symbol}
+                    name={
+                      sorted.find((s) => s.symbol === symbol)?.name ?? symbol
+                    }
+                    side={side}
+                    amount={Number(amount)}
+                  />
+                </form>
+              )}
+            </section>
+
+            <div className="practice-holdings-stack">
+              <section
+                className="card practice-holdings"
+                aria-labelledby="holdings"
+              >
+                <div className="card-head">
+                  <h2 id="holdings">
+                    What you own <small className="term-real">Holdings</small>
+                  </h2>
+                </div>
+                {p.positions.length ? (
+                  <>
+                    <div
+                      className="table-wrap"
+                      tabIndex={0}
+                      role="region"
+                      aria-label="Holdings table"
+                    >
+                      <table className="practice-table">
+                        <thead>
+                          <tr>
+                            <th scope="col">Ticker</th>
+                            <th scope="col">Shares</th>
+                            <th scope="col">Value</th>
+                            <th scope="col">Up / down</th>
+                            <th scope="col">Auto-sell guardrails</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {p.positions.map((pos) => (
+                            <tr key={pos.symbol}>
+                              <th scope="row">
+                                {pos.symbol}
+                                <small>{pos.name}</small>
+                                <TakeLive symbol={pos.symbol} compact />
+                              </th>
+                              <td>{pos.shares}</td>
+                              <td>
+                                {usd(pos.value)}
+                                <small>
+                                  {pos.price
+                                    ? `at ${usd(pos.price)}`
+                                    : "price not loading"}
+                                </small>
+                              </td>
+                              <td className={tone(pos.gain)}>
+                                {usd(pos.gain)}
+                              </td>
+                              <td>
+                                <form
+                                  className="stops"
+                                  onSubmit={(e) => {
+                                    e.preventDefault();
+                                    const f = new FormData(e.currentTarget);
+                                    const v = (k: string) =>
+                                      f.get(k) === "" ? null : Number(f.get(k));
+                                    void run(async () => {
+                                      await request(
+                                        `/api/practice/positions/${pos.symbol}`,
+                                        "PATCH",
+                                        {
+                                          stopLoss: v("stopLoss"),
+                                          takeProfit: v("takeProfit"),
+                                        },
+                                      );
+                                    }, `Guardrails saved for ${pos.symbol}.`);
+                                  }}
+                                >
+                                  <input
+                                    name="stopLoss"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="Stop"
+                                    aria-label={`Stop-loss price for ${pos.symbol}`}
+                                    defaultValue={pos.stopLoss ?? ""}
+                                  />
+                                  <input
+                                    name="takeProfit"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="Target"
+                                    aria-label={`Take-profit price for ${pos.symbol}`}
+                                    defaultValue={pos.takeProfit ?? ""}
+                                  />
+                                  <button
+                                    className="btn btn--sm"
+                                    disabled={busy}
+                                  >
+                                    Save
+                                  </button>
+                                </form>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="muted practice-help">
+                      <Term label="Stop" tip={TERMS.stop} />: sell if the price
+                      drops to this (bail out early).{" "}
+                      <Term label="Target" tip={TERMS.target} />: sell when it
+                      hits this (take the W). These are rules you set: Brix only
+                      sells at the exact price you type, and leaves blank ones
+                      alone.
+                    </p>
+                  </>
+                ) : (
+                  <p className="muted practice-empty">
+                    Nothing yet. Lots of people start with a broad index fund
+                    like VOO or VTI.
+                  </p>
+                )}
+              </section>
+
+              <InvestingNews headlines={news} lines={lines} />
             </div>
-          ) : (
+          </div>
+
+          <section
+            className="card form-card practice-rules"
+            aria-labelledby="rules"
+          >
+            <h2 id="rules">
+              Auto-invest{" "}
+              <small className="term-real">set it and forget it</small>
+            </h2>
+            <p className="muted">
+              A fixed recurring purchase: the same dollar amount of the same
+              ticker on the same schedule, whatever the price. (This is called{" "}
+              <Term label="dollar-cost averaging" tip={TERMS.dca} />
+              .) Brix runs it on weekday mornings.
+            </p>
+            <p className="practice-disclaimer" role="note">
+              Fixed schedule only. Auto-invest only buys. It never sells, never
+              waits for a better price, and never tries to time the market.
+            </p>
+            {p.rules.length > 0 && (
+              <ul className="rule-list">
+                {p.rules.map((r) => (
+                  <li key={r.id}>
+                    <div>
+                      <strong>
+                        {usd(r.amount)} of {nameOf(r.symbol)}{" "}
+                        {schedule(r.cadence, r.nextRunOn)}
+                      </strong>
+                      <small>
+                        {r.symbol} · {CADENCE[r.cadence]} ·{" "}
+                        {r.active
+                          ? `next buy ${nextBuy(r.nextRunOn)}`
+                          : "paused"}
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      aria-label={`${r.active ? "Pause" : "Resume"} ${r.symbol} rule`}
+                      disabled={busy}
+                      onClick={() =>
+                        void run(async () => {
+                          await request(
+                            `/api/practice/rules/${r.id}`,
+                            "PATCH",
+                            {
+                              active: !r.active,
+                            },
+                          );
+                        })
+                      }
+                    >
+                      {r.active ? <Pause size={16} /> : <Play size={16} />}
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      aria-label={`Delete ${r.symbol} rule`}
+                      disabled={busy}
+                      onClick={() =>
+                        void run(async () => {
+                          await request(
+                            `/api/practice/rules/${r.id}`,
+                            "DELETE",
+                          );
+                        })
+                      }
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
             <form
+              className="rule-form"
+              onChange={(e) => {
+                const f = new FormData(e.currentTarget);
+                setPlan({
+                  symbol: String(f.get("symbol")),
+                  amount: Number(f.get("amount")),
+                  cadence: f.get("cadence") as AutoRule["cadence"],
+                });
+              }}
               onSubmit={(e) => {
                 e.preventDefault();
-                setReview({ symbol, side, amount: Number(amount) });
+                const form = e.currentTarget,
+                  f = new FormData(form);
+                void run(async () => {
+                  await request("/api/practice/rules", "POST", {
+                    symbol: f.get("symbol"),
+                    amount: Number(f.get("amount")),
+                    cadence: f.get("cadence"),
+                  });
+                  form.reset();
+                  setPlan(PLAN);
+                }, "Auto-invest is on.");
               }}
             >
-              <div className="field">
-                <span className="trade-ticket__label">
-                  <label htmlFor={symbolId}>Symbol</label>
-                  <small className="muted">
-                    New here? Try an <Term label="ETF" tip={TERMS.etf} /> like
-                    VOO.
-                  </small>
-                </span>
+              <label className="field">
+                Ticker
                 <Dropdown
-                  id={symbolId}
-                  label="Symbol"
-                  value={symbol}
-                  onChange={setSymbol}
+                  name="symbol"
+                  label="Auto-invest ticker"
+                  defaultValue="VOO"
                   options={sorted.map((s) => ({
                     value: s.symbol,
-                    label: `${s.symbol} · ${s.name}`,
+                    label: s.symbol,
                   }))}
                 />
-              </div>
+              </label>
               <label className="field">
-                Amount (USD)
+                Amount each time
                 <input
                   name="amount"
                   type="number"
                   min="1"
-                  step="0.01"
+                  step="1"
+                  defaultValue={25}
                   required
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
                 />
-                <small className="muted">
-                  {price
-                    ? `One share costs about ${usd(price)}`
-                    : "Loading the price…"}
-                </small>
               </label>
-              <button className="btn btn--primary" disabled={busy}>
-                Review order
+              <label className="field">
+                How often
+                <Dropdown
+                  name="cadence"
+                  label="How often"
+                  defaultValue="weekly"
+                  options={Object.entries(CADENCE).map(([value, label]) => ({
+                    value,
+                    label,
+                  }))}
+                />
+              </label>
+              <button className="btn" disabled={busy}>
+                Turn on auto-invest
               </button>
-              <RealBuy
-                symbol={symbol}
-                name={
-                  sorted.find((s) => s.symbol === symbol)?.name ?? symbol
-                }
-                side={side}
-                amount={Number(amount)}
-              />
             </form>
-          )}
-        </section>
-
-        <div className="practice-holdings-stack">
-          <section
-            className="card practice-holdings"
-            aria-labelledby="holdings"
-          >
-            <div className="card-head">
-              <h2 id="holdings">
-                What you own <small className="term-real">Holdings</small>
-              </h2>
-            </div>
-            {p.positions.length ? (
-              <>
-                <div
-                  className="table-wrap"
-                  tabIndex={0}
-                  role="region"
-                  aria-label="Holdings table"
-                >
-                  <table className="practice-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">Ticker</th>
-                        <th scope="col">Shares</th>
-                        <th scope="col">Value</th>
-                        <th scope="col">Up / down</th>
-                        <th scope="col">Auto-sell guardrails</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {p.positions.map((pos) => (
-                        <tr key={pos.symbol}>
-                          <th scope="row">
-                            {pos.symbol}
-                            <small>{pos.name}</small>
-                            <TakeLive symbol={pos.symbol} compact />
-                          </th>
-                          <td>{pos.shares}</td>
-                          <td>
-                            {usd(pos.value)}
-                            <small>
-                              {pos.price
-                                ? `at ${usd(pos.price)}`
-                                : "price not loading"}
-                            </small>
-                          </td>
-                          <td className={tone(pos.gain)}>{usd(pos.gain)}</td>
-                          <td>
-                            <form
-                              className="stops"
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                const f = new FormData(e.currentTarget);
-                                const v = (k: string) =>
-                                  f.get(k) === "" ? null : Number(f.get(k));
-                                void run(async () => {
-                                  await request(
-                                    `/api/practice/positions/${pos.symbol}`,
-                                    "PATCH",
-                                    {
-                                      stopLoss: v("stopLoss"),
-                                      takeProfit: v("takeProfit"),
-                                    },
-                                  );
-                                }, `Guardrails saved for ${pos.symbol}.`);
-                              }}
-                            >
-                              <input
-                                name="stopLoss"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="Stop"
-                                aria-label={`Stop-loss price for ${pos.symbol}`}
-                                defaultValue={pos.stopLoss ?? ""}
-                              />
-                              <input
-                                name="takeProfit"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="Target"
-                                aria-label={`Take-profit price for ${pos.symbol}`}
-                                defaultValue={pos.takeProfit ?? ""}
-                              />
-                              <button className="btn btn--sm" disabled={busy}>
-                                Save
-                              </button>
-                            </form>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="muted practice-help">
-                  <Term label="Stop" tip={TERMS.stop} />: sell if the price
-                  drops to this (bail out early).{" "}
-                  <Term label="Target" tip={TERMS.target} />: sell when it hits
-                  this (take the W). These are rules you set: Brix only sells at
-                  the exact price you type, and leaves blank ones alone.
-                </p>
-              </>
-            ) : (
-              <p className="muted practice-empty">
-                Nothing yet. Lots of people start with a broad index fund like
-                VOO or VTI.
-              </p>
-            )}
+            <p className="muted" role="status">
+              You&apos;re setting:{" "}
+              <strong>
+                {plan.amount > 0 ? usd(plan.amount) : "$—"} of{" "}
+                {nameOf(plan.symbol)} {schedule(plan.cadence, today())}
+              </strong>
+              . Nothing else. Pause or delete it anytime.
+            </p>
           </section>
 
-          <InvestingNews headlines={news} lines={lines} />
-        </div>
-      </div>
-
-      <section
-        className="card form-card practice-rules"
-        aria-labelledby="rules"
-      >
-        <h2 id="rules">
-          Auto-invest <small className="term-real">set it and forget it</small>
-        </h2>
-        <p className="muted">
-          A fixed recurring purchase: the same dollar amount of the same ticker
-          on the same schedule, whatever the price. (This is called{" "}
-          <Term label="dollar-cost averaging" tip={TERMS.dca} />
-          .) Brix runs it on weekday mornings.
-        </p>
-        <p className="practice-disclaimer" role="note">
-          Fixed schedule only. Auto-invest only buys. It never sells, never
-          waits for a better price, and never tries to time the market.
-        </p>
-        {p.rules.length > 0 && (
-          <ul className="rule-list">
-            {p.rules.map((r) => (
-              <li key={r.id}>
-                <div>
-                  <strong>
-                    {usd(r.amount)} of {nameOf(r.symbol)}{" "}
-                    {schedule(r.cadence, r.nextRunOn)}
-                  </strong>
-                  <small>
-                    {r.symbol} · {CADENCE[r.cadence]} ·{" "}
-                    {r.active ? `next buy ${nextBuy(r.nextRunOn)}` : "paused"}
-                  </small>
-                </div>
-                <button
-                  type="button"
-                  className="icon-btn"
-                  aria-label={`${r.active ? "Pause" : "Resume"} ${r.symbol} rule`}
-                  disabled={busy}
-                  onClick={() =>
-                    void run(async () => {
-                      await request(`/api/practice/rules/${r.id}`, "PATCH", {
-                        active: !r.active,
-                      });
-                    })
-                  }
-                >
-                  {r.active ? <Pause size={16} /> : <Play size={16} />}
-                </button>
-                <button
-                  type="button"
-                  className="icon-btn"
-                  aria-label={`Delete ${r.symbol} rule`}
-                  disabled={busy}
-                  onClick={() =>
-                    void run(async () => {
-                      await request(`/api/practice/rules/${r.id}`, "DELETE");
-                    })
-                  }
-                >
-                  <Trash2 size={16} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <form
-          className="rule-form"
-          onChange={(e) => {
-            const f = new FormData(e.currentTarget);
-            setPlan({
-              symbol: String(f.get("symbol")),
-              amount: Number(f.get("amount")),
-              cadence: f.get("cadence") as AutoRule["cadence"],
-            });
-          }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            const form = e.currentTarget,
-              f = new FormData(form);
-            void run(async () => {
-              await request("/api/practice/rules", "POST", {
-                symbol: f.get("symbol"),
-                amount: Number(f.get("amount")),
-                cadence: f.get("cadence"),
-              });
-              form.reset();
-              setPlan(PLAN);
-            }, "Auto-invest is on.");
-          }}
-        >
-          <label className="field">
-            Ticker
-            <Dropdown
-              name="symbol"
-              label="Auto-invest ticker"
-              defaultValue="VOO"
-              options={sorted.map((s) => ({
-                value: s.symbol,
-                label: s.symbol,
-              }))}
-            />
-          </label>
-          <label className="field">
-            Amount each time
-            <input
-              name="amount"
-              type="number"
-              min="1"
-              step="1"
-              defaultValue={25}
-              required
-            />
-          </label>
-          <label className="field">
-            How often
-            <Dropdown
-              name="cadence"
-              label="How often"
-              defaultValue="weekly"
-              options={Object.entries(CADENCE).map(([value, label]) => ({
-                value,
-                label,
-              }))}
-            />
-          </label>
-          <button className="btn" disabled={busy}>
-            Turn on auto-invest
-          </button>
-        </form>
-        <p className="muted" role="status">
-          You&apos;re setting:{" "}
-          <strong>
-            {plan.amount > 0 ? usd(plan.amount) : "$—"} of{" "}
-            {nameOf(plan.symbol)} {schedule(plan.cadence, today())}
-          </strong>
-          . Nothing else. Pause or delete it anytime.
-        </p>
-      </section>
-
-      <CopyVibes request={request} onPick={copy.open} />
-      {copy.modal}
-
-      <AllocationChart portfolio={p} sample={view.sample} />
-
-      <RealHoldings
-        request={request}
-        universe={sorted}
-        data={real}
-        loadError={realError}
-        reload={loadReal}
-      />
-
-      <section className="card practice-receipts" aria-labelledby="orders">
-        <div className="card-head">
-          <h2 id="orders">
-            Your receipts <small className="term-real">Order history</small>
-          </h2>
-          <ConfirmAction
-            className="btn btn--sm"
-            icon={<RotateCcw size={15} />}
-            label="Start over"
-            question="Start over? Your practice holdings, rules and history are cleared."
-            confirmLabel="Start over"
-            tone="danger"
-            disabled={busy}
-            onConfirm={() =>
-              void run(async () => {
-                await request("/api/practice/reset", "POST", {});
-              }, "Fresh start. Your practice portfolio is reset.")
+          <section className="card practice-receipts" aria-labelledby="orders">
+            <div className="card-head">
+              <h2 id="orders">
+                Your receipts <small className="term-real">Order history</small>
+              </h2>
+              <ConfirmAction
+                className="btn btn--sm"
+                icon={<RotateCcw size={15} />}
+                label="Start over"
+                question="Start over? Your practice holdings, rules and history are cleared."
+                confirmLabel="Start over"
+                tone="danger"
+                disabled={busy}
+                onConfirm={() =>
+                  void run(async () => {
+                    await request("/api/practice/reset", "POST", {});
+                  }, "Fresh start. Your practice portfolio is reset.")
+                }
+              />
+            </div>
+            {p.orders.length ? (
+              <details
+                className="practice-receipts__more"
+                onToggle={(e) => setShowReceipts(e.currentTarget.open)}
+              >
+                <summary>
+                  {showReceipts
+                    ? "Hide receipts"
+                    : `Show ${p.orders.length} ${p.orders.length === 1 ? "receipt" : "receipts"}`}
+                </summary>
+                <ul className="order-list">
+                  {p.orders.map((o) => (
+                    <li
+                      key={o.id}
+                      className={
+                        o.status === "rejected" ? "is-rejected" : undefined
+                      }
+                    >
+                      <span>
+                        {o.status === "filled"
+                          ? `${o.side === "buy" ? "Bought" : "Sold"} ${o.shares} ${o.symbol} at ${usd(o.price)}`
+                          : `${o.symbol}: ${o.reason}`}
+                        {o.afterHours ? " (market closed: last price)" : ""}
+                      </span>
+                      <small>
+                        {SOURCE[o.source]} ·{" "}
+                        {new Date(o.at).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                        {o.realized !== undefined
+                          ? ` · locked in ${usd(o.realized)}`
+                          : ""}
+                      </small>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : (
+              <p className="muted practice-empty">Your trades show up here.</p>
+            )}
+          </section>
+        </>
+      )}
+      {section === "copy" && (
+        <div className="practice-insights practice-hero practice-copy">
+          <CopyVibes request={request} onPick={copy.open} />
+          <Leaderboard
+            request={request}
+            onCopy={(e) =>
+              e.mix &&
+              e.copyId &&
+              copy.open({
+                label: `${e.sample ? e.name.replace("Sample · ", "") : e.name}'s mix`,
+                mix: e.mix,
+                player: e.copyId,
+              })
             }
+            share={{
+              on: !!p.shareMix,
+              busy,
+              onChange: (on) =>
+                void run(
+                  async () => {
+                    await request("/api/practice", "PATCH", { shareMix: on });
+                  },
+                  on
+                    ? "Your mix is copyable now. Percentages only."
+                    : "Your mix is private again.",
+                ),
+            }}
           />
         </div>
-        {p.orders.length ? (
-          <details
-            className="practice-receipts__more"
-            onToggle={(e) => setShowReceipts(e.currentTarget.open)}
-          >
-            <summary>
-              {showReceipts
-                ? "Hide receipts"
-                : `Show ${p.orders.length} ${p.orders.length === 1 ? "receipt" : "receipts"}`}
-            </summary>
-            <ul className="order-list">
-              {p.orders.map((o) => (
-                <li
-                  key={o.id}
-                  className={
-                    o.status === "rejected" ? "is-rejected" : undefined
-                  }
-                >
-                  <span>
-                    {o.status === "filled"
-                      ? `${o.side === "buy" ? "Bought" : "Sold"} ${o.shares} ${o.symbol} at ${usd(o.price)}`
-                      : `${o.symbol}: ${o.reason}`}
-                    {o.afterHours ? " (market closed: last price)" : ""}
-                  </span>
-                  <small>
-                    {SOURCE[o.source]} ·{" "}
-                    {new Date(o.at).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
-                    {o.realized !== undefined
-                      ? ` · locked in ${usd(o.realized)}`
-                      : ""}
-                  </small>
-                </li>
-              ))}
-            </ul>
-          </details>
-        ) : (
-          <p className="muted practice-empty">Your trades show up here.</p>
-        )}
-      </section>
+      )}
+      {section === "real" && (
+        <RealHoldings
+          request={request}
+          universe={sorted}
+          data={real}
+          loadError={realError}
+          reload={loadReal}
+        />
+      )}
+      {copy.modal}
     </>
   );
 }
@@ -1032,9 +1151,9 @@ function RealBuy({
   side: "buy" | "sell";
   amount: number;
 }) {
-  const [stage, setStage] = useState<"closed" | "choose" | BrokerHandoff["broker"]>(
-    "closed",
-  );
+  const [stage, setStage] = useState<
+    "closed" | "choose" | BrokerHandoff["broker"]
+  >("closed");
   const [open, setOpen] = useState<"idle" | "opening" | "opened" | "failed">(
     "idle",
   );
@@ -1122,7 +1241,11 @@ function RealBuy({
             </button>
           ))}
         </div>
-        <button type="button" className="btn btn--sm" onClick={() => reset("closed")}>
+        <button
+          type="button"
+          className="btn btn--sm"
+          onClick={() => reset("closed")}
+        >
           Cancel
         </button>
       </div>
@@ -1161,9 +1284,9 @@ function RealBuy({
       {open === "failed" ? (
         <div className="alert alert--error" role="alert">
           <p>
-            <strong>{handoff.broker} didn&apos;t open.</strong> Your browser
-            may have blocked the new tab, or you&apos;re offline. You can still
-            do it by hand: open{" "}
+            <strong>{handoff.broker} didn&apos;t open.</strong> Your browser may
+            have blocked the new tab, or you&apos;re offline. You can still do
+            it by hand: open{" "}
             <a href={handoff.homeUrl} target="_blank" rel="noopener noreferrer">
               {handoff.homeUrl}
             </a>{" "}
@@ -1202,7 +1325,9 @@ function RealBuy({
           }
         >
           <ExternalLink size={16} aria-hidden />{" "}
-          {open === "failed" ? `Try ${handoff.broker} again` : `Open ${handoff.broker}`}
+          {open === "failed"
+            ? `Try ${handoff.broker} again`
+            : `Open ${handoff.broker}`}
         </button>
         <button
           type="button"
@@ -1212,7 +1337,11 @@ function RealBuy({
         >
           <Copy size={16} aria-hidden /> Copy trade details
         </button>
-        <button type="button" className="btn btn--sm" onClick={() => reset("choose")}>
+        <button
+          type="button"
+          className="btn btn--sm"
+          onClick={() => reset("choose")}
+        >
           Back
         </button>
       </div>
@@ -1295,8 +1424,7 @@ function CoachCard({
       <p>
         <strong>What you&apos;re {buy ? "buying" : "selling"}</strong>
         {shares !== null ? `About ${shares} shares of ` : ""}
-        {trade.symbol} ({name})
-        {price ? ` at about ${usd(price)} a share` : ""}
+        {trade.symbol} ({name}){price ? ` at about ${usd(price)} a share` : ""}
       </p>
       <p>
         <strong>{buy ? "Dollar cost" : "Dollars back"}</strong>
@@ -1425,9 +1553,8 @@ function RealHoldings({
         Real money <small className="term-real">Self-reported</small>
       </h2>
       <p className="practice-disclaimer" role="note">
-        Self-reported. Brix does not verify these with your broker. None of
-        this counts toward your practice portfolio, cash to play with, or
-        allocation.
+        Self-reported. Brix does not verify these with your broker. None of this
+        counts toward your practice portfolio, cash to play with, or allocation.
       </p>
       {error && (
         <p className="alert alert--error" role="alert">
@@ -1533,8 +1660,10 @@ function RealHoldings({
             {data.totals.priced > 0 && (
               <>
                 {" "}
-                Where you gave a price per share: worth{" "}
-                {usd(data.totals.value)} now, {usd(data.totals.cost)} paid (
+                Where you gave a price per share: worth {usd(
+                  data.totals.value,
+                )}{" "}
+                now, {usd(data.totals.cost)} paid (
                 <span className={tone(data.totals.gain)}>
                   {usd(data.totals.gain)}
                 </span>
@@ -1595,13 +1724,7 @@ function RealHoldings({
         </label>
         <label className="field">
           Dollars spent
-          <input
-            name="dollars"
-            type="number"
-            min="0.01"
-            step="0.01"
-            required
-          />
+          <input name="dollars" type="number" min="0.01" step="0.01" required />
         </label>
         <label className="field">
           Date
