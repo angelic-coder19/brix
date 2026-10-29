@@ -7,6 +7,15 @@ import { BrixMark } from "@/components/brand/BrixMark";
 import "./market-ticker.css";
 
 const SYMBOLS = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "AMZN"];
+const LAST_KNOWN = "brix.lastQuotes";
+function readLastKnown(): Quote[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LAST_KNOWN) ?? "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
 const price = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -15,9 +24,11 @@ const price = new Intl.NumberFormat("en-US", {
 /** Uses the same authenticated, source-labelled quotes as practice investing. */
 export function MarketTicker({ request }: { request: RequestFn }) {
   const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [status, setStatus] = useState<"loading" | "ready" | "unavailable">(
-    "loading",
-  );
+  // "stale" shows the last prices this browser saw, labelled as such;
+  // "signedOut" explains the empty strip on the sign-in screen.
+  const [status, setStatus] = useState<
+    "loading" | "ready" | "stale" | "signedOut" | "unavailable"
+  >("loading");
 
   useEffect(() => {
     let stopped = false;
@@ -35,6 +46,7 @@ export function MarketTicker({ request }: { request: RequestFn }) {
       if (document.hidden) return schedule(60_000);
       running = true;
       let ok = false;
+      let signedOut = false;
       try {
         const response = await request<{ quotes: Record<string, Quote> }>(
           `/api/market/quote?symbols=${SYMBOLS.join(",")}`,
@@ -47,16 +59,31 @@ export function MarketTicker({ request }: { request: RequestFn }) {
         if (!stopped && ok) {
           setQuotes(next);
           setStatus("ready");
+          try {
+            localStorage.setItem(LAST_KNOWN, JSON.stringify(next));
+          } catch {}
         }
-      } catch {}
+      } catch (error) {
+        signedOut = (error as { status?: number }).status === 401;
+      }
       running = false;
       if (stopped) return;
       if (ok) failures = 0;
       else {
         failures += 1;
-        // Keep the last good prices on screen; only say "unavailable" when
-        // there is nothing to show.
-        setStatus((s) => (s === "ready" ? s : "unavailable"));
+        // Keep the last good prices on screen. With none this session, fall
+        // back to the last prices this browser saw, clearly marked as old.
+        const saved = readLastKnown();
+        setQuotes((q) => (q.length ? q : saved));
+        setStatus((s) =>
+          s === "ready" || s === "stale"
+            ? s
+            : saved.length
+              ? "stale"
+              : signedOut
+                ? "signedOut"
+                : "unavailable",
+        );
       }
       schedule(ok ? 60_000 : Math.min(30_000, 5_000 * 2 ** (failures - 1)));
     };
@@ -76,7 +103,13 @@ export function MarketTicker({ request }: { request: RequestFn }) {
   }, [request]);
 
   const sample = quotes.some((quote) => quote.sample);
-  const label = sample ? "Demo prices" : "Market · delayed";
+  const label =
+    status === "stale"
+      ? "Last known · delayed"
+      : sample
+        ? "Demo prices"
+        : "Market · delayed";
+  const shown = status === "ready" || status === "stale";
   const renderQuotes = (duplicate = false) => (
     <div className="market-ticker__group" aria-hidden={duplicate || undefined}>
       {quotes.map((quote) => {
@@ -111,9 +144,9 @@ export function MarketTicker({ request }: { request: RequestFn }) {
   return (
     <section className="market-ticker" aria-label="Market prices">
       <span className="market-ticker__label">
-        {status === "ready" ? label : "Market"}
+        {shown ? label : "Market"}
       </span>
-      {status === "ready" ? (
+      {shown ? (
         <div
           className="market-ticker__window"
           tabIndex={0}
@@ -129,7 +162,9 @@ export function MarketTicker({ request }: { request: RequestFn }) {
         <span className="market-ticker__message" role="status">
           {status === "loading"
             ? "Loading prices…"
-            : "Prices unavailable · retrying"}
+            : status === "signedOut"
+              ? "Prices show after you sign in"
+              : "Prices delayed · checking again"}
         </span>
       )}
     </section>

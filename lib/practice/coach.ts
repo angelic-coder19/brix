@@ -33,6 +33,9 @@ export interface CoachFacts {
   symbolPctAfter: number;
   cashPctBefore: number;
   cashPctAfter: number;
+  /** The trade itself as a share of cash on hand and of the portfolio. */
+  tradePctOfCash: number;
+  tradePctOfPortfolio: number;
   holdingsAfter: number;
   dropPct: number;
   dropLoss: number;
@@ -40,6 +43,7 @@ export interface CoachFacts {
   portfolioDropPct: number;
 }
 export interface CoachCheck {
+  size: string;
   bet: string | null;
   risk: string | null;
   allocation: string;
@@ -99,12 +103,21 @@ export function coachFacts(
     symbolPctAfter: share(symbolAfter),
     cashPctBefore: share(portfolio.cash),
     cashPctAfter: share(cashAfter),
+    tradePctOfCash:
+      portfolio.cash > 0 ? pct1((amount / portfolio.cash) * 100) : 0,
+    tradePctOfPortfolio: share(amount),
     holdingsAfter: others + (symbolAfter > 0 ? 1 : 0),
     dropPct: DROP,
     dropLoss,
     totalAfterDrop: round(total - dropLoss),
     portfolioDropPct: share(dropLoss),
   };
+}
+
+export function sizeLine(f: CoachFacts) {
+  return f.side === "buy"
+    ? `This buy uses ${f.tradePctOfCash}% of your cash and is ${f.tradePctOfPortfolio}% of your practice portfolio.`
+    : `This sale is ${f.tradePctOfPortfolio}% of your practice portfolio and adds to your cash.`;
 }
 
 export function allocationLine(f: CoachFacts) {
@@ -198,6 +211,7 @@ export async function coachCheck(
     price,
   );
   const base = {
+    size: sizeLine(facts),
     allocation: allocationLine(facts),
     whatIf: whatIfLine(facts),
   };

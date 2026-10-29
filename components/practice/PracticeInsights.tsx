@@ -276,42 +276,32 @@ export function Leaderboard({ request }: { request: RequestFn }) {
         </div>
       </div>
       {board ? (
-        <ol className="leaderboard__list">
-          {board.entries.map((e) => (
-            <li
-              key={`${e.rank}-${e.name}`}
-              className={`${e.you ? "is-you" : ""}${e.sample ? " is-sample" : ""}`}
-            >
-              <span
-                className={`leaderboard__rank leaderboard__rank--${e.rank}`}
+        <>
+          <ol className="leaderboard__list">
+            {board.entries
+              .filter((e) => !e.sample)
+              .map((e) => (
+                <BoardRow key={`${e.rank}-${e.name}`} e={e} />
+              ))}
+          </ol>
+          {board.hasSamples && (
+            <>
+              <p className="leaderboard__tag">
+                Made-up examples, not real students. Not ranked.
+              </p>
+              <ul
+                className="leaderboard__list"
+                aria-label="Example players, not real students"
               >
-                {e.rank}
-              </span>
-              <span className="leaderboard__name">
-                <span className="leaderboard__who">
-                  {e.sample ? e.name.replace("Sample · ", "") : e.name}
-                  {e.you && <span className="badge badge--accent">You</span>}
-                </span>
-                {e.sample && (
-                  <small className="leaderboard__tag">Sample player</small>
-                )}
-              </span>
-              <span
-                className={`leaderboard__gain ${e.gainPct >= 0 ? "is-up" : "is-down"}`}
-              >
-                {pct(e.gainPct)}
-              </span>
-              <span
-                className="leaderboard__coins"
-                title={`${e.coins} Brix coins`}
-              >
-                <Coins size={14} aria-hidden />
-                {e.coins.toLocaleString("en-US")}
-                <span className="sr-only"> coins</span>
-              </span>
-            </li>
-          ))}
-        </ol>
+                {board.entries
+                  .filter((e) => e.sample)
+                  .map((e) => (
+                    <BoardRow key={e.name} e={e} />
+                  ))}
+              </ul>
+            </>
+          )}
+        </>
       ) : (
         <p className="muted" role="status">
           {failed ? "Leaderboard unavailable right now." : "Loading…"}
@@ -321,8 +311,39 @@ export function Leaderboard({ request }: { request: RequestFn }) {
         Start: 100 · Trade: +10 · Auto-invest rule: +50 · Each 1% gained: +20 ·
         Losses never cost coins. Only first names and initials are shown.
         {board?.hasSamples &&
-          " Sample players fill the board until more students join."}
+          " Example players only show how coins work until more students join."}
       </p>
     </section>
+  );
+}
+
+function BoardRow({ e }: { e: LeaderboardEntry }) {
+  return (
+    <li
+      className={`${e.you ? "is-you" : ""}${e.sample ? " is-sample" : ""}`}
+    >
+      <span className={`leaderboard__rank leaderboard__rank--${e.rank}`}>
+        {e.sample ? "–" : e.rank}
+      </span>
+      <span className="leaderboard__name">
+        <span className="leaderboard__who">
+          {e.sample ? e.name.replace("Sample · ", "") : e.name}
+          {e.you && <span className="badge badge--accent">You</span>}
+        </span>
+        {e.sample && (
+          <small className="leaderboard__tag">Example, not a real person</small>
+        )}
+      </span>
+      <span
+        className={`leaderboard__gain ${e.gainPct >= 0 ? "is-up" : "is-down"}`}
+      >
+        {pct(e.gainPct)}
+      </span>
+      <span className="leaderboard__coins" title={`${e.coins} Brix coins`}>
+        <Coins size={14} aria-hidden />
+        {e.coins.toLocaleString("en-US")}
+        <span className="sr-only"> coins</span>
+      </span>
+    </li>
   );
 }

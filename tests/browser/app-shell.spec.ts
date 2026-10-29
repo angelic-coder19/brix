@@ -251,7 +251,7 @@ test("invest shows a price line and a leaderboard", async ({ page }) => {
     page.getByRole("img", { name: /VOO closing prices/ }),
   ).toBeVisible();
   const board = page.getByRole("region", { name: "Leaderboard" });
-  await expect(board.getByText("Sample").first()).toBeVisible();
+  await expect(board.getByText(/Made-up examples/)).toBeVisible();
   await page
     .getByRole("group", { name: "Time range" })
     .getByRole("button", { name: "6M" })

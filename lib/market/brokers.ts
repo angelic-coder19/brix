@@ -23,3 +23,12 @@ export function brokerLinks(symbol: string): BrokerLink[] {
     { broker: "Cash App", url: "https://cash.app/investing" },
   ];
 }
+
+/** Broker home pages, for places with no ticker in context (Connections). */
+export function brokerHomes(): BrokerLink[] {
+  return [
+    { broker: "Robinhood", url: "https://robinhood.com/us/en/" },
+    { broker: "Fidelity", url: "https://www.fidelity.com/" },
+    { broker: "Cash App", url: "https://cash.app/investing" },
+  ];
+}

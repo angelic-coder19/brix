@@ -190,8 +190,8 @@ export default function Practice({ request }: { request: RequestFn }) {
   return (
     <div className="practice">
       <p className="practice-disclaimer" role="note">
-        This is virtual money at real (sometimes delayed) prices. Brix never
-        places real trades.
+        Practice money: This is virtual money at real (sometimes delayed)
+        prices. Brix never places real trades.
       </p>
       {error && (
         <p className="alert alert--error" role="alert">
@@ -351,6 +351,28 @@ function Portfolio({
     p.benchmarkPct === null ? null : p.gainPct - p.benchmarkPct;
   const [showReceipts, setShowReceipts] = useState(false);
   const symbolId = useId();
+  // Real holdings load once here so the summary card and the section agree.
+  const [real, setReal] = useState<RealView | null>(null);
+  const [realError, setRealError] = useState("");
+  const loadReal = useCallback(
+    () =>
+      request<RealView>("/api/practice/real-holdings")
+        .then((r) => {
+          setReal(r);
+          setRealError("");
+        })
+        .catch((e: Error) => setRealError(e.message)),
+    [request],
+  );
+  useEffect(() => {
+    const first = setTimeout(() => void loadReal(), 0);
+    return () => clearTimeout(first);
+  }, [loadReal]);
+  const brokerSymbol =
+    [...(real?.holdings ?? [])].sort(
+      (a, b) => (b.value ?? b.cost) - (a.value ?? a.cost),
+    )[0]?.symbol ??
+    [...p.positions].sort((a, b) => b.value - a.value)[0]?.symbol;
 
   return (
     <>
@@ -393,6 +415,27 @@ function Portfolio({
           <div className="stat-card__value">{usd(p.cash)}</div>
           <p className="practice-summary__sub">Fake money, real prices</p>
           <p>Profit you&apos;ve locked in: {usd(p.realized)}</p>
+        </div>
+        <div className="practice-summary__cell">
+          <div className="stat-card__label">Real money</div>
+          <div className="stat-card__value">
+            {real === null
+              ? "…"
+              : real.holdings.length
+                ? usd(real.totals.value)
+                : "—"}
+          </div>
+          <p className="practice-summary__sub">
+            Self-reported, never mixed with practice
+          </p>
+          {brokerSymbol ? (
+            <TakeLive symbol={brokerSymbol} label="Open in broker" />
+          ) : null}
+          <a href="#real-holdings" className="take-live">
+            {real?.holdings.length
+              ? `${real.holdings.length} real ${real.holdings.length === 1 ? "purchase" : "purchases"} logged`
+              : "Log a real purchase"}
+          </a>
         </div>
       </section>
 
@@ -521,6 +564,7 @@ function Portfolio({
           )}
         </section>
 
+        <div className="practice-holdings-stack">
         <section className="card practice-holdings" aria-labelledby="holdings">
           <div className="card-head">
             <h2 id="holdings">
@@ -625,6 +669,40 @@ function Portfolio({
             </p>
           )}
         </section>
+
+        <section className="card news-card" aria-labelledby="stock-news">
+          <h3 id="stock-news">
+            <Newspaper size={17} /> News on your holdings
+          </h3>
+          {news === null ? (
+            <p className="muted">Loading…</p>
+          ) : news.length ? (
+            <ul className="news-list">
+              {news.map((h) => (
+                <li key={h.url}>
+                  <a href={h.url} target="_blank" rel="noopener noreferrer">
+                    {h.title} <ExternalLink size={13} aria-hidden />
+                  </a>
+                  {lines[h.url] && (
+                    <p className="news-line">
+                      <strong>What it means for you:</strong> {lines[h.url]}
+                    </p>
+                  )}
+                  <small>
+                    {h.symbol} · {h.source} ·{" "}
+                    {new Date(h.publishedAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </small>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">No recent headlines.</p>
+          )}
+        </section>
+        </div>
       </div>
 
       <section className="card form-card practice-rules" aria-labelledby="rules">
@@ -745,38 +823,13 @@ function Portfolio({
 
       <AllocationChart portfolio={p} sample={view.sample} />
 
-      <RealHoldings request={request} universe={sorted} />
-
-      <section className="card news-card" aria-labelledby="stock-news">
-        <h3 id="stock-news">
-          <Newspaper size={17} /> News on your holdings
-        </h3>
-        {news === null ? (
-          <p className="muted">Loading…</p>
-        ) : news.length ? (
-          <ul className="news-list">
-            {news.map((h) => (
-              <li key={h.url}>
-                <a href={h.url} target="_blank" rel="noopener noreferrer">
-                  {h.title} <ExternalLink size={13} aria-hidden />
-                </a>
-                {lines[h.url] && (
-                  <p className="news-line">{lines[h.url]}</p>
-                )}
-                <small>
-                  {h.symbol} · {h.source} ·{" "}
-                  {new Date(h.publishedAt).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </small>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="muted">No recent headlines.</p>
-        )}
-      </section>
+      <RealHoldings
+        request={request}
+        universe={sorted}
+        data={real}
+        loadError={realError}
+        reload={loadReal}
+      />
 
       <section className="card practice-receipts" aria-labelledby="orders">
         <div className="card-head">
@@ -847,10 +900,16 @@ function Portfolio({
 }
 
 /** Plain links to the same ticker on a broker's site. Brix never trades. */
-function TakeLive({ symbol }: { symbol: string }) {
+function TakeLive({
+  symbol,
+  label = "Take this live",
+}: {
+  symbol: string;
+  label?: string;
+}) {
   return (
     <small className="take-live">
-      Take this live:{" "}
+      {label === "Take this live" ? label : `${label} (${symbol})`}:{" "}
       {brokerLinks(symbol).map((b, i) => (
         <span key={b.broker}>
           {i > 0 && " · "}
@@ -907,35 +966,39 @@ function CoachCard({
         <p className="muted">Coach check unavailable</p>
       ) : (
         <>
-          {check.available ? (
-            <>
-              {check.bet && (
-                <p>
-                  <strong>What you&apos;re betting on</strong>
-                  {check.bet}
-                </p>
-              )}
-              {check.risk && (
-                <p>
-                  <strong>What could go wrong</strong>
-                  {check.risk}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="muted">Coach check unavailable</p>
-          )}
           <p>
-            <strong>
-              How your mix changes{" "}
-              <small className="term-real">Allocation</small>
-            </strong>
-            {check.allocation}
+            <strong>Size of this trade</strong>
+            {check.size}
           </p>
           <p>
             <strong>What if it drops 20%</strong>
             {check.whatIf}
           </p>
+          {!check.available && (
+            <p className="muted">Coach check unavailable</p>
+          )}
+          <details className="coach__more">
+            <summary>Why this matters</summary>
+            {check.bet && (
+              <p>
+                <strong>What you&apos;re betting on</strong>
+                {check.bet}
+              </p>
+            )}
+            {check.risk && (
+              <p>
+                <strong>What could go wrong</strong>
+                {check.risk}
+              </p>
+            )}
+            <p>
+              <strong>
+                How your mix changes{" "}
+                <small className="term-real">Allocation</small>
+              </strong>
+              {check.allocation}
+            </p>
+          </details>
           <ul className="msg__sources" aria-label="Where this came from">
             {check.sources.map((s) => (
               <li key={s}>{s}</li>
@@ -963,33 +1026,28 @@ interface RealView {
 function RealHoldings({
   request,
   universe,
+  data,
+  loadError,
+  reload,
 }: {
   request: RequestFn;
   universe: Security[];
+  data: RealView | null;
+  loadError: string;
+  reload: () => Promise<unknown>;
 }) {
-  const [data, setData] = useState<RealView | null>(null);
-  const [error, setError] = useState("");
+  const [actionError, setError] = useState("");
+  const error = actionError || loadError;
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
-  const load = useCallback(
-    () =>
-      request<RealView>("/api/practice/real-holdings")
-        .then(setData)
-        .catch((e: Error) => setError(e.message)),
-    [request],
-  );
-  useEffect(() => {
-    const first = setTimeout(() => void load(), 0);
-    return () => clearTimeout(first);
-  }, [load]);
   async function act(work: () => Promise<unknown>, done: string) {
     setBusy(true);
     setError("");
     setNotice("");
     try {
       await work();
-      await load();
+      await reload();
       setNotice(done);
     } catch (e) {
       setError((e as Error).message);

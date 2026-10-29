@@ -414,6 +414,54 @@ export default function Home() {
         </section>
 
         <section
+          id="grow"
+          className="section container"
+          aria-labelledby="grow-title"
+        >
+          <div className="section-head section-head--split" data-reveal>
+            <h2 id="grow-title">Grow, too.</h2>
+            <p>Charges come first. Two more things live inside Brix.</p>
+          </div>
+          <ol className="steps" data-reveal data-reveal-stagger>
+            <li>
+              <h3>Practice investing</h3>
+              <p>
+                Buy real stocks and index funds with virtual money at real
+                prices. A coach explains each trade before you confirm. No real
+                money moves.
+              </p>
+            </li>
+            <li>
+              <h3>Plan a school refund</h3>
+              <p>
+                See which part of an aid refund is borrowed, the 120-day window
+                to return it with no interest or fees, and a dated plan for the
+                rest.
+              </p>
+            </li>
+            <li>
+              <h3>Try the demo first</h3>
+              <p>
+                “Try the demo” opens a sample account. No sign-up, no card, no
+                real money.
+              </p>
+            </li>
+            <li>
+              <h3>Then make it yours</h3>
+              <p>
+                Sign in with Google or a text message to use your own data.
+                “Set up Brix step by step” covers your name, a bank, your first
+                trial and reminders.
+              </p>
+            </li>
+          </ol>
+          <p className="grow__pricing" data-reveal>
+            <strong>Pricing:</strong> decided before launch. Trying the demo is
+            free.
+          </p>
+        </section>
+
+        <section
           id="how"
           className="section container how"
           aria-labelledby="how-title"
