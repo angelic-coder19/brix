@@ -233,7 +233,10 @@ async function main() {
     !/can't find a verified/.test(v.results?.[0]?.result ?? ""),
     short(v.results?.[0]?.result),
   );
-  v = await vapi("mark_to_cancel", { merchant: "Smoke Trial Co" });
+  v = await vapi("set_reminder", {
+    merchant: "Smoke Trial Co",
+    when: "2 days before",
+  });
   check(
     "Voice proposes, app must confirm",
     /Confirm this request in the Brix app/.test(v.results?.[0]?.result ?? ""),
@@ -242,12 +245,10 @@ async function main() {
   r = await call("/api/agent/action", {
     body: { name: "confirm_voice_action" },
   });
-  const trialNow = (await call("/api/state")).data.charges.find(
-    (c: any) => c.merchant === "Smoke Trial Co",
-  );
+  const reminded = (await call("/api/state")).data.reminders.length;
   check(
     "Voice action confirmed in app",
-    r.status === 200 && trialNow?.status === "to_cancel",
+    r.status === 200 && reminded >= 1,
     short(r.data.reply),
   );
 
@@ -374,8 +375,10 @@ async function main() {
     t1.status === 201 && t1.data.id === t2.data.id,
   );
   check(
-    "API: mark to cancel",
-    p1.status === 200 && p1.data.status === "to_cancel",
+    "API: manage link instead of a cancel flag",
+    p1.status === 200 &&
+      p1.data.status !== "to_cancel" &&
+      /merchant/.test(p1.data.message ?? ""),
   );
   check(
     "API: reminder create + delete",
@@ -520,6 +523,14 @@ async function main() {
     "Price history (Yahoo)",
     r.status === 200 && r.data.points?.length > 10 && !r.data.sample,
     `${r.data.points?.length} closes`,
+  );
+  r = await call("/api/practice/copy", {
+    body: { strategy: "three-fund", amount: 60, clientKey: "smoke-copy" },
+  });
+  check(
+    "Copy trading fills a strategy at live prices",
+    r.status === 200 && r.data.filled === 3,
+    `${r.data.filled} of 3 filled`,
   );
   r = await call("/api/practice/leaderboard");
   check(
