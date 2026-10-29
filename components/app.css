@@ -2354,9 +2354,6 @@
 .studio__form > .giftface {
   margin-inline: auto;
 }
-.overview-news {
-  margin-bottom: 24px;
-}
 @media (max-width: 760px) {
   .wallet-tabs a {
     padding: 10px 12px;
