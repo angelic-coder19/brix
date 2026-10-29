@@ -68,3 +68,52 @@ test("merchant logos: only Plaid's CDN is trusted, domains are cleaned", async (
   assert.equal(merchantDomain("Local Gym"), undefined);
   assert.equal(merchantDomain("x", "not a domain"), undefined);
 });
+
+test("copy trading splits a mix by percent and refuses bad mixes", async () => {
+  const { planCopy, mixOf, STRATEGIES, copyIdFor } =
+    await import("../lib/practice/copy");
+  const plan = planCopy(
+    [
+      { symbol: "VTI", pct: 60 },
+      { symbol: "VXUS", pct: 30 },
+      { symbol: "BND", pct: 10 },
+    ],
+    100,
+  );
+  assert.deepEqual(
+    plan.map((p) => [p.symbol, p.amount]),
+    [
+      ["VTI", 60],
+      ["VXUS", 30],
+      ["BND", 10],
+    ],
+  );
+  assert.throws(() => planCopy([{ symbol: "NOPE", pct: 100 }], 50));
+  assert.throws(() => planCopy([{ symbol: "VOO", pct: 50 }], 50));
+  assert.throws(() =>
+    planCopy(
+      [
+        { symbol: "VOO", pct: 99 },
+        { symbol: "BND", pct: 1 },
+      ],
+      20,
+    ),
+  );
+  for (const s of STRATEGIES)
+    assert.equal(
+      s.mix.reduce((t, m) => t + m.pct, 0),
+      100,
+      s.id,
+    );
+  const mix = mixOf([
+    { symbol: "VOO", value: 200 },
+    { symbol: "QQQ", value: 100 },
+  ]);
+  assert.equal(
+    mix.reduce((t, m) => t + m.pct, 0),
+    100,
+  );
+  assert.equal(mix[0].symbol, "VOO");
+  assert.match(copyIdFor("user-123"), /^p_[0-9a-f]{16}$/);
+  assert.notEqual(copyIdFor("a"), copyIdFor("b"));
+});

@@ -106,7 +106,7 @@ test("scopes: a read key cannot write and gets 403 insufficient_scope", () =>
     assert.equal((await call(cards.GET, secret, "/cards")).status, 403);
   }));
 
-test("charges: filters, upcoming, get by id, mark to cancel and undo", () =>
+test("charges: filters, upcoming, get by id, manage link instead of a cancel flag", () =>
   withUser(async (uid) => {
     const { secret } = await createApiKey(uid, "rw", [
       "charges:read",
@@ -146,10 +146,10 @@ test("charges: filters, upcoming, get by id, mark to cancel and undo", () =>
       });
     assert.equal((await patch({ status: "cancelled" })).status, 400);
     assert.equal((await patch({ status: "to_cancel", amount: 0 })).status, 400);
-    const marked = await (await patch({ status: "to_cancel" })).json();
-    assert.equal(marked.status, "to_cancel");
-    assert.match(marked.message, /marked to cancel/);
-    assert.equal(
+    const managed = await (await patch({ status: "to_cancel" })).json();
+    assert.notEqual(managed.status, "to_cancel");
+    assert.match(managed.message, /directly with the merchant/);
+    assert.notEqual(
       (await getState(uid)).charges.find((c) => c.id === first.id)?.status,
       "to_cancel",
     );

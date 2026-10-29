@@ -1,6 +1,7 @@
 import { getQuotes, type Quote } from "../market/quotes";
 import { getPortfolio, getState, listPortfolioOwners } from "../store";
 import { valuation, type Portfolio } from "./engine";
+import { copyIdFor, mixOf, type MixWeight } from "./copy";
 
 export interface LeaderboardEntry {
   rank: number;
@@ -12,6 +13,10 @@ export interface LeaderboardEntry {
   you?: boolean;
   /** A labelled example player, shown while the real board is small. */
   sample?: boolean;
+  /** Present only when the player opted in: tickers and percentages, no dollars. */
+  mix?: MixWeight[];
+  /** Opaque id for copying this mix; never the player's account id. */
+  copyId?: string;
 }
 
 const MAX_PLAYERS = 200;
@@ -24,10 +29,53 @@ let cached: {
 // Example players so a small board still teaches what earns coins. Always
 // marked as samples in the API and the UI.
 const SAMPLES = [
-  { name: "Sample · Jordan K.", gainPct: 4.1, trades: 14, rules: 2 },
-  { name: "Sample · Priya S.", gainPct: 2.6, trades: 9, rules: 1 },
-  { name: "Sample · Leo M.", gainPct: -1.4, trades: 22, rules: 0 },
-  { name: "Sample · Ava T.", gainPct: 0.8, trades: 5, rules: 1 },
+  {
+    name: "Sample · Jordan K.",
+    gainPct: 4.1,
+    trades: 14,
+    rules: 2,
+    copyId: "sample_jordan",
+    mix: [
+      { symbol: "VOO", pct: 60 },
+      { symbol: "QQQ", pct: 25 },
+      { symbol: "NVDA", pct: 15 },
+    ],
+  },
+  {
+    name: "Sample · Priya S.",
+    gainPct: 2.6,
+    trades: 9,
+    rules: 1,
+    copyId: "sample_priya",
+    mix: [
+      { symbol: "VTI", pct: 70 },
+      { symbol: "VXUS", pct: 20 },
+      { symbol: "BND", pct: 10 },
+    ],
+  },
+  {
+    name: "Sample · Leo M.",
+    gainPct: -1.4,
+    trades: 22,
+    rules: 0,
+    copyId: "sample_leo",
+    mix: [
+      { symbol: "TSLA", pct: 40 },
+      { symbol: "AMD", pct: 30 },
+      { symbol: "QQQ", pct: 30 },
+    ],
+  },
+  {
+    name: "Sample · Ava T.",
+    gainPct: 0.8,
+    trades: 5,
+    rules: 1,
+    copyId: "sample_ava",
+    mix: [
+      { symbol: "SCHD", pct: 60 },
+      { symbol: "VOO", pct: 40 },
+    ],
+  },
 ];
 
 /**
@@ -60,6 +108,7 @@ async function rowFor(
   quotes: Record<string, Quote>,
 ) {
   const v = valuation(p, quotes);
+  const mix = p.shareMix ? mixOf(v.positions) : [];
   const trades = p.orders.filter((o) => o.status === "filled").length;
   const rules = p.rules.filter((r) => r.active).length;
   return {
@@ -69,6 +118,7 @@ async function rowFor(
     trades,
     rules,
     coins: coinsFor(v.gainPct, trades, rules),
+    ...(mix.length ? { mix, copyId: copyIdFor(uid) } : {}),
   };
 }
 
@@ -128,4 +178,14 @@ export async function leaderboard(uid: string) {
     players: real.length,
     hasSamples: samples.length > 0,
   };
+}
+
+/** The opted-in mix behind a copy id, or null. Sample ids map to examples. */
+export async function mixForCopyId(
+  copyId: string,
+): Promise<MixWeight[] | null> {
+  const sample = SAMPLES.find((s) => s.copyId === copyId);
+  if (sample) return sample.mix;
+  const row = (await players()).find((r) => r.copyId === copyId);
+  return row?.mix ?? null;
 }

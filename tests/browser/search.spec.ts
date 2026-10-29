@@ -98,10 +98,10 @@ test("compact overview and setup strip with real progress", async ({
   page,
 }) => {
   await page.goto("/dashboard");
-  const summary = page.getByRole("region", { name: "Summary" });
+  const summary = page.getByRole("region", { name: "Wallet snapshot" });
   await expect(summary).toContainText("Monthly recurring");
   await expect(summary).toContainText("Next 14 days");
-  await expect(summary).toContainText("Charges avoided");
+  await expect(summary).toContainText("Gift card balance");
   const h = (await summary.boundingBox())!.height;
   expect(h).toBeLessThan(page.viewportSize()!.width > 800 ? 140 : 320);
 

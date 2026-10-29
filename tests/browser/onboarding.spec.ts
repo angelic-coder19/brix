@@ -72,11 +72,12 @@ test("onboarding happy path in demo mode", async ({ page, request }) => {
   await page.getByRole("button", { name: "Go to your overview" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(
-    page.getByRole("button", { name: "Mark Notion AI to cancel" }),
-  ).toBeVisible();
-  await expect(
     page.getByRole("region", { name: "Finish setting up" }),
   ).toHaveCount(0);
+  await page.goto("/subscriptions");
+  await expect(
+    page.getByRole("button", { name: "Remind me about Notion AI" }),
+  ).toBeVisible();
 });
 
 test("onboarding shows an error and keeps the step when saving fails", async ({

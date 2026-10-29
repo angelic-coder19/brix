@@ -80,6 +80,7 @@ export async function practiceView(uid: string) {
   }
   return {
     portfolio: {
+      shareMix: portfolio.shareMix ?? false,
       ...valuation(portfolio, quotes),
       startingCash: portfolio.startingCash,
       createdAt: portfolio.createdAt,

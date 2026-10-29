@@ -33,7 +33,6 @@ import {
   Phone,
   Check,
   RefreshCw,
-  Scissors,
   Activity,
   GraduationCap,
   TrendingUp,
@@ -41,6 +40,7 @@ import {
   BookOpen,
   Briefcase,
   EyeOff,
+  MoreHorizontal,
   RotateCcw,
 } from "lucide-react";
 import { MoneyPicture } from "./MoneyPicture";
@@ -50,7 +50,9 @@ import MerchantLogo from "./ui/MerchantLogo";
 import BrixChat from "./brix/BrixChat";
 import DeveloperKeys from "./DeveloperKeys";
 import MerchantNews from "./MerchantNews";
-import { CardShowcase } from "./CardShowcase";
+import { OverviewNews } from "./OverviewNews";
+import { EmailConnect } from "./EmailConnect";
+import { merchantDomain } from "@/lib/merchant-domains";
 import { HeaderTrain, MarketTicker } from "./shell/MarketTicker";
 import GoogleOneTap, { disableGoogleAutoSelect } from "./GoogleOneTap";
 import SmsSignIn from "./SmsSignIn";
@@ -74,6 +76,7 @@ import { BrixMark } from "@/components/brand/BrixMark";
 import { Wordmark } from "@/components/brand/Wordmark";
 import { VirtualCard } from "@/components/brand/VirtualCard";
 import { ConfirmAction } from "@/components/ui/ConfirmAction";
+import { MenuButton } from "@/components/ui/MenuButton";
 import { AppSearch, type SearchResult } from "@/components/shell/AppSearch";
 import {
   AppSidebar,
@@ -128,23 +131,29 @@ const nav = [
 ] as const;
 
 const titles: Record<View, [string, string]> = {
-  dashboard: ["Overview", "Your next charges, all in one place."],
-  subscriptions: [
-    "Charges",
-    "Every subscription and free trial Brix is watching.",
+  dashboard: [
+    "Your money, your move",
+    "Build investing reps. Give your refund a game plan.",
   ],
-  cards: ["Cards", "One-time cards and gift balances."],
-  refunds: ["Refunds", "Give your school refund a plan."],
+  subscriptions: [
+    "Wallet",
+    "Subscriptions, cards, and the little charges that add up.",
+  ],
+  cards: ["Wallet", "Your cards and gift balances, minus the clutter."],
+  refunds: [
+    "Refund game plan",
+    "A refund isn’t all free money. Let’s make it last.",
+  ],
   practice: [
     "Invest",
     "Real prices, fake money. Learn the moves before you risk a dollar.",
   ],
   connect: [
     "Connections",
-    "Link a bank through Plaid and choose how Brix reaches you.",
+    "Plug in your bank, your inbox and your broker. Pick how Brix hits you up.",
   ],
-  settings: ["Settings", "Reminder channels, your phone number and your data."],
-  developer: ["Developers", "API keys for building on Brix, and the docs."],
+  settings: ["Settings", "Your pings, your number, your data. All your call."],
+  developer: ["Developers", "Build on Brix. Keys and docs live here."],
   admin: ["Admin", "Demo controls and integration checks."],
 };
 
@@ -205,7 +214,7 @@ function ChargeRow({
             <span className="badge badge--warn">Trial</span>
           )}
           {c.status === "to_cancel" && (
-            <span className="badge badge--accent">Marked to cancel</span>
+            <span className="badge badge--accent">Previously flagged</span>
           )}
         </strong>
         <span>
@@ -224,7 +233,7 @@ function ChargeRow({
               rel="noreferrer"
               className="cancel-link"
             >
-              Finish on the merchant site <ArrowUpRight size={13} />
+              Manage on merchant site <ArrowUpRight size={13} />
             </a>
           ) : (
             <span className="cancel-link">Cancel with the merchant</span>
@@ -249,27 +258,37 @@ function ChargeRow({
             <Bell size={15} />
             <span className="charge-action-label">Remind</span>
           </button>
-          <button
-            className="btn btn--sm"
-            title={`Mark ${c.merchant} to cancel`}
-            aria-label={`Mark ${c.merchant} to cancel`}
-            onClick={() => onAsk(`Mark ${c.merchant} to cancel`)}
-          >
-            <Scissors size={15} />
-            <span className="charge-action-label">Cancel</span>
-          </button>
-          {onHide && (
-            <button
+          {(c.cancelUrl?.startsWith("https://") ||
+            merchantDomain(c.merchant, c.website)) && (
+            <a
               className="btn btn--sm"
-              title={`${c.merchant} isn't a subscription`}
-              aria-label={`${c.merchant} isn't a subscription`}
-              onClick={onHide}
+              href={
+                c.cancelUrl?.startsWith("https://")
+                  ? c.cancelUrl
+                  : `https://${merchantDomain(c.merchant, c.website)}`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Manage ${c.merchant} on merchant site`}
             >
-              <EyeOff size={15} />
-              <span className="charge-action-label">
-                This isn&apos;t a subscription
-              </span>
-            </button>
+              Manage <ArrowUpRight size={15} />
+            </a>
+          )}
+          {onHide && (
+            <MenuButton
+              className="btn btn--sm charge-more"
+              align="end"
+              label={<span className="sr-only">More for {c.merchant}</span>}
+              icon={<MoreHorizontal size={16} aria-hidden />}
+              items={[
+                {
+                  label: "Not a subscription",
+                  hint: "Hide it from your wallet",
+                  icon: <EyeOff size={15} aria-hidden />,
+                  onSelect: onHide,
+                },
+              ]}
+            />
           )}
         </div>
       )}
@@ -433,10 +452,7 @@ export default function BrixApp() {
   const charges = useMemo(() => state?.charges ?? [], [state]);
   const active = charges.filter((c) => c.status !== "cancelled");
   const { monthly, subscriptionCount, trialCount } = summarizeCharges(charges);
-  const saved = (state?.events ?? []).reduce(
-    (sum, e) => sum + (e.amountSaved || 0),
-    0,
-  );
+
   const today = new Date(now).toISOString().slice(0, 10);
   const horizon = new Date(now + 14 * DAY).toISOString().slice(0, 10);
   const upcoming = active
@@ -498,42 +514,37 @@ export default function BrixApp() {
   };
   const navGroups: NavGroup[] = [
     {
-      label: "Money",
+      label: "Your money",
       items: [
         { ...nav[0] },
-        {
-          ...nav[1],
-          badge: {
-            value: trialCount,
-            label: `${trialCount} free ${trialCount === 1 ? "trial" : "trials"}`,
-          },
-        },
-        {
-          ...nav[2],
-          badge: {
-            value: openCards,
-            label: `${openCards} open ${openCards === 1 ? "card" : "cards"}`,
-          },
-        },
-      ],
-    },
-    {
-      label: "Grow",
-      items: [
+        { href: "practice", label: "Invest", icon: TrendingUp },
         {
           href: "refunds",
           label: "Refunds",
           icon: GraduationCap,
           badge: {
             value: newRefunds,
-            label: `${newRefunds} refund${newRefunds === 1 ? "" : "s"} to plan`,
+            label: `${newRefunds} ${newRefunds === 1 ? "refund" : "refunds"} to plan`,
           },
         },
-        { href: "practice", label: "Invest", icon: TrendingUp },
       ],
     },
     {
-      label: "Setup",
+      label: "The extras",
+      items: [
+        {
+          href: "subscriptions",
+          label: "Wallet",
+          icon: CreditCard,
+          badge: {
+            value: trialCount,
+            label: `${trialCount} free ${trialCount === 1 ? "trial" : "trials"}`,
+          },
+        },
+      ],
+    },
+    {
+      label: "Your setup",
       items: [
         { ...nav[3] },
         { href: "settings", label: "Settings", icon: Settings },
@@ -551,7 +562,7 @@ export default function BrixApp() {
         Skip to content
       </a>
       <AppSidebar
-        view={view}
+        view={view === "cards" ? "subscriptions" : view}
         groups={navGroups}
         collapsed={sidebar.collapsed}
         onToggle={sidebar.toggle}
@@ -656,13 +667,20 @@ export default function BrixApp() {
                       </div>
                     </section>
                   )}
-                  <button
-                    className="btn btn--primary"
-                    onClick={() => setTrialOpen(true)}
-                  >
-                    <Plus size={18} />
-                    Add a free trial
-                  </button>
+                  {view === "dashboard" ? (
+                    <Link href="/practice" className="btn btn--primary">
+                      <TrendingUp size={18} />
+                      Make a move
+                    </Link>
+                  ) : (
+                    <button
+                      className="btn btn--primary"
+                      onClick={() => setTrialOpen(true)}
+                    >
+                      <Plus size={18} />
+                      Add a free trial
+                    </button>
+                  )}
                 </div>
               )}
             {view === "settings" && state && !needsSignIn && (
@@ -702,6 +720,22 @@ export default function BrixApp() {
               </div>
             )}
           </div>
+          {(view === "cards" || view === "subscriptions") && (
+            <nav className="wallet-tabs" aria-label="Wallet sections">
+              <Link
+                href="/subscriptions"
+                aria-current={view === "subscriptions" ? "page" : undefined}
+              >
+                Subscriptions
+              </Link>
+              <Link
+                href="/cards"
+                aria-current={view === "cards" ? "page" : undefined}
+              >
+                Cards & gift cards
+              </Link>
+            </nav>
+          )}
           {error && (
             <div className="alert alert--error" role="alert">
               {error}
@@ -835,6 +869,36 @@ export default function BrixApp() {
               )}
               {view === "dashboard" && (
                 <>
+                  <section
+                    className="overview-moves"
+                    aria-label="Your next moves"
+                  >
+                    <Link href="/practice">
+                      <TrendingUp size={26} />
+                      <span>
+                        <strong>Build your investing reps</strong>
+                        <small>
+                          Practice trades. Real market context. Your pace.
+                        </small>
+                      </span>
+                      <ArrowUpRight size={20} />
+                    </Link>
+                    <Link href="/refunds">
+                      <GraduationCap size={26} />
+                      <span>
+                        <strong>Make that refund last</strong>
+                        <small>Essentials first. Then your next move.</small>
+                      </span>
+                      <ArrowUpRight size={20} />
+                    </Link>
+                  </section>
+                  <div className="overview-status">
+                    <NextDecisionCard
+                      decision={nextDecision(state)}
+                      onAsk={ask}
+                    />
+                  </div>
+                  <OverviewNews request={request} />
                   <MoneyPicture
                     state={state}
                     request={request}
@@ -842,13 +906,10 @@ export default function BrixApp() {
                     busy={busy}
                     now={now}
                   />
-                  <div className="overview-status">
-                    <NextDecisionCard
-                      decision={nextDecision(state)}
-                      onAsk={ask}
-                    />
-                  </div>
-                  <section className="card summary-row" aria-label="Summary">
+                  <section
+                    className="card summary-row"
+                    aria-label="Wallet snapshot"
+                  >
                     <div className="summary-stat summary-stat--lead">
                       <span className="summary-stat__label">
                         <Layers3 size={14} aria-hidden /> Monthly recurring
@@ -889,57 +950,67 @@ export default function BrixApp() {
                     </div>
                     <div className="summary-stat summary-stat--good">
                       <span className="summary-stat__label">
-                        <ShieldCheck size={14} aria-hidden /> Charges avoided
+                        <CreditCard size={14} aria-hidden /> Gift card balance
                       </span>
                       <span className="summary-stat__value">
-                        {money(saved)}
+                        {money(
+                          (state.giftCards ?? [])
+                            .filter((g) => g.status === "active")
+                            .reduce((total, g) => total + g.balance, 0),
+                        )}
                       </span>
-                      <span className="summary-stat__sub">
-                        {
-                          state.charges.filter((c) => c.status === "to_cancel")
-                            .length
-                        }{" "}
-                        marked to cancel
-                      </span>
+                      <span className="summary-stat__sub">Yours to use</span>
                     </div>
                     <Link
                       href="/subscriptions"
                       className="icon-btn summary-row__link"
-                      aria-label="See all charges"
+                      aria-label="Open your wallet"
                     >
                       <ArrowUpRight size={18} />
                     </Link>
                   </section>
                   <div className="dash-columns">
-                    <section className="card">
+                    <section
+                      className="card wallet-glance"
+                      aria-labelledby="glance-title"
+                    >
                       <div className="card-head">
                         <div>
-                          <h2>Coming up next</h2>
-                          <p>Sorted by date, next 14 days.</p>
+                          <h2 id="glance-title">On deck in your wallet</h2>
+                          <p>What bills in the next 14 days.</p>
                         </div>
-                        <span className="badge">
-                          {upcoming.length} upcoming
-                        </span>
+                        <span className="badge">{upcoming.length} soon</span>
                       </div>
                       {upcoming.length ? (
-                        upcoming.map((c) => (
-                          <ChargeRow key={c.id} charge={c} onAsk={ask} />
-                        ))
+                        <ul className="wallet-glance__list">
+                          {upcoming.slice(0, 4).map((c) => (
+                            <li key={c.id}>
+                              <MerchantLogo
+                                merchant={c.merchant}
+                                logoUrl={c.logoUrl}
+                                website={c.website}
+                                size={34}
+                              />
+                              <span className="wallet-glance__name">
+                                <strong>{c.merchant}</strong>
+                                <small>
+                                  {c.kind === "trial" ? "Trial ends" : "Renews"}{" "}
+                                  {shortDate(c.nextDate)}
+                                </small>
+                              </span>
+                              <strong className="wallet-glance__amount">
+                                {money(c.amount)}
+                              </strong>
+                            </li>
+                          ))}
+                        </ul>
                       ) : (
-                        <div className="empty-state">
-                          <Bell size={28} />
-                          <h3>Nothing bills in the next 14 days.</h3>
-                          <p>
-                            Add a free trial you just started, or connect a bank
-                            so Brix can find recurring charges.
-                          </p>
-                          <Link href="/connect" className="text-link">
-                            Connect a bank <ArrowRight size={16} />
-                          </Link>
-                        </div>
+                        <p className="muted wallet-glance__empty">
+                          Nothing bills in the next 14 days. You&apos;re good.
+                        </p>
                       )}
                       <Link href="/subscriptions" className="card-foot-link">
-                        See all your charges <ArrowRight size={16} />
+                        Open your wallet <ArrowRight size={16} />
                       </Link>
                     </section>
                     <aside className="right-column">
@@ -978,10 +1049,6 @@ export default function BrixApp() {
                         )}
                       </section>
                     </aside>
-                  </div>
-                  <div className="dash-secondary">
-                    <CardShowcase />
-                    <MerchantNews request={request} />
                   </div>
                 </>
               )}
@@ -1069,7 +1136,9 @@ export default function BrixApp() {
                                 await request(`/api/charges/${c.id}`, "PATCH", {
                                   notSubscription: false,
                                 });
-                                setNotice(`${c.merchant} is back on your list.`);
+                                setNotice(
+                                  `${c.merchant} is back on your list.`,
+                                );
                               })
                             }
                           >
@@ -1080,9 +1149,12 @@ export default function BrixApp() {
                     </details>
                   )}
                   <p className="footnote">
-                    <ShieldCheck size={15} /> “Mark to cancel” flags a charge.
-                    You finish cancellation on the merchant’s website.
+                    <ShieldCheck size={15} /> Manage takes you straight to the
+                    merchant. No extra cancellation step in Brix.
                   </p>
+                  <div className="wallet-news">
+                    <MerchantNews request={request} />
+                  </div>
                 </>
               )}
               {view === "cards" && (
@@ -1225,6 +1297,7 @@ export default function BrixApp() {
                 />
               )}
               {view === "practice" && <Practice request={request} />}
+              {view === "connect" && <EmailConnect request={request} />}
               {view === "connect" && (
                 <Connect
                   request={request}
@@ -1409,7 +1482,10 @@ export default function BrixApp() {
             </>
           )}
           <footer className="app-footer">
-            <span>Brix reads your charges. It never moves money.</span>
+            <span>
+              Built by Gen Z, for Gen Z. Practice here. Real trades happen with
+              your broker.
+            </span>
             <span>
               <ShieldCheck size={14} /> Read-only by design.
             </span>
@@ -1417,19 +1493,27 @@ export default function BrixApp() {
         </main>
       </div>
       <nav className="mobile-nav" aria-label="Brix navigation">
-        {[...nav, { href: "settings", label: "Settings", icon: Settings }].map(
-          (n) => (
-            <Link
-              href={`/${n.href}`}
-              key={n.href}
-              className={view === n.href ? "is-active" : ""}
-              aria-current={view === n.href ? "page" : undefined}
-            >
-              <n.icon size={20} />
-              <span>{n.label}</span>
-            </Link>
-          ),
-        )}
+        {[
+          { ...nav[0] },
+          { href: "practice", label: "Invest", icon: TrendingUp },
+          { href: "refunds", label: "Refunds", icon: GraduationCap },
+          { href: "subscriptions", label: "Wallet", icon: CreditCard },
+          { href: "settings", label: "Settings", icon: Settings },
+        ].map((n) => (
+          <Link
+            href={`/${n.href}`}
+            key={n.href}
+            className={
+              (view === "cards" ? "subscriptions" : view) === n.href
+                ? "is-active"
+                : ""
+            }
+            aria-current={view === n.href ? "page" : undefined}
+          >
+            <n.icon size={20} />
+            <span>{n.label}</span>
+          </Link>
+        ))}
       </nav>
       {trialOpen && (
         <TrialModal
@@ -1793,20 +1877,17 @@ function Connect({
           Brix doesn&apos;t log in to or trade in a brokerage account. Open your
           broker, then log real purchases yourself to see them next to practice.
         </p>
-        <div className="button-row">
-          {brokerHomes().map((b) => (
-            <a
-              key={b.broker}
-              className="btn btn--sm"
-              href={b.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Open ${b.broker} (new tab, real money)`}
-            >
-              {b.broker} <ArrowUpRight size={15} />
-            </a>
-          ))}
-        </div>
+        <MenuButton
+          className="btn btn--sm"
+          icon={<Briefcase size={15} aria-hidden />}
+          label="Open your broker"
+          items={brokerHomes().map((b) => ({
+            label: b.broker,
+            href: b.url,
+            hint: "Real money. Opens in a new tab",
+            icon: <ArrowUpRight size={14} aria-hidden />,
+          }))}
+        />
         <Link href="/practice#real-holdings" className="text-link">
           Log a real purchase <ArrowRight size={16} />
         </Link>

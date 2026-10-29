@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { BrixMark } from "@/components/brand/BrixMark";
+import { VirtualCard } from "@/components/brand/VirtualCard";
 import { CARD_DESIGNS, type CardDesign } from "@/lib/types";
 
 const TEMPLATES = [
@@ -10,7 +10,7 @@ const TEMPLATES = [
     label: "Free trial",
     purpose: "Free trial",
     limit: "1.00",
-    hint: "A $1 limit passes the sign-up check, so the trial can’t bill you later.",
+    hint: "Preview a low-limit trial card. Sandbox only; not for real checkouts.",
   },
   {
     id: "month",
@@ -68,9 +68,13 @@ export function CardStudio({
     <section className="card studio" aria-labelledby="new-card-title">
       <div className="studio__head">
         <h2 id="new-card-title">New one-time card</h2>
-        <p>Type on the card. Brix asks you to confirm before creating it.</p>
+        <p>Pick your vibe. Set a limit. Review before it’s made.</p>
       </div>
-      <div className="studio__templates" role="group" aria-label="Card templates">
+      <div
+        className="studio__templates"
+        role="group"
+        aria-label="Card templates"
+      >
         {TEMPLATES.map((t) => (
           <button
             key={t.id}
@@ -98,61 +102,48 @@ export function CardStudio({
           });
         }}
       >
-        <div className={`vcard vcard--${design} vcard--editing`}>
-          <div className="vcard__face">
-            <div className="vcard__top">
-              <span className="vcard__brand" aria-hidden>
-                <BrixMark className="vcard__mark" />
-                brix<span className="brand-period">.</span>
-              </span>
-              <span className="vcard__type" aria-hidden>
-                Virtual · Single use
-              </span>
-            </div>
-            <span className="vcard__chip" aria-hidden />
-            <p className="vcard__number" aria-hidden>
-              <span>••••</span>
-              <span>••••</span>
-              <span>••••</span>
-              <span>new</span>
-            </p>
-            <div className="vcard__bottom">
-              <label className="vcard__edit">
-                <small>For</small>
-                <input
-                  name="purpose"
-                  aria-label="What’s it for?"
-                  required
-                  maxLength={80}
-                  value={purpose}
-                  onChange={(e) => {
-                    setPurpose(e.target.value);
-                    setTemplate("custom");
-                  }}
-                  placeholder="e.g. Notion AI trial"
-                />
-              </label>
-            </div>
-            <label className="vcard__limit vcard__limit--edit">
-              <span aria-hidden>Limit $</span>
-              <input
-                name="spendLimit"
-                aria-label="Spending limit (USD)"
-                required
-                type="number"
-                inputMode="decimal"
-                min="0.01"
-                max="500"
-                step="0.01"
-                value={limit}
-                onChange={(e) => {
-                  setLimit(e.target.value);
-                  setTemplate("custom");
-                }}
-                placeholder="10.00"
-              />
-            </label>
-          </div>
+        <VirtualCard
+          purpose={purpose || "Your next move"}
+          last4="0000"
+          limit={Number(limit) || 0}
+          expiry={null}
+          design={design}
+          note="Design preview · sandbox"
+          tilt={false}
+        />
+        <div className="studio-fields">
+          <label className="field">
+            What’s it for?
+            <input
+              name="purpose"
+              required
+              maxLength={80}
+              value={purpose}
+              onChange={(e) => {
+                setPurpose(e.target.value);
+                setTemplate("custom");
+              }}
+              placeholder="e.g. Streaming trial"
+            />
+          </label>
+          <label className="field">
+            Spending limit (USD)
+            <input
+              name="spendLimit"
+              required
+              type="number"
+              inputMode="decimal"
+              min="0.01"
+              max="500"
+              step="0.01"
+              value={limit}
+              onChange={(e) => {
+                setLimit(e.target.value);
+                setTemplate("custom");
+              }}
+              placeholder="10.00"
+            />
+          </label>
         </div>
         <p className="studio__hint">{hint}</p>
         <div className="studio__foot">

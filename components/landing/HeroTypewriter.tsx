@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 
 // The first phrase is the longest; the reserved line is sized to it.
-const phrases = ["it catches you.", "the trial ends.", "renewal day."];
+const phrases = [
+  "without the guesswork.",
+  "at your own pace.",
+  "one move at a time.",
+];
 
 /**
  * Only the ending changes. The second line never wraps and a reserved copy of
@@ -51,16 +55,16 @@ export default function HeroTypewriter() {
 
   return (
     <span className="accent-text hero__accent hero-type">
-      <span className="sr-only">before it catches you.</span>
+      <span className="sr-only">without the guesswork.</span>
       <span className="hero-type__reserve" aria-hidden="true">
-        before it catches you.
+        without the guesswork.
       </span>
       <span className="hero-type__text" aria-hidden="true">
-        before {text}
+        {text}
         <span className="hero-type__caret" />
       </span>
       <span className="hero-type__still" aria-hidden="true">
-        before it catches you.
+        without the guesswork.
       </span>
     </span>
   );

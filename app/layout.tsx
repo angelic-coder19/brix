@@ -12,12 +12,12 @@ const siteUrl = process.env.APP_URL?.startsWith("http")
   ? process.env.APP_URL
   : "https://www.usebrix.app";
 const description =
-  "Brix tracks subscriptions and free trials for college students. It finds recurring charges through Plaid, reminds you 7 and 2 days before they bill, and lets you cancel by chat after you say yes. It never moves money.";
+  "Built by Gen Z, for Gen Z. Build investing reps with practice money, give your school refund a game plan, and keep cards and subscriptions in one wallet. Real trades happen with your broker.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Brix · Subscription and free-trial tracker",
+    default: "Brix · Your money, your move",
     template: "%s · Brix",
   },
   description,
@@ -28,19 +28,21 @@ export const metadata: Metadata = {
     "free trial reminder",
     "student budgeting",
     "money assistant",
-    "HackPSU",
+    "Gen Z finance",
+    "practice investing",
+    "school refunds",
   ],
   openGraph: {
     type: "website",
     url: "/",
     siteName: "Brix",
-    title: "Brix · Catch the charge before it catches you",
+    title: "Brix · Your money, your move",
     description,
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Brix · Catch the charge before it catches you",
+    title: "Brix · Your money, your move",
     description,
   },
   other: {

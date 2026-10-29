@@ -15,6 +15,7 @@ import {
   formatUsPhone,
   Phone,
 } from "@/components/landing/Devices";
+import LandingAction from "@/components/landing/LandingAction";
 import HeroTypewriter from "@/components/landing/HeroTypewriter";
 import HeroBuddy from "@/components/landing/HeroBuddy";
 import HelpLauncher from "@/components/landing/HelpLauncher";
@@ -35,7 +36,7 @@ import "./landing.css";
 import { Wordmark } from "@/components/brand/Wordmark";
 
 const links = [
-  { href: "#product", label: "Product" },
+  { href: "#product", label: "Invest & plan" },
   { href: "#how", label: "How it works" },
   { href: "#calculator", label: "Cost check" },
   { href: "#faq", label: "FAQ" },
@@ -54,55 +55,59 @@ const tracked: BrandSlug[] = [
 ];
 
 const facts = [
-  { n: "7 & 2", unit: "days", text: "before each charge. Time to decide." },
-  { n: "14", unit: "days", text: "of charges, in one clear view." },
-  { n: "$0", unit: "", text: "moved by Brix. Read-only, always." },
-  { n: "1", unit: "yes", text: "from you before Brix takes action." },
+  { n: "$0", unit: "", text: "real money risked in practice trades." },
+  { n: "1", unit: "plan", text: "for your refund, essentials first." },
+  { n: "Your", unit: "call", text: "in charge of your next move." },
+  {
+    n: "Gen Z",
+    unit: "",
+    text: "built this. For people figuring it out, too.",
+  },
 ];
 
 const steps = [
   {
-    title: "Start your list",
-    text: "Link a bank through Plaid, or add trials yourself.",
+    title: "Pick your starting point",
+    text: "Try investing practice or map out a school refund.",
   },
   {
-    title: "See what repeats",
-    text: "Know the amount and date of your next charge.",
+    title: "Get the context",
+    text: "Understand a trade, or separate borrowed money from the rest.",
   },
   {
-    title: "Get a heads-up",
-    text: "Reminders arrive 7 and 2 days before a charge.",
+    title: "Make a plan",
+    text: "Practice with virtual cash. Give your real expenses room first.",
   },
   {
-    title: "Make your choice",
-    text: "Keep it, set a reminder, or get the cancellation link.",
+    title: "Keep checking in",
+    text: "Review what you learned, update your plan, and catch surprise charges.",
   },
 ];
 
 const faqs = [
   {
+    q: "Am I buying real stocks here?",
+    a: "No. Brix is a practice space with virtual money. Explore stocks and funds, read the coach’s explanation, and learn how a trade works. Real trades happen with your broker, outside Brix.",
+  },
+  {
+    q: "What does the refund planner do?",
+    a: "It helps you separate borrowed money from other aid, set aside essentials, and plan what’s left. Your school or loan servicer can confirm the terms of your aid.",
+  },
+  {
+    q: "Is Brix telling me what to invest in?",
+    a: "No. The practice coach explains concepts and trade-offs. It doesn’t promise returns or make a real-money decision for you.",
+  },
+  {
     q: "Can Brix move my money?",
-    a: "No. Brix connects through Plaid with read-only access. It can see recurring charges, but it can’t pay, transfer, or cancel anything by itself.",
+    a: "No. Bank access is read-only, investing is simulated, and you handle real transactions outside Brix.",
   },
   {
-    q: "Does Brix cancel subscriptions for me?",
-    a: "It marks the charge as “to cancel” and gives you the merchant’s cancellation page. You finish on the merchant’s site, so nothing is cancelled without you.",
-  },
-  {
-    q: "Why does it keep asking me to confirm?",
-    a: "Every action is saved as a proposal and waits for a separate yes. If you send yes twice, it still only runs once. Voice requests for cards also need your PIN.",
-  },
-  {
-    q: "Are the one-time cards real?",
-    a: "Not yet. They’re sandbox cards, so they can’t spend money. They show how a single-use card with a limit keeps a trial from rolling into a bill.",
-  },
-  {
-    q: "How do WhatsApp and phone reminders work?",
-    a: "Verify your number, join the WhatsApp sandbox, then switch on the channels you want in Settings. Turn them off whenever you like.",
+    q: "What about subscriptions and cards?",
+    a: "They’re here too. Track trials, set reminders, and manage subscriptions with the merchant. Single-use cards are sandbox previews and cannot spend real money.",
   },
   {
     q: "Can I delete my data?",
-    a: "Yes. Settings has a button to disconnect your bank and another to delete your Brix data entirely.",
+    a: "Yes. Disconnect your bank or delete your Brix data in Settings. You stay in control.",
   },
 ];
 
@@ -138,17 +143,17 @@ const screens: ScrollyStep[] = [
     ),
   },
   {
-    id: "cancel",
+    id: "confirm",
     copy: (
       <>
         <span className="row__num">02</span>
         <h3>Your call. Your confirmation.</h3>
         <p>
-          Say “cancel Spotify” in the chat or on a call. Brix asks first, then marks the charge and
-          shares the merchant’s cancellation link.
+          Ask for a reminder in chat or on a call. Brix checks the details with
+          you before saving it.
         </p>
         <ul className="row__list">
-          <li>Proposals run once, even if you send yes twice</li>
+          <li>Confirm the date before a reminder is saved</li>
           <li>Brix reacts to your messages, and you can react back</li>
         </ul>
       </>
@@ -156,8 +161,8 @@ const screens: ScrollyStep[] = [
     media: (
       <div className="row__media row__phones">
         <Phone
-          src="/screens/chat-confirm-mobile-393.webp"
-          alt="Brix asks: Mark Spotify ($11.99) to cancel? Reply yes to confirm"
+          src="/screens/charges-mobile-393.webp"
+          alt="Your charges and upcoming renewal dates in Brix"
           sizes="(max-width: 640px) 46vw, 260px"
         />
         <CallPhone number={BRIX_NUMBER} />
@@ -196,7 +201,7 @@ const screens: ScrollyStep[] = [
             <strong>Brix</strong>
             <p>
               Heads-up: your Notion trial ends in 2 days. After that it’s
-              $10.00/mo. Keep it or cancel?
+              $10.00/mo. Want a reminder?
             </p>
           </div>
         </div>
@@ -218,21 +223,16 @@ export default function Home() {
         <section className="hero container">
           <div className="hero__copy">
             <h1>
-              <span className="hero__line">Catch the charge</span>{" "}
+              <span className="hero__line">Your money era,</span>{" "}
               <HeroTypewriter />
             </h1>
             <p className="hero__lead">
-              Your subscriptions and trials. A heads-up before they bill.
+              Practice investing. Make a plan for your school refund. Built by
+              Gen Z, for the money stuff nobody explained.
             </p>
             <div className="hero__ctas">
               <PeekCta>
-                <Link
-                  href="/dashboard"
-                  className="btn btn--primary btn--lg"
-                  data-buddy-mood="celebrate"
-                >
-                  Try the demo <ArrowRight size={18} />
-                </Link>
+                <LandingAction className="btn btn--primary btn--lg" arrow />
               </PeekCta>
               <PeekCta>
                 <a href="#how" className="btn btn--lg btn--ghost hero__how">
@@ -241,8 +241,8 @@ export default function Home() {
               </PeekCta>
             </div>
             <p className="hero__note">
-              <ShieldCheck size={16} /> Read-only bank access. Brix never moves
-              money.
+              <ShieldCheck size={16} /> Virtual trades here. Real investing
+              stays with your broker.
             </p>
           </div>
           <div className="hero__visual">
@@ -268,19 +268,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="tracked container" aria-labelledby="tracked-title">
-          <p id="tracked-title">
-            Recognizes the subscriptions you already pay for
-          </p>
-          <Marquee
-            label="Subscriptions Brix recognizes"
-            items={tracked.map((slug) => ({
-              key: slug,
-              node: <BrandMark slug={slug} size={26} />,
-            }))}
-          />
-        </section>
-
         <section
           className="facts container"
           aria-label="How Brix works, in numbers"
@@ -303,12 +290,83 @@ export default function Home() {
 
         <section
           id="product"
-          className="section container"
+          className="section container money-first"
           aria-labelledby="product-title"
         >
+          <div className="section-head" data-reveal>
+            <h2 id="product-title">Figure it out. Then move.</h2>
+            <p>No finance degree required. Just a place to start.</p>
+          </div>
+          <article className="money-feature" data-reveal>
+            <div className="money-feature__copy">
+              <span className="eyebrow">Investing practice</span>
+              <h3>Your first trade, minus the panic.</h3>
+              <p>
+                Try stocks and funds with virtual money. Ask the coach what a
+                trade means before you confirm.
+              </p>
+              <p className="money-feature__note">
+                Practice here. Place real trades with your broker when you’re
+                ready.
+              </p>
+              <Link href="/practice" className="text-link">
+                Explore practice <ArrowRight size={17} />
+              </Link>
+            </div>
+            <Browser
+              src="/screens/practice-desktop.webp"
+              alt="Brix investing practice workspace with virtual money"
+              url="usebrix.app/practice"
+            />
+          </article>
+          <article className="money-feature money-feature--refund" data-reveal>
+            <div className="money-feature__copy">
+              <span className="eyebrow">School refunds</span>
+              <h3>Refund hit? Give it a plan.</h3>
+              <p>
+                Rent, books, next month’s groceries. Set aside the essentials,
+                spot borrowed money, and decide what’s left.
+              </p>
+              <p className="money-feature__note">
+                A refund isn’t always extra cash. Brix helps you see the
+                difference.
+              </p>
+              <Link href="/refunds" className="text-link">
+                Plan a refund <ArrowRight size={17} />
+              </Link>
+            </div>
+            <Browser
+              src="/screens/refunds-desktop.webp"
+              alt="Brix school refund planner for essentials and borrowed money"
+              url="usebrix.app/refunds"
+            />
+          </article>
+        </section>
+
+        <section className="tracked container" aria-labelledby="tracked-title">
+          <p id="tracked-title">
+            Recognizes the subscriptions you already pay for
+          </p>
+          <Marquee
+            label="Subscriptions Brix recognizes"
+            items={tracked.map((slug) => ({
+              key: slug,
+              node: <BrandMark slug={slug} size={26} />,
+            }))}
+          />
+        </section>
+
+        <section
+          id="grow"
+          className="section container"
+          aria-labelledby="grow-title"
+        >
           <div className="section-head section-head--split" data-reveal>
-            <h2 id="product-title">Meet your money.</h2>
-            <p>A clear view of what’s coming. A simple way to act.</p>
+            <h2 id="grow-title">And the little money leaks?</h2>
+            <p>
+              Still covered. Keep tabs on trials, subscriptions, and surprise
+              renewals.
+            </p>
           </div>
 
           <Scrolly steps={screens} />
@@ -370,7 +428,7 @@ export default function Home() {
               <ol className="night__flow" data-reveal data-reveal-stagger>
                 <li>
                   <span>
-                    <b>Brix proposes.</b> “Mark Spotify ($11.99) to cancel?”
+                    <b>Brix proposes.</b> “Remind you before Spotify renews?”
                   </span>
                 </li>
                 <li>
@@ -380,7 +438,8 @@ export default function Home() {
                 </li>
                 <li>
                   <span>
-                    <b>It’s logged.</b> You finish on Spotify’s own cancel page.
+                    <b>It’s logged.</b> Your reminder stays in your activity
+                    feed.
                   </span>
                 </li>
               </ol>
@@ -411,54 +470,6 @@ export default function Home() {
           <div data-reveal>
             <TrialCalculator />
           </div>
-        </section>
-
-        <section
-          id="grow"
-          className="section container"
-          aria-labelledby="grow-title"
-        >
-          <div className="section-head section-head--split" data-reveal>
-            <h2 id="grow-title">Grow, too.</h2>
-            <p>Charges come first. Two more things live inside Brix.</p>
-          </div>
-          <ol className="steps" data-reveal data-reveal-stagger>
-            <li>
-              <h3>Practice investing</h3>
-              <p>
-                Buy real stocks and index funds with virtual money at real
-                prices. A coach explains each trade before you confirm. No real
-                money moves.
-              </p>
-            </li>
-            <li>
-              <h3>Plan a school refund</h3>
-              <p>
-                See which part of an aid refund is borrowed, the 120-day window
-                to return it with no interest or fees, and a dated plan for the
-                rest.
-              </p>
-            </li>
-            <li>
-              <h3>Try the demo first</h3>
-              <p>
-                “Try the demo” opens a sample account. No sign-up, no card, no
-                real money.
-              </p>
-            </li>
-            <li>
-              <h3>Then make it yours</h3>
-              <p>
-                Sign in with Google or a text message to use your own data.
-                “Set up Brix step by step” covers your name, a bank, your first
-                trial and reminders.
-              </p>
-            </li>
-          </ol>
-          <p className="grow__pricing" data-reveal>
-            <strong>Pricing:</strong> decided before launch. Trying the demo is
-            free.
-          </p>
         </section>
 
         <section
@@ -523,7 +534,7 @@ export default function Home() {
                 <dt>
                   <PhoneCall size={18} /> Phone
                 </dt>
-                <dd>“Mark Netflix to cancel.”</dd>
+                <dd>“When does Netflix renew?”</dd>
               </div>
             </dl>
           </div>
@@ -537,11 +548,8 @@ export default function Home() {
           <div className="section-head" data-reveal>
             <h2 id="faq-title">Questions</h2>
             <p>
-              Anything else?{" "}
-              <Link href="/dashboard" className="text-link">
-                Try the demo
-              </Link>{" "}
-              and ask Brix.
+              Anything else? <LandingAction className="text-link" /> and ask
+              Brix.
             </p>
           </div>
           <div className="faq__list" data-reveal data-reveal-stagger>
@@ -561,18 +569,16 @@ export default function Home() {
           <div className="final-cta" data-reveal>
             <div className="final-cta__inner">
               <h2 id="cta-title">
-                Fewer surprises.{" "}
-                <span className="accent-text">More control.</span>
+                Less “wait, what?”{" "}
+                <span className="accent-text">More “I’ve got this.”</span>
               </h2>
               <p>
-                The demo opens with a sample account. No sign-up, no card, no
-                real money.
+                Start with practice. Build a plan. Take the next step at your
+                own pace.
               </p>
               <div className="hero__ctas">
                 <PeekCta>
-                  <Link href="/dashboard" className="btn btn--primary btn--lg">
-                    Try the demo <ArrowRight size={18} />
-                  </Link>
+                  <LandingAction className="btn btn--primary btn--lg" arrow />
                 </PeekCta>
                 <a href="#product" className="final-cta__link">
                   See the product <ArrowUpRight size={16} />
@@ -593,13 +599,15 @@ export default function Home() {
               <Wordmark />
             </Link>
             <p>
-              Tracks subscriptions and free trials for college students. Never
-              moves money.
+              Investing practice and refund plans for our generation. Built by
+              Gen Z, figuring it out together.
             </p>
           </div>
           <nav aria-label="Product">
             <h3>Product</h3>
             <Link href="/dashboard">Overview</Link>
+            <Link href="/practice">Investing practice</Link>
+            <Link href="/refunds">School refunds</Link>
             <Link href="/subscriptions">Your charges</Link>
             <Link href="/cards">One-time cards</Link>
             <Link href="/connect">Connections</Link>
