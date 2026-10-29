@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { brokerLinks } from "../lib/market/brokers";
+import { brokerHandoffs, brokerLinks } from "../lib/market/brokers";
 import { parseRealHolding } from "../lib/practice/real";
 import {
   allocationLine,
@@ -43,6 +43,7 @@ test("a real purchase must use a listed ticker, positive numbers and a past date
   );
   assert.deepEqual(ok, {
     symbol: "VOO",
+    dollars: 750.2,
     shares: 1.5,
     pricePaid: 500.13,
     boughtOn: "2026-10-01",
@@ -58,6 +59,45 @@ test("a real purchase must use a listed ticker, positive numbers and a past date
     { broker: "x".repeat(41) },
   ])
     assert.throws(() => parseRealHolding({ ...base, ...bad }, "2026-10-28"));
+});
+
+test("a real purchase logged in dollars never guesses a share count", () => {
+  const day = "2026-10-28";
+  const plain = parseRealHolding(
+    { symbol: "MSFT", dollars: "20", boughtOn: day, broker: "Robinhood" },
+    day,
+  );
+  assert.equal(plain.dollars, 20);
+  assert.equal(plain.shares, null);
+  assert.equal(plain.pricePaid, null);
+  // Shares only come from a price the student typed.
+  const priced = parseRealHolding(
+    { symbol: "MSFT", dollars: 20, pricePaid: 400, boughtOn: day },
+    day,
+  );
+  assert.equal(priced.shares, 0.05);
+  assert.throws(() => parseRealHolding({ symbol: "MSFT", boughtOn: day }, day));
+  assert.throws(() =>
+    parseRealHolding({ symbol: "MSFT", dollars: 0, boughtOn: day }, day),
+  );
+});
+
+test("broker handoff never claims the dollar amount carries over", () => {
+  const all = brokerHandoffs("MSFT");
+  assert.deepEqual(
+    all.map((b) => b.broker),
+    ["Robinhood", "Cash App", "Fidelity"],
+  );
+  for (const b of all) {
+    assert.equal(b.carriesAmount, false);
+    assert.ok(b.homeUrl.startsWith("https://"));
+    // The steps tell the student to type the amount themselves.
+    assert.ok(b.steps("$20.00", "buy").some((s) => s.includes("$20.00")));
+  }
+  const cash = all.find((b) => b.broker === "Cash App")!;
+  assert.equal(cash.carriesSymbol, false);
+  assert.ok(cash.steps("$20.00", "buy").some((s) => s.includes("MSFT")));
+  assert.ok(all[0].url.endsWith("/stocks/MSFT/"));
 });
 
 test("coach math: allocation before and after, and a 20% drop from real numbers", () => {

@@ -29,6 +29,10 @@ export interface ChatMessage {
   persisted: boolean;
   pending?: boolean;
   error?: boolean;
+  /** On a failed reply: the message to send again from "Try again". */
+  retry?: string;
+  /** A user message whose reply failed; dropped when it is retried. */
+  failed?: boolean;
 }
 
 interface ChatResponse {
@@ -139,7 +143,7 @@ export function useBrixChat({
       if (!text || busy) return false;
       const localId = `local-${++counter.current}`;
       setLocal((m) => [
-        ...m.filter((x) => !x.error),
+        ...m.filter((x) => !x.error && !(x.failed && x.text === text)),
         { id: localId, role: "user", text, persisted: false, pending: true },
       ]);
       setBusy(true);
@@ -156,7 +160,9 @@ export function useBrixChat({
         return true;
       } catch (error) {
         setLocal((m) => [
-          ...m.map((x) => (x.id === localId ? { ...x, pending: false } : x)),
+          ...m.map((x) =>
+            x.id === localId ? { ...x, pending: false, failed: true } : x,
+          ),
           {
             id: `local-${++counter.current}`,
             role: "assistant",
@@ -165,6 +171,7 @@ export function useBrixChat({
               "Something went wrong. Please try again.",
             persisted: false,
             error: true,
+            retry: text,
           },
         ]);
         flash("error", 4000);
