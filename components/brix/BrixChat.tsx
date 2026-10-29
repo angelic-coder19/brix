@@ -7,17 +7,28 @@ import StreamingText from "./StreamingText";
 import Tapbacks from "./Tapbacks";
 import type { BuddyMood } from "@/lib/agent/persona";
 import type { BrixChatApi } from "./useBrixChat";
+import {
+  describeTrade,
+  usePendingTrade,
+} from "../practice/pendingTrade";
 
 const STATUS: Record<BuddyMood, string> = {
   idle: "Online",
   listening: "Listening…",
-  thinking: "Checking your charges…",
+  thinking: "Thinking…",
   talking: "Typing…",
   happy: "Glad to help",
   celebrate: "One less charge",
   concerned: "Keeping an eye on something",
   error: "Hmm, that didn't work",
 };
+
+/** Sample questions above the input. Clicking one fills and sends it. */
+const SAMPLES = [
+  "Explain this trade before I confirm it",
+  "What happens to my cash if I buy $20 of Microsoft",
+  "How does my weekly $20 auto-invest work",
+];
 
 export default function BrixChat({
   chat,
@@ -42,6 +53,18 @@ export default function BrixChat({
     celebration,
     headsUp,
   } = chat;
+
+  const pendingTrade = usePendingTrade();
+  // After a few seconds of thinking, say so and remind them they can leave.
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!busy) return;
+    const t = setTimeout(() => setSlow(true), 6000);
+    return () => {
+      clearTimeout(t);
+      setSlow(false);
+    };
+  }, [busy]);
 
   useEffect(() => {
     field.current?.focus();
@@ -86,6 +109,19 @@ export default function BrixChat({
     }, 120);
     return () => clearInterval(id);
   }, [streamingId]);
+
+  async function ask(sample: string) {
+    if (busy) return;
+    setInput(sample);
+    // The trade waiting on Confirm goes along, so Brix explains that exact one.
+    const text =
+      sample === SAMPLES[0] && pendingTrade
+        ? `${sample}: ${describeTrade(pendingTrade)}.`
+        : sample;
+    await send(text);
+    setInput("");
+    field.current?.focus();
+  }
 
   async function submit(e?: FormEvent) {
     e?.preventDefault();
@@ -152,6 +188,16 @@ export default function BrixChat({
                 m.text
               )}
             </div>
+            {m.error && m.retry && (
+              <button
+                type="button"
+                className="chip msg__retry"
+                disabled={busy}
+                onClick={() => void send(m.retry!)}
+              >
+                Try again
+              </button>
+            )}
             {m.reaction && (
               <span
                 className="msg__reaction"
@@ -183,7 +229,11 @@ export default function BrixChat({
               <i />
               <i />
             </div>
-            <span className="sr-only">Brix is typing</span>
+            <small className="msg__thinking">
+              {slow
+                ? "Still thinking. You can close this and keep going; the answer will be here."
+                : "Brix is thinking…"}
+            </small>
           </div>
         )}
       </div>
@@ -205,6 +255,20 @@ export default function BrixChat({
           ))}
         </div>
       )}
+      {!busy && !streamingId && (
+        <div className="chat__chips" role="group" aria-label="Try asking">
+          {SAMPLES.map((s) => (
+            <button
+              type="button"
+              key={s}
+              className="chip"
+              onClick={() => void ask(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
       <form className="chat__composer" onSubmit={(e) => void submit(e)}>
         <input
           ref={field}
@@ -215,7 +279,7 @@ export default function BrixChat({
             setInput(e.target.value);
             typing(e.target.value);
           }}
-          placeholder="Ask me anything about your charges…"
+          placeholder="Ask about your charges, trades or auto-invest…"
           maxLength={2000}
           autoComplete="off"
         />

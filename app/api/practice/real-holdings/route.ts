@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     return errorResponse(error);
   }
 }
-/** Logs a real purchase: `symbol`, `shares`, `pricePaid`, `boughtOn`, `broker`. */
+/** Logs a real purchase: `symbol`, `dollars`, `boughtOn`, `broker`, and optionally `pricePaid`. */
 export async function POST(request: Request) {
   try {
     const { uid } = await requireUser(request);

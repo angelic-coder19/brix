@@ -74,7 +74,10 @@ test("practice: start from the refund, buy, set a stop, auto-invest, sell, reset
     .locator(".rule-form")
     .getByRole("button", { name: "Turn on auto-invest" })
     .click();
-  await expect(page.getByText("$25.00 of VOO")).toBeVisible();
+  // Auto-invest reads as a fixed schedule: "$25.00 of <fund> every <day>".
+  await expect(
+    page.locator(".rule-list").getByText(/\$25\.00 of Vanguard S&P 500 ETF (every|on the)/),
+  ).toBeVisible();
   const job = await request.post("/api/jobs/practice");
   expect((await job.json()).filled).toBe(1);
   expect((await (await request.post("/api/jobs/practice")).json()).filled).toBe(
@@ -192,7 +195,7 @@ test("chat replies say where their facts came from", async ({ page }) => {
     .getByRole("button", { name: /Ask Brix|Open chat/ })
     .first()
     .click();
-  const box = page.getByPlaceholder(/Ask me anything/);
+  const box = page.getByPlaceholder(/Ask about your charges/);
   await box.fill("What's coming up?");
   await box.press("Enter");
   await expect(

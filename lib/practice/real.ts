@@ -11,8 +11,11 @@ import { getRealHoldings, updateRealHoldings } from "../store";
 export interface RealHolding {
   id: string;
   symbol: string;
-  shares: number;
-  pricePaid: number;
+  /** Dollars spent. Older entries only have shares and price paid. */
+  dollars?: number;
+  /** Only known when the student typed the price per share. */
+  shares: number | null;
+  pricePaid: number | null;
   boughtOn: string;
   broker: string;
   addedAt: string;
@@ -51,13 +54,23 @@ export function parseRealHolding(
   const broker = typeof body.broker === "string" ? body.broker.trim() : "";
   if (broker.length > 40)
     throw new HttpError(400, "Keep the broker name under 40 characters.");
-  return {
-    symbol: security.symbol,
-    shares: positive(body.shares, "Shares", 1_000_000, 6),
-    pricePaid: positive(body.pricePaid, "Price paid", 1_000_000, 2),
-    boughtOn,
-    broker,
-  };
+  const given = (v: unknown) => v !== undefined && v !== null && v !== "";
+  const pricePaid = given(body.pricePaid)
+    ? positive(body.pricePaid, "Price paid", 1_000_000, 2)
+    : null;
+  let shares = given(body.shares)
+    ? positive(body.shares, "Shares", 1_000_000, 6)
+    : null;
+  let dollars: number;
+  if (given(body.dollars)) {
+    dollars = positive(body.dollars, "Dollars", 10_000_000, 2);
+    // Shares only come from what the student typed, never from a guessed price.
+    if (shares === null && pricePaid !== null)
+      shares = Math.round((dollars / pricePaid) * 1e6) / 1e6;
+  } else if (shares !== null && pricePaid !== null) {
+    dollars = round(shares * pricePaid);
+  } else throw new HttpError(400, "Enter how many dollars you spent.");
+  return { symbol: security.symbol, dollars, shares, pricePaid, boughtOn, broker };
 }
 
 export async function addRealHolding(
@@ -94,8 +107,9 @@ export async function realHoldingsView(uid: string) {
   const quotes = await getQuotes(holdings.map((h) => h.symbol));
   const rows = holdings.map((h) => {
     const quote = quotes[h.symbol];
-    const cost = round(h.shares * h.pricePaid);
-    const value = quote ? round(h.shares * quote.price) : null;
+    const cost = h.dollars ?? round((h.shares ?? 0) * (h.pricePaid ?? 0));
+    const value =
+      quote && h.shares !== null ? round(h.shares * quote.price) : null;
     return {
       ...h,
       name: findSecurity(h.symbol)?.name ?? h.symbol,
@@ -110,9 +124,13 @@ export async function realHoldingsView(uid: string) {
     selfReported: true as const,
     holdings: rows,
     totals: {
+      /** Everything logged, priced or not. */
+      spent: round(rows.reduce((s, r) => s + r.cost, 0)),
+      /** Value and gain only count rows with a known share count. */
       cost: round(priced.reduce((s, r) => s + r.cost, 0)),
       value: round(priced.reduce((s, r) => s + r.value!, 0)),
       gain: round(priced.reduce((s, r) => s + r.gain!, 0)),
+      priced: priced.length,
     },
     sample: Object.values(quotes).some((q) => q.sample),
   };

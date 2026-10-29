@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useId, useState } from "react";
 import {
+  Copy,
   ExternalLink,
   Pause,
   Play,
@@ -15,7 +16,7 @@ import type { RequestFn } from "../brix/useBrixChat";
 import type { AutoRule, Order } from "@/lib/practice/engine";
 import type { Quote } from "@/lib/market/quotes";
 import type { Security } from "@/lib/market/universe";
-import { brokerLinks } from "@/lib/market/brokers";
+import { brokerHandoffs, type BrokerHandoff } from "@/lib/market/brokers";
 import type { CoachCheck } from "@/lib/practice/coach";
 import type { RealHolding } from "@/lib/practice/real";
 import { Leaderboard, PriceChart } from "./PracticeInsights";
@@ -89,6 +90,8 @@ const TERMS = {
   target:
     "Short for take-profit. If the price rises to this, Brix sells and locks in the gain.",
 };
+// Matches the auto-invest form's defaults.
+const PLAN = { symbol: "VOO", amount: 25, cadence: "weekly" as AutoRule["cadence"] };
 const today = () => new Date().toISOString().slice(0, 10);
 // The daily job only runs on weekday mornings, so a rule can show a date that
 // already passed until the next run picks it up.
@@ -101,6 +104,18 @@ const nextBuy = (date: string) =>
         day: "numeric",
         timeZone: "UTC",
       });
+const ordinal = (n: number) =>
+  `${n}${n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th"}`;
+/** "every Tuesday", "every other Friday", "on the 3rd of each month". */
+function schedule(cadence: AutoRule["cadence"], from: string) {
+  const d = new Date(`${from}T12:00:00Z`);
+  const day = d.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+  // Rules run on weekday mornings only, so a weekend date can't name the day.
+  const weekend = d.getUTCDay() === 0 || d.getUTCDay() === 6;
+  if (cadence === "monthly") return `on the ${ordinal(d.getUTCDate())} of each month`;
+  if (weekend) return cadence === "weekly" ? "every week" : "every 2 weeks";
+  return cadence === "weekly" ? `every ${day}` : `every other ${day}`;
+}
 
 /** A plain label with a "what's this?" bubble for the real term. */
 function Term({ label, tip }: { label: string; tip: string }) {
@@ -373,11 +388,15 @@ function Portfolio({
     const first = setTimeout(() => void loadReal(), 0);
     return () => clearTimeout(first);
   }, [loadReal]);
-  const brokerSymbol =
-    [...(real?.holdings ?? [])].sort(
-      (a, b) => (b.value ?? b.cost) - (a.value ?? a.cost),
-    )[0]?.symbol ??
-    [...p.positions].sort((a, b) => b.value - a.value)[0]?.symbol;
+  const [amount, setAmount] = useState("100");
+  const [plan, setPlan] = useState(PLAN);
+  const nameOf = (s: string) =>
+    view.universe.find((x) => x.symbol === s)?.name ?? s;
+  // Ask Brix can explain the trade on screen; clear it when review closes.
+  useEffect(() => {
+    setPendingTrade(review);
+    return () => setPendingTrade(null);
+  }, [review]);
 
   return (
     <>
@@ -423,12 +442,16 @@ function Portfolio({
           <div className="stat-card__value">
             {real === null
               ? "…"
-              : real.holdings.length
-                ? usd(real.totals.value)
-                : "—"}
+              : !real.holdings.length
+                ? "—"
+                : real.totals.priced
+                  ? usd(real.totals.value)
+                  : usd(real.totals.spent)}
           </div>
           <p className="practice-summary__sub">
-            Self-reported, never mixed with practice
+            {real?.holdings.length && !real.totals.priced
+              ? "Spent, self-reported. Never mixed with practice"
+              : "Self-reported, never mixed with practice"}
           </p>
           {brokerSymbol ? (
             <TakeLive symbol={brokerSymbol} label="Open in broker" />
@@ -481,7 +504,20 @@ function Portfolio({
                   : ""}{" "}
                 with fake money?
               </p>
-              <CoachCard request={request} trade={review} />
+              <CoachCard
+                request={request}
+                trade={review}
+                name={
+                  view.universe.find((s) => s.symbol === review.symbol)?.name ??
+                  review.symbol
+                }
+                price={quoteFor(review.symbol)?.price ?? null}
+                cash={p.cash}
+                invested={p.invested}
+                held={
+                  p.positions.find((x) => x.symbol === review.symbol)?.value ?? 0
+                }
+              />
               <div className="button-row">
                 <button
                   className="btn btn--primary"
@@ -497,6 +533,7 @@ function Portfolio({
                         },
                       );
                       setReview(null);
+                      setAmount("100");
                       setClientKey(crypto.randomUUID());
                       if (order.status !== "filled")
                         throw new Error(order.reason || "Order not filled.");
@@ -518,8 +555,7 @@ function Portfolio({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const f = new FormData(e.currentTarget);
-                setReview({ symbol, side, amount: Number(f.get("amount")) });
+                setReview({ symbol, side, amount: Number(amount) });
               }}
             >
               <div className="field">
@@ -549,7 +585,8 @@ function Portfolio({
                   min="1"
                   step="0.01"
                   required
-                  defaultValue={100}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
                 />
                 <small className="muted">
                   {price
@@ -557,10 +594,17 @@ function Portfolio({
                     : "Loading the price…"}
                 </small>
               </label>
-              <TakeLive symbol={symbol} />
               <button className="btn btn--primary" disabled={busy}>
                 Review order
               </button>
+              <RealBuy
+                symbol={symbol}
+                name={
+                  sorted.find((s) => s.symbol === symbol)?.name ?? symbol
+                }
+                side={side}
+                amount={Number(amount)}
+              />
             </form>
           )}
         </section>
@@ -686,10 +730,14 @@ function Portfolio({
           Auto-invest <small className="term-real">set it and forget it</small>
         </h2>
         <p className="muted">
-          Buy a set amount on a schedule so you&apos;re not trying to time the
-          market. (This is called{" "}
+          A fixed recurring purchase: the same dollar amount of the same ticker
+          on the same schedule, whatever the price. (This is called{" "}
           <Term label="dollar-cost averaging" tip={TERMS.dca} />
           .) Brix runs it on weekday mornings.
+        </p>
+        <p className="practice-disclaimer" role="note">
+          Fixed schedule only. Auto-invest only buys. It never sells, never
+          waits for a better price, and never tries to time the market.
         </p>
         {p.rules.length > 0 && (
           <ul className="rule-list">
@@ -697,10 +745,11 @@ function Portfolio({
               <li key={r.id}>
                 <div>
                   <strong>
-                    {usd(r.amount)} of {r.symbol}
+                    {usd(r.amount)} of {nameOf(r.symbol)}{" "}
+                    {schedule(r.cadence, r.nextRunOn)}
                   </strong>
                   <small>
-                    {CADENCE[r.cadence]} ·{" "}
+                    {r.symbol} · {CADENCE[r.cadence]} ·{" "}
                     {r.active ? `next buy ${nextBuy(r.nextRunOn)}` : "paused"}
                   </small>
                 </div>
@@ -738,6 +787,14 @@ function Portfolio({
         )}
         <form
           className="rule-form"
+          onChange={(e) => {
+            const f = new FormData(e.currentTarget);
+            setPlan({
+              symbol: String(f.get("symbol")),
+              amount: Number(f.get("amount")),
+              cadence: f.get("cadence") as AutoRule["cadence"],
+            });
+          }}
           onSubmit={(e) => {
             e.preventDefault();
             const form = e.currentTarget,
@@ -749,6 +806,7 @@ function Portfolio({
                 cadence: f.get("cadence"),
               });
               form.reset();
+              setPlan(PLAN);
             }, "Auto-invest is on.");
           }}
         >
@@ -791,6 +849,14 @@ function Portfolio({
             Turn on auto-invest
           </button>
         </form>
+        <p className="muted" role="status">
+          You&apos;re setting:{" "}
+          <strong>
+            {plan.amount > 0 ? usd(plan.amount) : "$—"} of{" "}
+            {nameOf(plan.symbol)} {schedule(plan.cadence, today())}
+          </strong>
+          . Nothing else. Pause or delete it anytime.
+        </p>
       </section>
 
       <div className="practice-insights">
@@ -941,13 +1007,27 @@ function TakeLive({
   );
 }
 
-/** Explains the pending trade before Confirm. Never blocks the order. */
+/**
+ * Plain facts about the pending trade before Confirm. The numbers are worked
+ * out here from the portfolio already on screen, so review never waits on
+ * the network; the written explainer loads below and never blocks the order.
+ */
 function CoachCard({
   request,
   trade,
+  name,
+  price,
+  cash,
+  invested,
+  held,
 }: {
   request: RequestFn;
   trade: { symbol: string; side: "buy" | "sell"; amount: number };
+  name: string;
+  price: number | null;
+  cash: number;
+  invested: number;
+  held: number;
 }) {
   const key = `${trade.side}|${trade.symbol}|${trade.amount}`;
   const [result, setResult] = useState<{
@@ -967,26 +1047,57 @@ function CoachCard({
   }, [request, key]);
   const shown = result?.key === key ? result : null;
   const check = shown?.check;
+
+  const buy = trade.side === "buy";
+  // A sell can't be bigger than what you hold.
+  const moved = buy ? trade.amount : Math.min(trade.amount, held);
+  const cashAfter = buy ? cash - moved : cash + moved;
+  const investedAfter = buy ? invested + moved : invested - moved;
+  const heldAfter = buy ? held + moved : held - moved;
+  const share = (part: number, whole: number) =>
+    whole > 0 ? Math.round((part / whole) * 1000) / 10 : 0;
+  const before = share(held, invested);
+  const after = share(heldAfter, investedAfter);
+  const shares = price ? Math.round((moved / price) * 10000) / 10000 : null;
+
   return (
     <div className="coach" role="region" aria-label="Coach check">
       <h3>
         Coach check <small className="term-real">explains, never advises</small>
       </h3>
-      {!shown ? (
-        <p className="muted" role="status">
-          Checking this trade…
-        </p>
-      ) : !check ? (
-        <p className="muted">Coach check unavailable</p>
-      ) : (
-        <>
-          <p>
-            <strong>Size of this trade</strong>
-            {check.size}
-          </p>
-          <p>
-            <strong>What if it drops 20%</strong>
-            {check.whatIf}
+      <p>
+        <strong>What you&apos;re {buy ? "buying" : "selling"}</strong>
+        {shares !== null ? `About ${shares} shares of ` : ""}
+        {trade.symbol} ({name})
+        {price ? ` at about ${usd(price)} a share` : ""}
+      </p>
+      <p>
+        <strong>{buy ? "Dollar cost" : "Dollars back"}</strong>
+        {usd(moved)} of practice money
+      </p>
+      <p>
+        <strong>Cash left after</strong>
+        {cashAfter < 0
+          ? `${usd(cashAfter)}. That's more than your ${usd(cash)} cash, so this won't fill.`
+          : usd(cashAfter)}
+      </p>
+      <p>
+        <strong>Share of your invested practice money</strong>
+        {investedAfter > 0
+          ? `${trade.symbol} goes from ${before}% to ${after}% of what you've invested.`
+          : "Nothing left invested after this."}
+      </p>
+      <p>
+        <strong>What could go wrong</strong>
+        {buy
+          ? `Prices can drop. If ${trade.symbol} fell 20%, this ${usd(moved)} would be worth about ${usd(moved * 0.8)}.`
+          : `If ${trade.symbol} rises after you sell, you won't get that gain on the ${usd(moved)} you sold.`}
+      </p>
+      <details className="coach__more">
+        <summary>Why this matters</summary>
+        {!shown ? (
+          <p className="muted" role="status">
+            Loading the explainer… You can confirm without it.
           </p>
           {!check.available && <p className="muted">Coach check unavailable</p>}
           <details className="coach__more">
@@ -999,7 +1110,7 @@ function CoachCard({
             )}
             {check.risk && (
               <p>
-                <strong>What could go wrong</strong>
+                <strong>More on the risk</strong>
                 {check.risk}
               </p>
             )}
@@ -1010,14 +1121,14 @@ function CoachCard({
               </strong>
               {check.allocation}
             </p>
-          </details>
-          <ul className="msg__sources" aria-label="Where this came from">
-            {check.sources.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
-        </>
-      )}
+            <ul className="msg__sources" aria-label="Where this came from">
+              {check.sources.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          </>
+        )}
+      </details>
     </div>
   );
 }
@@ -1030,7 +1141,13 @@ interface RealView {
     value: number | null;
     gain: number | null;
   })[];
-  totals: { cost: number; value: number; gain: number };
+  totals: {
+    spent: number;
+    cost: number;
+    value: number;
+    gain: number;
+    priced: number;
+  };
   sample?: boolean;
 }
 
@@ -1074,10 +1191,12 @@ function RealHoldings({
       aria-labelledby="real-holdings"
     >
       <h2 id="real-holdings">
-        My real holdings <small className="term-real">Self-reported</small>
+        Real money <small className="term-real">Self-reported</small>
       </h2>
       <p className="practice-disclaimer" role="note">
-        Self-reported. Brix does not verify these with your broker.
+        Self-reported. Brix does not verify these with your broker. None of
+        this counts toward your practice portfolio, cash to play with, or
+        allocation.
       </p>
       {error && (
         <p className="alert alert--error" role="alert">
@@ -1089,6 +1208,7 @@ function RealHoldings({
           {notice}
         </p>
       )}
+      <h3>My real holdings</h3>
       {!data ? (
         <p className="muted" role="status">
           Loading…
@@ -1105,8 +1225,7 @@ function RealHoldings({
               <thead>
                 <tr>
                   <th scope="col">Ticker</th>
-                  <th scope="col">Shares</th>
-                  <th scope="col">Paid</th>
+                  <th scope="col">Spent</th>
                   <th scope="col">Value now</th>
                   <th scope="col">Up / down</th>
                   <th scope="col">
@@ -1132,15 +1251,22 @@ function RealHoldings({
                         )}
                       </small>
                     </th>
-                    <td>{h.shares}</td>
                     <td>
                       {usd(h.cost)}
-                      <small>at {usd(h.pricePaid)}</small>
+                      {h.pricePaid !== null && h.shares !== null && (
+                        <small>
+                          {h.shares} at {usd(h.pricePaid)}
+                        </small>
+                      )}
                     </td>
                     <td>
                       {h.value === null ? "—" : usd(h.value)}
                       <small>
-                        {h.price ? `at ${usd(h.price)}` : "price not loading"}
+                        {h.shares === null
+                          ? "add the price per share to see this"
+                          : h.price
+                            ? `at ${usd(h.price)}`
+                            : "price not loading"}
                       </small>
                     </td>
                     <td className={h.gain === null ? undefined : tone(h.gain)}>
@@ -1172,11 +1298,19 @@ function RealHoldings({
             </table>
           </div>
           <p className="muted">
-            Worth {usd(data.totals.value)} now, {usd(data.totals.cost)} paid (
-            <span className={tone(data.totals.gain)}>
-              {usd(data.totals.gain)}
-            </span>
-            ). Kept apart from your practice money, the leaderboard and coins.
+            {usd(data.totals.spent)} spent in total.
+            {data.totals.priced > 0 && (
+              <>
+                {" "}
+                Where you gave a price per share: worth{" "}
+                {usd(data.totals.value)} now, {usd(data.totals.cost)} paid (
+                <span className={tone(data.totals.gain)}>
+                  {usd(data.totals.gain)}
+                </span>
+                ).
+              </>
+            )}{" "}
+            Kept apart from your practice money, the leaderboard and coins.
             {data.sample ? " Demo prices are samples." : ""}
           </p>
         </>
@@ -1186,6 +1320,7 @@ function RealHoldings({
           now.
         </p>
       )}
+      <h3>Log a real purchase</h3>
       <form
         className="rule-form"
         aria-label="Log a real purchase"
@@ -1195,16 +1330,26 @@ function RealHoldings({
             f = new FormData(form);
           void act(async () => {
             await request("/api/practice/real-holdings", "POST", {
-              symbol: f.get("symbol"),
-              shares: Number(f.get("shares")),
-              pricePaid: Number(f.get("pricePaid")),
-              boughtOn: f.get("boughtOn"),
               broker: f.get("broker"),
+              symbol: f.get("symbol"),
+              dollars: Number(f.get("dollars")),
+              boughtOn: f.get("boughtOn"),
+              pricePaid: f.get("pricePaid") || undefined,
             });
             form.reset();
-          }, "Purchase logged.");
+          }, "Purchase logged in My real holdings.");
         }}
       >
+        <label className="field">
+          Broker
+          <select name="broker" defaultValue="Robinhood">
+            {["Robinhood", "Cash App", "Fidelity", "Other"].map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="field">
           Ticker
           <Dropdown
@@ -1218,19 +1363,9 @@ function RealHoldings({
           />
         </label>
         <label className="field">
-          Shares
+          Dollars spent
           <input
-            name="shares"
-            type="number"
-            min="0.000001"
-            step="any"
-            required
-          />
-        </label>
-        <label className="field">
-          Price paid per share
-          <input
-            name="pricePaid"
+            name="dollars"
             type="number"
             min="0.01"
             step="0.01"
@@ -1248,6 +1383,12 @@ function RealHoldings({
           />
         </label>
         <label className="field">
+          Price per share
+          <input
+            name="pricePaid"
+            type="number"
+            min="0.01"
+            step="0.01"
           Broker
           <input
             name="broker"
@@ -1260,6 +1401,10 @@ function RealHoldings({
           Log a real purchase
         </button>
       </form>
+      <p className="muted">
+        Add the price per share from your broker receipt to see what it&apos;s
+        worth now. Brix won&apos;t guess it.
+      </p>
     </section>
   );
 }

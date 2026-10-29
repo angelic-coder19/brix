@@ -650,6 +650,8 @@
 .practice-trade-row > .practice-holdings-stack {
   grid-area: holdings;
   display: grid;
+  /* Lets the holdings table scroll inside its card instead of widening the page. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   align-content: start;
   min-width: 0;
@@ -812,6 +814,63 @@
 .take-live a {
   color: var(--color-accent-ink);
   font-weight: 600;
+}
+.real-buy {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-line);
+}
+.real-buy--open {
+  padding: var(--space-4);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+.real-buy h3 {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+.real-buy p {
+  margin: 0;
+}
+.real-buy__brokers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--space-2);
+}
+.real-buy__details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+.real-buy__details dt {
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+}
+.real-buy__details dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.real-buy__details small {
+  display: block;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+.real-buy__steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}
+.real-buy .alert a {
+  overflow-wrap: anywhere;
+}
+.practice-real h3 {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
 }
 .practice-real.form-card {
   align-items: stretch;
