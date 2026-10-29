@@ -229,8 +229,7 @@
   }
 }
 /* The track is max-content wide; never let it size the page. */
-.investing-news,
-.overview-news {
+.investing-news {
   min-width: 0;
   max-width: 100%;
 }

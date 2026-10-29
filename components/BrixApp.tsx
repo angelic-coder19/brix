@@ -52,7 +52,6 @@ import MerchantLogo from "./ui/MerchantLogo";
 import BrixChat from "./brix/BrixChat";
 import DeveloperKeys from "./DeveloperKeys";
 import MerchantNews from "./MerchantNews";
-import { OverviewNews } from "./OverviewNews";
 import { EmailConnect } from "./EmailConnect";
 import { HEADING_ASIDE_ID, HeadingAside } from "./ui/HeadingAside";
 import { merchantDomain } from "@/lib/merchant-domains";
@@ -996,7 +995,6 @@ export default function BrixApp() {
                       onAsk={ask}
                     />
                   </div>
-                  <OverviewNews request={request} />
                   <div className="dash-columns">
                     <section
                       className="card wallet-glance"
