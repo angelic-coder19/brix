@@ -118,9 +118,9 @@ export const operations: Operation[] = [
     method: "patch",
     path: "/charges/{id}",
     scope: "charges:write",
-    summary: "Mark to cancel / reactivate",
+    summary: "Manage link / reactivate",
     description:
-      "Set `status` to `to_cancel` to mark a charge for cancellation, or `active` to undo it. Brix never cancels at the merchant; the response includes the merchant's cancel link when known.",
+      "Brix no longer flags subscriptions to cancel. Sending `to_cancel` leaves the charge unchanged and returns a `message` with the merchant's manage link, so you can send the user straight there. `active` restores a charge flagged by older clients.",
     example: { body: { status: "to_cancel" } },
     spec: {
       parameters: [idParam("charge")],

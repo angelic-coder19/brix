@@ -105,19 +105,16 @@ test("help launcher face follows the chat's mood", async ({ page }) => {
 
   await launcher.click();
   const panel = page.getByRole("dialog", { name: "Brix help" });
-  await panel.getByRole("button", { name: "Mark Netflix to cancel" }).click();
+  await panel.getByRole("button", { name: "Remind me about Spotify" }).click();
   await panel.getByRole("button", { name: "Yes", exact: true }).click();
   await panel.getByRole("button", { name: "Minimize help" }).click();
 
-  // Still working when minimized, then celebrating the cancellation.
-  await expect(launcher).toHaveAttribute(
-    "data-mood",
-    /thinking|talking|celebrate/,
-  );
-  await expect(launcher).toHaveAttribute("data-mood", "celebrate", {
+  // Still working when minimized, then happy about the reminder.
+  await expect(launcher).toHaveAttribute("data-mood", /thinking|talking|happy/);
+  await expect(launcher).toHaveAttribute("data-mood", "happy", {
     timeout: 8000,
   });
-  await expect(face).toHaveAttribute("data-mood", "celebrate");
+  await expect(face).toHaveAttribute("data-mood", "happy");
 });
 
 test("app launcher face follows the chat's mood", async ({ page, request }) => {

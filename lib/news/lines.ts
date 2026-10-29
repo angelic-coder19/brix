@@ -134,13 +134,7 @@ export async function newsLines(
         misses.push({
           key,
           url: h.url,
-          facts: lineFacts(
-            i + 1,
-            h,
-            shares,
-            quote.price,
-            quote.previousClose,
-          ),
+          facts: lineFacts(i + 1, h, shares, quote.price, quote.previousClose),
         });
       }
     }),

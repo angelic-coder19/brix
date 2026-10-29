@@ -1,0 +1,55 @@
+.brix-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(41 41 32 / 0.38);
+  backdrop-filter: blur(3px);
+  animation: brix-modal-fade 0.15s ease-out;
+}
+.brix-modal__box {
+  width: min(480px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 22px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg, 18px);
+  background: var(--color-surface);
+  box-shadow: 0 24px 60px -20px #29292066;
+  animation: brix-modal-rise 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.brix-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.brix-modal__head h2 {
+  margin: 0;
+  font-size: 19px;
+}
+.brix-modal__head p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--color-ink-soft);
+}
+@keyframes brix-modal-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes brix-modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brix-modal,
+  .brix-modal__box {
+    animation: none;
+  }
+}

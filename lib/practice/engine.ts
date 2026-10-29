@@ -49,6 +49,8 @@ export interface Portfolio {
   positions: Record<string, Position>;
   orders: Order[];
   rules: AutoRule[];
+  /** Opt-in: others on the leaderboard may copy this mix (percentages only). */
+  shareMix?: boolean;
 }
 
 export const MAX_ORDERS = 200;

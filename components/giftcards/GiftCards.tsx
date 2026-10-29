@@ -78,11 +78,13 @@ export function GiftCardStudio({
     <section className="card studio" aria-labelledby="add-gift-title">
       <div className="studio__head">
         <h2 id="add-gift-title">Add a gift card</h2>
-        <p>
-          Fill in the card. Brix reminds you 14 and 3 days before it expires.
-        </p>
+        <p>That gift card is still money. Keep it on your radar.</p>
       </div>
-      <div className="studio__templates" role="group" aria-label="Store templates">
+      <div
+        className="studio__templates"
+        role="group"
+        aria-label="Store templates"
+      >
         {[...STORES, "Other"].map((s) => (
           <button
             key={s}
@@ -114,9 +116,10 @@ export function GiftCardStudio({
           });
         }}
       >
-        <GiftFace merchant={merchant}>
+        <GiftFace merchant={merchant || "Your store"} />
+        <div className="studio-fields">
           <span className="giftface__kind">Gift card</span>
-          <label className="giftface__edit giftface__edit--store">
+          <label className="field">
             <span className="sr-only">Store</span>
             <input
               name="merchant"
@@ -128,7 +131,7 @@ export function GiftCardStudio({
               placeholder="Store name"
             />
           </label>
-          <label className="giftface__edit giftface__edit--balance">
+          <label className="field">
             <span aria-hidden>$</span>
             <input
               name="balance"
@@ -142,7 +145,7 @@ export function GiftCardStudio({
               placeholder="0.00"
             />
           </label>
-          <label className="giftface__edit giftface__edit--expiry">
+          <label className="field">
             <small>Expires (optional)</small>
             <input
               name="expiresOn"
@@ -151,7 +154,7 @@ export function GiftCardStudio({
               min={new Date().toISOString().slice(0, 10)}
             />
           </label>
-        </GiftFace>
+        </div>
         <p className="studio__hint">
           Most store cards never expire. Promo and reward cards often do.
         </p>

@@ -310,8 +310,8 @@ export function AppSidebar({
           <div className="sidebar-trust">
             <ShieldCheck size={16} aria-hidden />
             <p>
-              <strong>Read-only banking.</strong> Brix spots charges and helps
-              you plan. You finish cancellations with the merchant.
+              <strong>Read-only, always.</strong> Brix can see, never spend.
+              Real trades and cancels happen on your apps.
             </p>
           </div>
           <AccountMenu

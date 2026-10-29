@@ -1,0 +1,239 @@
+.investing-news {
+  min-width: 0;
+}
+.investing-news__heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.investing-news__heading > svg {
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+.investing-news__eyebrow {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+}
+.investing-news__heading h2 {
+  margin: 5px 0 0;
+  font-size: var(--text-lg);
+}
+.investing-news__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.investing-news__list > li {
+  border-top: 1px solid var(--color-line);
+  padding: 16px 0;
+}
+.investing-news__list > li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.investing-news__list > li:last-child {
+  padding-bottom: 0;
+}
+.investing-news__story {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 14px;
+  color: inherit;
+  text-decoration: none;
+  align-items: start;
+  border-radius: var(--radius-sm);
+}
+.investing-news__story:hover h3 {
+  color: var(--color-accent-ink);
+}
+.investing-news__story:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 4px;
+}
+.investing-news__image,
+.investing-news__placeholder {
+  width: 100%;
+  aspect-ratio: 1.15;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--color-surface-2);
+}
+.investing-news__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-muted);
+}
+.investing-news__placeholder span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.investing-news__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 9px;
+  color: var(--color-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.investing-news__meta > span:first-child {
+  background: var(--color-green-soft);
+  color: var(--color-green);
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: 650;
+}
+.investing-news__copy h3 {
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  margin: 7px 0;
+  font-weight: 650;
+}
+.investing-news__copy h3 svg {
+  display: inline;
+  vertical-align: middle;
+}
+.investing-news__read {
+  color: var(--color-muted);
+  font-size: 11px;
+}
+.investing-news__context {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--color-ink-soft);
+  line-height: 1.6;
+}
+.investing-news__context strong {
+  color: var(--color-ink);
+}
+.investing-news__note {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin: 14px 0 0;
+}
+@media (max-width: 480px) {
+  .investing-news__story {
+    grid-template-columns: 74px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .investing-news__image,
+  .investing-news__placeholder {
+    aspect-ratio: 1;
+  }
+}
+
+/* Story strip: photo cards that drift sideways, pause on hover or focus,
+   and turn into a plain scroller for reduced motion. */
+.investing-news__marquee {
+  overflow: hidden;
+  margin-inline: -4px;
+  padding: 4px;
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent
+  );
+}
+.investing-news__marquee:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+.investing-news__track {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  animation: investing-news-drift var(--news-duration, 40s) linear infinite;
+}
+.investing-news__marquee:hover .investing-news__track,
+.investing-news__marquee:focus-within .investing-news__track {
+  animation-play-state: paused;
+}
+.investing-news__item {
+  flex: none;
+  width: 248px;
+}
+.investing-news__item .investing-news__story {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md, 14px);
+  background: var(--color-surface);
+  transition:
+    transform 0.2s var(--ease-out, ease-out),
+    box-shadow 0.2s;
+}
+.investing-news__item .investing-news__story:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -14px #29292066;
+}
+.investing-news__item .investing-news__image,
+.investing-news__item .investing-news__placeholder {
+  aspect-ratio: 16 / 9;
+  border-radius: 0;
+}
+.investing-news__item .investing-news__copy {
+  padding: 12px 14px 14px;
+}
+.investing-news__item .investing-news__copy h3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 8px 0 0;
+}
+.investing-news__item .investing-news__context {
+  margin-top: 10px;
+}
+@keyframes investing-news-drift {
+  to {
+    transform: translateX(calc(-50% - 7px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .investing-news__marquee {
+    overflow-x: auto;
+    mask-image: none;
+  }
+  .investing-news__track {
+    animation: none;
+  }
+  .investing-news__item[aria-hidden="true"] {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .investing-news__item {
+    width: 220px;
+  }
+}
+/* The track is max-content wide; never let it size the page. */
+.investing-news,
+.overview-news {
+  min-width: 0;
+  max-width: 100%;
+}
+.investing-news__marquee {
+  width: 100%;
+  contain: inline-size;
+}
+/* Absolutely positioned screen-reader text must be clipped by the strip too. */
+.investing-news__marquee,
+.investing-news__item {
+  position: relative;
+}

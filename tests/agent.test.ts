@@ -12,11 +12,12 @@ test("actions require a separate persisted confirmation, consumed once", async (
   const uid = `test-${randomUUID()}`;
   try {
     await assert.rejects(confirmAction(uid, "web"), /No pending/);
-    await proposeAction(uid, "web", "mark_to_cancel", {
+    await proposeAction(uid, "web", "set_reminder", {
       merchant: "Spotify",
+      when: "2 days before",
       confirmed: true,
     });
-    assert.equal((await getState(uid)).charges[0].status, "active");
+    assert.equal((await getState(uid)).reminders.length, 0);
     await assert.rejects(confirmAction(uid, "whatsapp"), /No pending/);
     const results = await Promise.allSettled([
       confirmAction(uid, "web"),
@@ -24,11 +25,7 @@ test("actions require a separate persisted confirmation, consumed once", async (
     ]);
     assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
     const state = await getState(uid);
-    assert.equal(state.charges[0].status, "to_cancel");
-    assert.equal(
-      state.events.filter((e) => e.type === "marked_cancel").length,
-      1,
-    );
+    assert.equal(state.reminders.length, 1);
   } finally {
     await deleteData(uid);
   }
@@ -65,7 +62,10 @@ test("expired confirmations cannot mutate; fuzzy ambiguity asks which merchant",
   process.env.BRIX_DEMO_MODE = "true";
   const uid = `test-${randomUUID()}`;
   try {
-    await proposeAction(uid, "web", "mark_to_cancel", { merchant: "Spotify" });
+    await proposeAction(uid, "web", "set_reminder", {
+      merchant: "Spotify",
+      when: "2 days before",
+    });
     await updateState(uid, (s) => {
       s.pendingActions!.web!.expiresAt = "2000-01-01T00:00:00.000Z";
       s.charges.push({
@@ -120,4 +120,20 @@ test("Vapi rejects Unicode secret with mismatched byte length without throwing",
     true,
   );
   delete process.env.VAPI_SERVER_SECRET;
+});
+
+test("mark to cancel no longer flags anything; it points to the merchant", async () => {
+  process.env.BRIX_DEMO_MODE = "true";
+  const uid = `test-${randomUUID()}`;
+  try {
+    const r = await proposeAction(uid, "web", "mark_to_cancel", {
+      merchant: "Spotify",
+    });
+    assert.match(r.reply, /directly with the merchant/);
+    const state = await getState(uid);
+    assert.equal(state.pendingActions?.web, undefined);
+    assert.equal(state.charges[0].status, "active");
+  } finally {
+    await deleteData(uid);
+  }
 });

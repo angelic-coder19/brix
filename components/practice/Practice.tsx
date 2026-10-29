@@ -3,13 +3,14 @@ import { useCallback, useEffect, useId, useState } from "react";
 import {
   Copy,
   ExternalLink,
-  Newspaper,
   Pause,
   Play,
   RotateCcw,
   Trash2,
   TrendingUp,
 } from "lucide-react";
+import { Dropdown } from "../ui/Dropdown";
+import { InvestingNews } from "./InvestingNews";
 import { ConfirmAction } from "../ui/ConfirmAction";
 import type { RequestFn } from "../brix/useBrixChat";
 import type { AutoRule, Order } from "@/lib/practice/engine";
@@ -19,7 +20,8 @@ import { brokerHandoffs, type BrokerHandoff } from "@/lib/market/brokers";
 import type { CoachCheck } from "@/lib/practice/coach";
 import type { RealHolding } from "@/lib/practice/real";
 import { Leaderboard, PriceChart } from "./PracticeInsights";
-import { setPendingTrade } from "./pendingTrade";
+import { MenuButton } from "../ui/MenuButton";
+import { CopyVibes, useCopyFlow } from "./CopyTrading";
 import "./practice.css";
 
 interface PositionView {
@@ -48,6 +50,7 @@ interface View {
     positions: PositionView[];
     orders: Order[];
     rules: AutoRule[];
+    shareMix?: boolean;
   } | null;
   quotes?: Record<string, Quote>;
   universe: Security[];
@@ -60,6 +63,7 @@ interface Headline {
   url: string;
   publishedAt: string;
   source: string;
+  imageUrl?: string;
 }
 
 const usd = (n: number) =>
@@ -206,8 +210,8 @@ export default function Practice({ request }: { request: RequestFn }) {
   return (
     <div className="practice">
       <p className="practice-disclaimer" role="note">
-        Practice money: This is virtual money at real (sometimes delayed)
-        prices. Brix never places real trades.
+        Trade with virtual money here. When you’re ready, open your broker.
+        Quotes can be delayed; demo prices are labeled.
       </p>
       {error && (
         <p className="alert alert--error" role="alert">
@@ -255,9 +259,9 @@ function Start({
         <TrendingUp size={28} />
         <h2>Learn investing without risking a dollar.</h2>
         <p>
-          Buy real US stocks and index funds at real prices with fake money.
-          Set up auto-invest like long-term investors do, and see how you stack
-          up against the S&amp;P 500.
+          Buy real US stocks and index funds at real prices with fake money. Set
+          up auto-invest like long-term investors do, and see how you stack up
+          against the S&amp;P 500.
         </p>
         <form
           className="practice-start__form"
@@ -338,6 +342,7 @@ function Portfolio({
   request: RequestFn;
 }) {
   const p = view.portfolio!;
+  const copy = useCopyFlow({ request, run, cash: p.cash, busy });
   const [symbol, setSymbol] = useState("VOO");
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [review, setReview] = useState<{
@@ -363,8 +368,7 @@ function Portfolio({
   const price = quoteFor(symbol)?.price;
   // The practice list is already ordered: broad index funds first.
   const sorted = view.universe;
-  const lead =
-    p.benchmarkPct === null ? null : p.gainPct - p.benchmarkPct;
+  const lead = p.benchmarkPct === null ? null : p.gainPct - p.benchmarkPct;
   const [showReceipts, setShowReceipts] = useState(false);
   const symbolId = useId();
   // Real holdings load once here so the summary card and the section agree.
@@ -396,10 +400,7 @@ function Portfolio({
 
   return (
     <>
-      <section
-        className="card practice-summary"
-        aria-label="Portfolio summary"
-      >
+      <section className="card practice-summary" aria-label="Portfolio summary">
         <div className="practice-summary__cell">
           <div className="stat-card__label">Your portfolio</div>
           <div className="stat-card__value">{usd(p.total)}</div>
@@ -452,7 +453,10 @@ function Portfolio({
               ? "Spent, self-reported. Never mixed with practice"
               : "Self-reported, never mixed with practice"}
           </p>
-          <a href="#real-holdings" className="take-live">
+          {brokerSymbol ? (
+            <TakeLive symbol={brokerSymbol} label="Open in broker" />
+          ) : null}
+          <a href="#real-holdings" className="practice-real-link">
             {real?.holdings.length
               ? `${real.holdings.length} real ${real.holdings.length === 1 ? "purchase" : "purchases"} logged`
               : "Log a real purchase"}
@@ -562,17 +566,16 @@ function Portfolio({
                     VOO.
                   </small>
                 </span>
-                <select
+                <Dropdown
                   id={symbolId}
+                  label="Symbol"
                   value={symbol}
-                  onChange={(e) => setSymbol(e.target.value)}
-                >
-                  {sorted.map((s) => (
-                    <option key={s.symbol} value={s.symbol}>
-                      {s.symbol} · {s.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSymbol}
+                  options={sorted.map((s) => ({
+                    value: s.symbol,
+                    label: `${s.symbol} · ${s.name}`,
+                  }))}
+                />
               </div>
               <label className="field">
                 Amount (USD)
@@ -607,147 +610,122 @@ function Portfolio({
         </section>
 
         <div className="practice-holdings-stack">
-        <section className="card practice-holdings" aria-labelledby="holdings">
-          <div className="card-head">
-            <h2 id="holdings">
-              What you own <small className="term-real">Holdings</small>
-            </h2>
-          </div>
-          {p.positions.length ? (
-            <>
-              <div
-                className="table-wrap"
-                tabIndex={0}
-                role="region"
-                aria-label="Holdings table"
-              >
-                <table className="practice-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Ticker</th>
-                      <th scope="col">Shares</th>
-                      <th scope="col">Value</th>
-                      <th scope="col">Up / down</th>
-                      <th scope="col">Auto-sell guardrails</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {p.positions.map((pos) => (
-                      <tr key={pos.symbol}>
-                        <th scope="row">
-                          {pos.symbol}
-                          <small>{pos.name}</small>
-                        </th>
-                        <td>{pos.shares}</td>
-                        <td>
-                          {usd(pos.value)}
-                          <small>
-                            {pos.price
-                              ? `at ${usd(pos.price)}`
-                              : "price not loading"}
-                          </small>
-                        </td>
-                        <td className={tone(pos.gain)}>{usd(pos.gain)}</td>
-                        <td>
-                          <form
-                            className="stops"
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              const f = new FormData(e.currentTarget);
-                              const v = (k: string) =>
-                                f.get(k) === "" ? null : Number(f.get(k));
-                              void run(async () => {
-                                await request(
-                                  `/api/practice/positions/${pos.symbol}`,
-                                  "PATCH",
-                                  {
-                                    stopLoss: v("stopLoss"),
-                                    takeProfit: v("takeProfit"),
-                                  },
-                                );
-                              }, `Guardrails saved for ${pos.symbol}.`);
-                            }}
-                          >
-                            <input
-                              name="stopLoss"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="Stop"
-                              aria-label={`Stop-loss price for ${pos.symbol}`}
-                              defaultValue={pos.stopLoss ?? ""}
-                            />
-                            <input
-                              name="takeProfit"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              placeholder="Target"
-                              aria-label={`Take-profit price for ${pos.symbol}`}
-                              defaultValue={pos.takeProfit ?? ""}
-                            />
-                            <button className="btn btn--sm" disabled={busy}>
-                              Save
-                            </button>
-                          </form>
-                        </td>
+          <section
+            className="card practice-holdings"
+            aria-labelledby="holdings"
+          >
+            <div className="card-head">
+              <h2 id="holdings">
+                What you own <small className="term-real">Holdings</small>
+              </h2>
+            </div>
+            {p.positions.length ? (
+              <>
+                <div
+                  className="table-wrap"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Holdings table"
+                >
+                  <table className="practice-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Ticker</th>
+                        <th scope="col">Shares</th>
+                        <th scope="col">Value</th>
+                        <th scope="col">Up / down</th>
+                        <th scope="col">Auto-sell guardrails</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="muted practice-help">
-                <Term label="Stop" tip={TERMS.stop} />: sell if the price drops
-                to this (bail out early).{" "}
-                <Term label="Target" tip={TERMS.target} />: sell when it hits
-                this (take the W). These are rules you set: Brix only sells at
-                the exact price you type, and leaves blank ones alone.
+                    </thead>
+                    <tbody>
+                      {p.positions.map((pos) => (
+                        <tr key={pos.symbol}>
+                          <th scope="row">
+                            {pos.symbol}
+                            <small>{pos.name}</small>
+                            <TakeLive symbol={pos.symbol} compact />
+                          </th>
+                          <td>{pos.shares}</td>
+                          <td>
+                            {usd(pos.value)}
+                            <small>
+                              {pos.price
+                                ? `at ${usd(pos.price)}`
+                                : "price not loading"}
+                            </small>
+                          </td>
+                          <td className={tone(pos.gain)}>{usd(pos.gain)}</td>
+                          <td>
+                            <form
+                              className="stops"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                const f = new FormData(e.currentTarget);
+                                const v = (k: string) =>
+                                  f.get(k) === "" ? null : Number(f.get(k));
+                                void run(async () => {
+                                  await request(
+                                    `/api/practice/positions/${pos.symbol}`,
+                                    "PATCH",
+                                    {
+                                      stopLoss: v("stopLoss"),
+                                      takeProfit: v("takeProfit"),
+                                    },
+                                  );
+                                }, `Guardrails saved for ${pos.symbol}.`);
+                              }}
+                            >
+                              <input
+                                name="stopLoss"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="Stop"
+                                aria-label={`Stop-loss price for ${pos.symbol}`}
+                                defaultValue={pos.stopLoss ?? ""}
+                              />
+                              <input
+                                name="takeProfit"
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                placeholder="Target"
+                                aria-label={`Take-profit price for ${pos.symbol}`}
+                                defaultValue={pos.takeProfit ?? ""}
+                              />
+                              <button className="btn btn--sm" disabled={busy}>
+                                Save
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="muted practice-help">
+                  <Term label="Stop" tip={TERMS.stop} />: sell if the price
+                  drops to this (bail out early).{" "}
+                  <Term label="Target" tip={TERMS.target} />: sell when it hits
+                  this (take the W).
+                </p>
+              </>
+            ) : (
+              <p className="muted practice-empty">
+                Nothing yet. Lots of people start with a broad index fund like
+                VOO or VTI.
               </p>
-            </>
-          ) : (
-            <p className="muted practice-empty">
-              Nothing yet. Lots of people start with a broad index fund like VOO
-              or VTI.
-            </p>
-          )}
-        </section>
+            )}
+          </section>
 
-        <section className="card news-card" aria-labelledby="stock-news">
-          <h3 id="stock-news">
-            <Newspaper size={17} /> News on your holdings
-          </h3>
-          {news === null ? (
-            <p className="muted">Loading…</p>
-          ) : news.length ? (
-            <ul className="news-list">
-              {news.map((h) => (
-                <li key={h.url}>
-                  <a href={h.url} target="_blank" rel="noopener noreferrer">
-                    {h.title} <ExternalLink size={13} aria-hidden />
-                  </a>
-                  {lines[h.url] && (
-                    <p className="news-line">
-                      <strong>What it means for you:</strong> {lines[h.url]}
-                    </p>
-                  )}
-                  <small>
-                    {h.symbol} · {h.source} ·{" "}
-                    {new Date(h.publishedAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">No recent headlines.</p>
-          )}
-        </section>
+          <InvestingNews headlines={news} lines={lines} />
         </div>
       </div>
 
-      <section className="card form-card practice-rules" aria-labelledby="rules">
+      <section
+        className="card form-card practice-rules"
+        aria-labelledby="rules"
+      >
         <h2 id="rules">
           Auto-invest <small className="term-real">set it and forget it</small>
         </h2>
@@ -834,13 +812,15 @@ function Portfolio({
         >
           <label className="field">
             Ticker
-            <select name="symbol" defaultValue="VOO">
-              {sorted.map((s) => (
-                <option key={s.symbol} value={s.symbol}>
-                  {s.symbol}
-                </option>
-              ))}
-            </select>
+            <Dropdown
+              name="symbol"
+              label="Auto-invest ticker"
+              defaultValue="VOO"
+              options={sorted.map((s) => ({
+                value: s.symbol,
+                label: s.symbol,
+              }))}
+            />
           </label>
           <label className="field">
             Amount each time
@@ -855,13 +835,15 @@ function Portfolio({
           </label>
           <label className="field">
             How often
-            <select name="cadence" defaultValue="weekly">
-              {Object.entries(CADENCE).map(([v, l]) => (
-                <option key={v} value={v}>
-                  {l}
-                </option>
-              ))}
-            </select>
+            <Dropdown
+              name="cadence"
+              label="How often"
+              defaultValue="weekly"
+              options={Object.entries(CADENCE).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+            />
           </label>
           <button className="btn" disabled={busy}>
             Turn on auto-invest
@@ -882,8 +864,34 @@ function Portfolio({
           request={request}
           symbols={p.positions.map((x) => x.symbol)}
         />
-        <Leaderboard request={request} />
+        <Leaderboard
+          request={request}
+          onCopy={(e) =>
+            e.mix &&
+            e.copyId &&
+            copy.open({
+              label: `${e.sample ? e.name.replace("Sample · ", "") : e.name}'s mix`,
+              mix: e.mix,
+              player: e.copyId,
+            })
+          }
+          share={{
+            on: !!p.shareMix,
+            busy,
+            onChange: (on) =>
+              void run(
+                async () => {
+                  await request("/api/practice", "PATCH", { shareMix: on });
+                },
+                on
+                  ? "Your mix is copyable now. Percentages only."
+                  : "Your mix is private again.",
+              ),
+          }}
+        />
       </div>
+      <CopyVibes request={request} onPick={copy.open} />
+      {copy.modal}
 
       <AllocationChart portfolio={p} sample={view.sample} />
 
@@ -963,219 +971,38 @@ function Portfolio({
   );
 }
 
-/**
- * "Buy this stock for real": pick a broker, see exactly what to type, then
- * open the broker in a new tab. Brix never places the trade or moves money.
- */
-function RealBuy({
+/** One button that opens the same ticker on a real broker. Brix never trades. */
+function TakeLive({
   symbol,
-  name,
-  side,
-  amount,
+  label = "Take this live",
+  compact = false,
 }: {
   symbol: string;
-  name: string;
-  side: "buy" | "sell";
-  amount: number;
+  label?: string;
+  compact?: boolean;
 }) {
-  const [stage, setStage] = useState<"closed" | "choose" | BrokerHandoff["broker"]>(
-    "closed",
-  );
-  const [open, setOpen] = useState<"idle" | "opening" | "opened" | "failed">(
-    "idle",
-  );
-  const [copied, setCopied] = useState<"" | "yes" | "no">("");
-  const detailsId = useId();
-  const hasAmount = Number.isFinite(amount) && amount > 0;
-  const verb = side === "buy" ? "Buy" : "Sell";
-  const label = `${verb} this stock for real`;
-  const handoff = brokerHandoffs(symbol).find((b) => b.broker === stage);
-  const dollars = usd(amount);
-  const details = handoff
-    ? `${verb} ${dollars} of ${symbol} (${name}) on ${handoff.broker}. Brix did not place this order.`
-    : "";
-
-  // Opening never takes long; after a moment, say where it went and offer help.
-  useEffect(() => {
-    if (open !== "opening") return;
-    const t = setTimeout(() => setOpen("opened"), 1200);
-    return () => clearTimeout(t);
-  }, [open]);
-
-  function reset(next: typeof stage) {
-    setStage(next);
-    setOpen("idle");
-    setCopied("");
-  }
-
-  function openBroker(url: string) {
-    if (typeof navigator !== "undefined" && navigator.onLine === false) {
-      setOpen("failed");
-      return;
-    }
-    const tab = window.open(url, "_blank");
-    if (!tab) {
-      setOpen("failed");
-      return;
-    }
-    tab.opener = null;
-    setOpen("opening");
-  }
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(details);
-      setCopied("yes");
-    } catch {
-      setCopied("no");
-    }
-  }
-
-  if (stage === "closed")
-    return (
-      <div className="real-buy">
-        <button
-          type="button"
-          className="btn btn--lg btn--block"
-          disabled={!hasAmount}
-          onClick={() => reset("choose")}
-        >
-          <ExternalLink size={16} aria-hidden /> {label}
-        </button>
-        <small className="muted">
-          {hasAmount
-            ? `Takes ${symbol} and ${dollars} to your broker. Real money, your account.`
-            : "Enter an amount first."}
-        </small>
-      </div>
-    );
-
-  if (!handoff)
-    return (
-      <div className="real-buy real-buy--open" role="group" aria-label={label}>
-        <h3>
-          {verb} {symbol} for real: where do you have an account?
-        </h3>
-        <div className="real-buy__brokers">
-          {brokerHandoffs(symbol).map((b) => (
-            <button
-              type="button"
-              key={b.broker}
-              className="btn"
-              onClick={() => reset(b.broker)}
-            >
-              {b.broker}
-            </button>
-          ))}
-        </div>
-        <button type="button" className="btn btn--sm" onClick={() => reset("closed")}>
-          Cancel
-        </button>
-      </div>
-    );
-
-  const steps = handoff.steps(dollars, side);
+  const hints: Record<string, string> = {
+    Robinhood: `Opens ${symbol} on Robinhood`,
+    Fidelity: `Opens the ${symbol} quote on Fidelity`,
+    "Cash App": `Opens Cash App investing, then search ${symbol}`,
+  };
   return (
-    <div
-      className="real-buy real-buy--open"
-      role="group"
-      aria-label={`Before you open ${handoff.broker}`}
-    >
-      <h3>Before you open {handoff.broker}</h3>
-      <dl className="real-buy__details" id={detailsId}>
-        <div>
-          <dt>Stock</dt>
-          <dd>
-            {symbol} <small>{name}</small>
-          </dd>
-        </div>
-        <div>
-          <dt>Amount</dt>
-          <dd>{dollars}</dd>
-        </div>
-        <div>
-          <dt>Order</dt>
-          <dd>{verb}, in dollars</dd>
-        </div>
-      </dl>
-      <p className="muted">
-        {handoff.carriesSymbol
-          ? `${handoff.broker} opens on the ${symbol} page.`
-          : `${handoff.broker} can't open a page for ${symbol}, so search for it there.`}{" "}
-        The {dollars} does not carry over. Type it in yourself.
-      </p>
-      {open === "failed" ? (
-        <div className="alert alert--error" role="alert">
-          <p>
-            <strong>{handoff.broker} didn&apos;t open.</strong> Your browser
-            may have blocked the new tab, or you&apos;re offline. You can still
-            do it by hand: open{" "}
-            <a href={handoff.homeUrl} target="_blank" rel="noopener noreferrer">
-              {handoff.homeUrl}
-            </a>{" "}
-            and follow the steps below.
-          </p>
-        </div>
-      ) : open === "opening" ? (
-        <p className="muted" role="status">
-          Opening {handoff.broker} in a new tab…
-        </p>
-      ) : open === "opened" ? (
-        <p className="muted" role="status">
-          {handoff.broker} opened in a new tab. Finish there; this page stays
-          here.{" "}
-          <button
-            type="button"
-            className="text-link"
-            onClick={() => setOpen("failed")}
-          >
-            Page didn&apos;t load?
-          </button>
-        </p>
-      ) : null}
-      <ol className="real-buy__steps">
-        {steps.map((s) => (
-          <li key={s}>{s}</li>
-        ))}
-      </ol>
-      <div className="button-row">
-        <button
-          type="button"
-          className="btn btn--primary"
-          disabled={open === "opening"}
-          onClick={() =>
-            openBroker(open === "failed" ? handoff.homeUrl : handoff.url)
-          }
-        >
-          <ExternalLink size={16} aria-hidden />{" "}
-          {open === "failed" ? `Try ${handoff.broker} again` : `Open ${handoff.broker}`}
-        </button>
-        <button
-          type="button"
-          className="btn"
-          aria-describedby={detailsId}
-          onClick={() => void copy()}
-        >
-          <Copy size={16} aria-hidden /> Copy trade details
-        </button>
-        <button type="button" className="btn btn--sm" onClick={() => reset("choose")}>
-          Back
-        </button>
+    <div className={`take-live${compact ? " take-live--compact" : ""}`}>
+      <div className="take-live__heading">
+        <strong>Ready for the real thing?</strong>
+        <span>Real money happens at your broker, not here.</span>
       </div>
-      {copied === "yes" && (
-        <p className="muted" role="status">
-          Copied: {details}
-        </p>
-      )}
-      {copied === "no" && (
-        <p className="muted" role="status">
-          Couldn&apos;t copy. Select this instead: {details}
-        </p>
-      )}
-      <p className="practice-disclaimer" role="note">
-        This is your real money at {handoff.broker}. Brix never places real
-        trades and can&apos;t see or undo what you do there.
-      </p>
+      <MenuButton
+        className="btn btn--sm take-live__trigger"
+        icon={<ExternalLink size={14} aria-hidden />}
+        label={label === "Take this live" ? `Take ${symbol} live` : label}
+        items={brokerLinks(symbol).map((b) => ({
+          label: b.broker,
+          href: b.url,
+          hint: hints[b.broker] ?? "Opens in a new tab",
+          icon: <ExternalLink size={14} aria-hidden />,
+        }))}
+      />
     </div>
   );
 }
@@ -1272,13 +1099,9 @@ function CoachCard({
           <p className="muted" role="status">
             Loading the explainer… You can confirm without it.
           </p>
-        ) : !check ? (
-          <p className="muted">Coach check unavailable</p>
-        ) : (
-          <>
-            {!check.available && (
-              <p className="muted">Coach check unavailable</p>
-            )}
+          {!check.available && <p className="muted">Coach check unavailable</p>}
+          <details className="coach__more">
+            <summary>Why this matters</summary>
             {check.bet && (
               <p>
                 <strong>What you&apos;re betting on</strong>
@@ -1529,13 +1352,15 @@ function RealHoldings({
         </label>
         <label className="field">
           Ticker
-          <select name="symbol" defaultValue="VOO">
-            {universe.map((s) => (
-              <option key={s.symbol} value={s.symbol}>
-                {s.symbol}
-              </option>
-            ))}
-          </select>
+          <Dropdown
+            name="symbol"
+            label="Real holding ticker"
+            defaultValue="VOO"
+            options={universe.map((s) => ({
+              value: s.symbol,
+              label: s.symbol,
+            }))}
+          />
         </label>
         <label className="field">
           Dollars spent
@@ -1564,6 +1389,11 @@ function RealHoldings({
             type="number"
             min="0.01"
             step="0.01"
+          Broker
+          <input
+            name="broker"
+            type="text"
+            maxLength={40}
             placeholder="Optional"
           />
         </label>

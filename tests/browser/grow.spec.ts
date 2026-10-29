@@ -46,7 +46,14 @@ test("practice: start from the refund, buy, set a stop, auto-invest, sell, reset
     "$1,850.00",
   );
 
-  await page.getByLabel("Symbol").first().selectOption("VOO");
+  const ticker = page.getByRole("combobox", { name: "Symbol", exact: true });
+  await ticker.focus();
+  await ticker.press("Home");
+  await ticker.press("v");
+  await ticker.press("o");
+  await ticker.press("o");
+  await ticker.press("Enter");
+  await expect(ticker).toContainText("VOO");
   await page.getByLabel("Amount (USD)").fill("100");
   await page.getByRole("button", { name: "Review order" }).click();
   await expect(page.getByRole("group", { name: "Review order" })).toContainText(

@@ -58,21 +58,17 @@ test("bot reacts to the user, and the user's tapback persists", async ({
   ).toBeVisible();
 });
 
-test("confirming a cancel celebrates and the chips switch to yes/no while pending", async ({
+test("confirming a reminder applies it and the chips switch to yes/no while pending", async ({
   page,
 }) => {
-  await page.goto("/dashboard");
-  await page.getByRole("button", { name: "Mark Spotify to cancel" }).click();
+  await page.goto("/subscriptions");
+  await page.getByRole("button", { name: "Remind me about Spotify" }).click();
   const chat = page.getByRole("dialog", { name: "Talk with Brix" });
   await expect(chat.getByText(/Reply yes to confirm/)).toBeVisible();
   const chips = chat.getByRole("group", { name: "Suggested replies" });
   await expect(chips.getByRole("button", { name: "Yes" })).toBeVisible();
   await chips.getByRole("button", { name: "Yes" }).click();
-  await expect(chat.getByText(/Spotify is marked to cancel/)).toBeVisible();
-  await expect(chat.locator(".chat__confetti")).toBeAttached();
-  await expect(
-    chat.getByRole("img", { name: "Brix reacted 🎉" }),
-  ).toBeVisible();
+  await expect(chat.getByText(/Reminder set for Spotify/)).toBeVisible();
 });
 
 test("saying yes with nothing pending gets a friendly reply, not an error", async ({
@@ -95,20 +91,22 @@ test("landing help bot runs the full propose → confirm loop", async ({
   await page.goto("/");
   await page.getByRole("button", { name: "Open Brix help" }).click();
   const preview = page.getByRole("dialog", { name: "Brix help" });
-  await preview.getByLabel("Message the Brix preview").fill("cancel netflix");
+  await preview
+    .getByLabel("Message the Brix preview")
+    .fill("remind me about netflix");
   await preview.getByRole("button", { name: "Send preview message" }).click();
   const bubbles = preview.locator(".msg--assistant .msg__bubble");
   await expect(
-    bubbles.filter({ hasText: /Mark Netflix \(\$15\.49\) to cancel\?/ }),
+    bubbles.filter({ hasText: /Remind you about Netflix 2 days/ }),
   ).toBeVisible();
   // Wait for the reply to finish streaming before answering.
   await expect(preview.locator(".stream-caret")).toHaveCount(0);
   await preview.getByLabel("Message the Brix preview").fill("yes");
   await preview.getByRole("button", { name: "Send preview message" }).click();
   await expect(
-    bubbles.filter({ hasText: /Netflix is marked to cancel/ }),
+    bubbles.filter({ hasText: /Reminder set for Netflix/ }),
   ).toBeVisible();
   await expect(
-    preview.getByRole("img", { name: "Brix reacted 🎉" }),
+    preview.getByRole("img", { name: "Brix reacted ⏰" }),
   ).toBeVisible();
 });

@@ -152,13 +152,16 @@ test("trials and cards validate inputs", async ({ request }) => {
 
 test("rapid repeated confirmations apply exactly once", async ({ request }) => {
   await request.post("/api/agent", {
-    data: { message: "Mark Spotify to cancel" },
+    data: { message: "Remind me about Spotify 2 days before" },
   });
   const state0 = await (await request.get("/api/state")).json();
   if (!state0.pendingActions?.web) {
     // Without an LLM key the keyword agent proposes through the action route.
     await request.post("/api/agent/action", {
-      data: { name: "mark_to_cancel", args: { merchant: "Spotify" } },
+      data: {
+        name: "set_reminder",
+        args: { merchant: "Spotify", when: "2 days before" },
+      },
     });
   }
   const results = await Promise.all(
@@ -169,7 +172,7 @@ test("rapid repeated confirmations apply exactly once", async ({ request }) => {
   expect(results.every((r) => r.status() < 500)).toBeTruthy();
   const state = await (await request.get("/api/state")).json();
   expect(
-    state.events.filter((e: { type: string }) => e.type === "marked_cancel"),
+    state.events.filter((e: { type: string }) => e.type === "reminder_created"),
   ).toHaveLength(1);
 });
 

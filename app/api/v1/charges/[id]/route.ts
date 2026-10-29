@@ -11,7 +11,10 @@ export const GET = apiRoute("charges:read", async ({ uid, params }) => {
   if (!found) throw new HttpError(404, "No charge with that ID.");
   return charge(found);
 });
-/** Only `status` can change: `to_cancel` marks it, `active` undoes that. */
+/**
+ * `to_cancel` no longer flags anything: the charge stays as is and the reply
+ * points to the merchant. `active` restores a charge flagged by older clients.
+ */
 export const PATCH = apiRoute(
   "charges:write",
   async ({ uid, params, request }) => {

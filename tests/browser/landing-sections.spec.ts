@@ -168,9 +168,31 @@ test("hero types a changing ending without shifting its heading", async ({
   const fragment = page.locator(".hero-type__text");
   const heading = page.locator(".hero h1");
   const initial = await heading.boundingBox();
-  await expect(fragment).toHaveText("before the trial ends.", {
+  await expect(fragment).toHaveText("at your own pace.", {
     timeout: 7000,
   });
   const changed = await heading.boundingBox();
   expect(changed?.height).toBe(initial?.height);
+});
+
+test("investing and refund planning lead the product story", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".hero h1")).toContainText("Your money era,");
+  await expect(page.locator(".hero__lead")).toContainText("Built by Gen Z");
+  const product = page.locator("#product");
+  await expect(
+    product.getByRole("link", { name: "Explore practice" }),
+  ).toHaveAttribute("href", "/practice");
+  await expect(
+    product.getByRole("link", { name: "Plan a refund" }),
+  ).toHaveAttribute("href", "/refunds");
+  await expect(product).toContainText("virtual money");
+  await expect(product).toContainText("real trades with your broker");
+  const order = await page
+    .locator("#product, #grow")
+    .evaluateAll((els) => els.map((el) => el.id));
+  expect(order).toEqual(["product", "grow"]);
+  await expect(page.locator(".lp-nav__signin")).toHaveCount(0);
 });

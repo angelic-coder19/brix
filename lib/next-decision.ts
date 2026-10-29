@@ -109,16 +109,17 @@ export function nextDecision(state: AppState, now = Date.now()): NextDecision {
     return {
       kind: "charge",
       title: `${soon.merchant} charges ${usd(soon.amount)} on ${nice(soon.nextDate)}`,
-      detail: "Still using it? Keep it, or mark it to cancel before it bills.",
+      detail:
+        "Still using it? Manage it directly with the merchant before it bills.",
       ask: `Do I still need ${soon.merchant}?`,
       cta: "Check with Brix",
     };
 
   return {
     kind: "clear",
-    title: "Nothing needs a decision this week",
-    detail: "Brix will message you 7 days and 2 days before anything bills.",
-    href: "/subscriptions",
-    cta: "See all charges",
+    title: "You’re caught up. What’s your next move?",
+    detail: "Build investing reps with practice money, at your own pace.",
+    href: "/practice",
+    cta: "Explore investing",
   };
 }

@@ -2620,7 +2620,9 @@
   margin-top: 8cqw;
   border-radius: 50%;
   background: #f7f5ef;
-  box-shadow: 0 0 0 3cqw #f7f5ef1f, 0 0 0 6cqw #f7f5ef0f;
+  box-shadow:
+    0 0 0 3cqw #f7f5ef1f,
+    0 0 0 6cqw #f7f5ef0f;
 }
 .device-call__face svg {
   width: 24cqw;
@@ -2690,4 +2692,61 @@
   margin: var(--space-6) 0 0;
   font-size: var(--text-md);
   color: var(--color-ink-soft);
+}
+
+/* Investing and refunds lead; the charge tools follow as supporting features. */
+.money-first .section-head {
+  max-width: 680px;
+}
+.money-feature {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: var(--space-9);
+  padding-block: var(--space-9);
+}
+.money-feature + .money-feature {
+  border-top: 1px solid var(--color-line);
+}
+.money-feature__copy h3 {
+  font-size: clamp(28px, 3.2vw, 42px);
+  margin: var(--space-3) 0 var(--space-5);
+  max-width: 400px;
+}
+.money-feature__copy p {
+  color: var(--color-ink-soft);
+  max-width: 400px;
+}
+.money-feature__copy .money-feature__note {
+  font-size: var(--text-sm);
+  margin-top: var(--space-4);
+  color: var(--color-muted);
+}
+.money-feature__copy .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--space-5);
+}
+.money-feature--refund .device-browser {
+  order: -1;
+}
+.money-feature--refund {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+}
+.facts__col:last-child strong {
+  font-size: clamp(35px, 4.4vw, 62px);
+}
+@media (max-width: 860px) {
+  .money-feature,
+  .money-feature--refund {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+  .money-feature--refund .device-browser {
+    order: 0;
+  }
+  .money-feature__copy p {
+    max-width: 540px;
+  }
 }

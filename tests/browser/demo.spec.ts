@@ -5,13 +5,12 @@ test.beforeEach(async ({ request }) => {
   expect(response.ok()).toBeTruthy();
 });
 
-test("trial and cancellation work through the dashboard with explicit confirmation", async ({
+test("trials and reminders work through the wallet with explicit confirmation", async ({
   page,
   request,
 }) => {
-  await page.goto("/dashboard");
+  await page.goto("/subscriptions");
   await expect(page.getByText("Spotify", { exact: true })).toBeVisible();
-  await expect(page.getByText(/Across 6 subscriptions/)).toBeVisible();
   await page
     .getByRole("button", { name: "Add a free trial", exact: true })
     .click();
@@ -22,32 +21,27 @@ test("trial and cancellation work through the dashboard with explicit confirmati
   await page.getByLabel("Price after trial (USD)").fill("10");
   await page.getByRole("button", { name: "Add to my charges" }).click();
   await expect(
-    page.getByRole("button", { name: "Mark Notion AI to cancel" }),
+    page.getByRole("button", { name: "Remind me about Notion AI" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Mark Spotify to cancel" }).click();
+  await page.getByRole("button", { name: "Remind me about Spotify" }).click();
   const chat = page.getByRole("dialog", { name: "Talk with Brix" });
   await expect(chat.getByText(/Reply yes to confirm/)).toBeVisible();
   let state = await (await request.get("/api/state")).json();
+  expect(state.reminders).toHaveLength(0);
+  await page.getByLabel("Message Brix", { exact: true }).fill("yes");
+  await page.getByRole("button", { name: "Send message" }).click();
+  await expect(chat.getByText(/Reminder set for Spotify/)).toBeVisible();
+  state = await (await request.get("/api/state")).json();
+  expect(state.reminders).toHaveLength(1);
+  // Brix never flags a cancel; Manage goes straight to the merchant.
   expect(
     state.charges.find((c: { merchant: string }) => c.merchant === "Spotify")
       .status,
   ).toBe("active");
-  await page.getByLabel("Message Brix", { exact: true }).fill("yes");
-  await page.getByRole("button", { name: "Send message" }).click();
-  await expect(chat.getByText(/Spotify is marked to cancel/)).toBeVisible();
-  state = await (await request.get("/api/state")).json();
-  expect(
-    state.charges.find((c: { merchant: string }) => c.merchant === "Spotify")
-      .status,
-  ).toBe("to_cancel");
-  expect(
-    state.events.filter((e: { type: string }) => e.type === "marked_cancel"),
-  ).toHaveLength(1);
-  // The summary drops the cancelled charge from both the count and the total.
   await page.keyboard.press("Escape");
-  await expect(page.getByText(/Across 5 subscriptions/)).toBeVisible();
-  await expect(page.getByText("$50.95")).toBeVisible();
-  await expect(page.getByText(/1 free trial to keep an eye on/)).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Manage Spotify on merchant site" }),
+  ).toBeVisible();
 });
 
 test("mobile landing and dashboard fit the viewport", async ({ page }) => {
