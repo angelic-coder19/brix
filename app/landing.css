@@ -2750,3 +2750,37 @@
     max-width: 540px;
   }
 }
+
+/* Brix stands in the open space under the card, beside the phone, on a soft
+   ground shadow, instead of covering the phone's screen. */
+.hero__buddy {
+  left: auto;
+  right: 8%;
+  bottom: 3%;
+  z-index: 4;
+  display: block;
+}
+.hero__buddy::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -2px;
+  z-index: -1;
+  width: 62%;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #29292030, transparent);
+  transform: translateX(-50%);
+}
+.hero__buddy .buddy {
+  --buddy-scale: 0.46 !important;
+}
+@media (max-width: 640px) {
+  .hero__buddy {
+    right: 24%;
+    bottom: 1%;
+  }
+  .hero__buddy .buddy {
+    --buddy-scale: 0.34 !important;
+  }
+}
