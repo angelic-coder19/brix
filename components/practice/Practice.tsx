@@ -1,13 +1,17 @@
 "use client";
 import { useCallback, useEffect, useId, useState } from "react";
 import {
+  Activity,
+  Briefcase,
   Copy,
   ExternalLink,
+  Landmark,
   Pause,
   Play,
   RotateCcw,
   Trash2,
   TrendingUp,
+  Wallet,
 } from "lucide-react";
 import { Dropdown } from "../ui/Dropdown";
 import { InvestingNews } from "./InvestingNews";
@@ -417,13 +421,19 @@ function Portfolio({
       <HeadingAside>
         <section className="practice-glance" aria-label="Portfolio summary">
           <div className="glance-tile glance-tile--lead">
+            <span className="glance-tile__icon" aria-hidden="true">
+              <Briefcase size={14} />
+            </span>
             <span className="glance-tile__label">Your portfolio</span>
             <strong className="glance-tile__value">{usd(p.total)}</strong>
             <span className={`glance-tile__sub ${tone(p.gain) ?? ""}`}>
-              {usd(p.gain)} ({pct(p.gainPct)}) all time
+              {usd(p.gain)} ({pct(p.gainPct)})
             </span>
           </div>
-          <div className="glance-tile">
+          <div className="glance-tile glance-tile--blue">
+            <span className="glance-tile__icon" aria-hidden="true">
+              <Activity size={14} />
+            </span>
             <span className="glance-tile__label">
               You vs. the <Term label="S&P 500" tip={TERMS.sp500} />
             </span>
@@ -436,11 +446,14 @@ function Portfolio({
                 : lead >= 0.005
                   ? "You're ahead so far"
                   : lead <= -0.005
-                    ? "Most people trail it. That's the lesson"
+                    ? "Most people trail it"
                     : "Neck and neck"}
             </span>
           </div>
           <div className="glance-tile glance-tile--green">
+            <span className="glance-tile__icon" aria-hidden="true">
+              <Wallet size={14} />
+            </span>
             <span className="glance-tile__label">Cash to play with</span>
             <strong className="glance-tile__value">{usd(p.cash)}</strong>
             <span className="glance-tile__sub">
@@ -448,6 +461,9 @@ function Portfolio({
             </span>
           </div>
           <div className="glance-tile glance-tile--warm">
+            <span className="glance-tile__icon" aria-hidden="true">
+              <Landmark size={14} />
+            </span>
             <span className="glance-tile__label">Real money</span>
             <strong className="glance-tile__value">
               {real === null
