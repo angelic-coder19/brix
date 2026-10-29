@@ -48,7 +48,7 @@ export function MoneyPicture({
         </div>
         <span className="badge">Estimate · {month}</span>
       </div>
-      <div className="summary-row money-picture__row">
+      <div className="summary-row summary-row--tiles money-picture__row">
         <div className="summary-stat summary-stat--lead">
           <span className="summary-stat__label">
             <Wallet size={14} aria-hidden /> Left

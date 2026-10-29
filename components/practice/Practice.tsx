@@ -16,12 +16,19 @@ import type { RequestFn } from "../brix/useBrixChat";
 import type { AutoRule, Order } from "@/lib/practice/engine";
 import type { Quote } from "@/lib/market/quotes";
 import type { Security } from "@/lib/market/universe";
-import { brokerHandoffs, type BrokerHandoff } from "@/lib/market/brokers";
+import {
+  brokerHandoffs,
+  brokerLinks,
+  type BrokerHandoff,
+} from "@/lib/market/brokers";
 import type { CoachCheck } from "@/lib/practice/coach";
 import type { RealHolding } from "@/lib/practice/real";
 import { Leaderboard, PriceChart } from "./PracticeInsights";
 import { MenuButton } from "../ui/MenuButton";
 import { CopyVibes, useCopyFlow } from "./CopyTrading";
+import { setPendingTrade } from "./pendingTrade";
+import { BrixLoader } from "../ui/BrixLoader";
+import { HeadingAside } from "../ui/HeadingAside";
 import "./practice.css";
 
 interface PositionView {
@@ -201,10 +208,12 @@ export default function Practice({ request }: { request: RequestFn }) {
   }
 
   if (!view)
-    return (
-      <div className="card" role="status">
-        {error || "Loading your practice portfolio…"}
-      </div>
+    return error ? (
+      <p className="alert alert--error" role="alert">
+        {error}
+      </p>
+    ) : (
+      <BrixLoader label="Loading your practice portfolio" />
     );
 
   return (
@@ -255,6 +264,10 @@ function Start({
   const start = view.suggestedStart;
   return (
     <div className="practice-intro-grid">
+      <div className="practice-insights practice-hero">
+        <PriceChart request={request} symbols={["VOO", "QQQ", "VTI"]} />
+        <Leaderboard request={request} />
+      </div>
       <section className="card form-card practice-start">
         <TrendingUp size={28} />
         <h2>Learn investing without risking a dollar.</h2>
@@ -318,10 +331,6 @@ function Start({
         </form>
       </section>
       <MarketSnapshot request={request} />
-      <div className="practice-insights">
-        <PriceChart request={request} symbols={["VOO", "QQQ", "VTI"]} />
-        <Leaderboard request={request} />
-      </div>
     </div>
   );
 }
@@ -388,6 +397,11 @@ function Portfolio({
     const first = setTimeout(() => void loadReal(), 0);
     return () => clearTimeout(first);
   }, [loadReal]);
+  const brokerSymbol =
+    [...(real?.holdings ?? [])].sort(
+      (a, b) => (b.value ?? b.cost) - (a.value ?? a.cost),
+    )[0]?.symbol ??
+    [...p.positions].sort((a, b) => b.value - a.value)[0]?.symbol;
   const [amount, setAmount] = useState("100");
   const [plan, setPlan] = useState(PLAN);
   const nameOf = (s: string) =>
@@ -400,69 +414,95 @@ function Portfolio({
 
   return (
     <>
-      <section className="card practice-summary" aria-label="Portfolio summary">
-        <div className="practice-summary__cell">
-          <div className="stat-card__label">Your portfolio</div>
-          <div className="stat-card__value">{usd(p.total)}</div>
-          <p className="practice-summary__sub">
-            What everything you own is worth right now
-          </p>
-          <p className={tone(p.gain)}>
-            {usd(p.gain)} ({pct(p.gainPct)}) from your {usd(p.startingCash)}{" "}
-            start
-          </p>
-        </div>
-        <div className="practice-summary__cell">
-          <div className="stat-card__label">You vs. the market</div>
-          <div className="stat-card__value">
-            {p.benchmarkPct === null ? "—" : pct(p.benchmarkPct)}
+      <HeadingAside>
+        <section className="practice-glance" aria-label="Portfolio summary">
+          <div className="glance-tile glance-tile--lead">
+            <span className="glance-tile__label">Your portfolio</span>
+            <strong className="glance-tile__value">{usd(p.total)}</strong>
+            <span className={`glance-tile__sub ${tone(p.gain) ?? ""}`}>
+              {usd(p.gain)} ({pct(p.gainPct)}) all time
+            </span>
           </div>
-          <p className="practice-summary__sub">
-            vs. the <Term label="S&P 500" tip={TERMS.sp500} />, the usual
-            scoreboard
-          </p>
-          <p>
-            {lead !== null &&
-              (lead >= 0.005
-                ? "You're ahead so far."
-                : lead <= -0.005
-                  ? "Most people trail the market. That's the lesson."
-                  : "Neck and neck. You're just getting started.")}
-            {lead === null && "Shows up once prices load."}
-          </p>
-        </div>
-        <div className="practice-summary__cell">
-          <div className="stat-card__label">Cash to play with</div>
-          <div className="stat-card__value">{usd(p.cash)}</div>
-          <p className="practice-summary__sub">Fake money, real prices</p>
-          <p>Profit you&apos;ve locked in: {usd(p.realized)}</p>
-        </div>
-        <div className="practice-summary__cell">
-          <div className="stat-card__label">Real money</div>
-          <div className="stat-card__value">
-            {real === null
-              ? "…"
-              : !real.holdings.length
-                ? "—"
-                : real.totals.priced
-                  ? usd(real.totals.value)
-                  : usd(real.totals.spent)}
+          <div className="glance-tile">
+            <span className="glance-tile__label">
+              You vs. the <Term label="S&P 500" tip={TERMS.sp500} />
+            </span>
+            <strong className="glance-tile__value">
+              {p.benchmarkPct === null ? "—" : pct(p.benchmarkPct)}
+            </strong>
+            <span className="glance-tile__sub">
+              {lead === null
+                ? "Shows up once prices load"
+                : lead >= 0.005
+                  ? "You're ahead so far"
+                  : lead <= -0.005
+                    ? "Most people trail it. That's the lesson"
+                    : "Neck and neck"}
+            </span>
           </div>
-          <p className="practice-summary__sub">
-            {real?.holdings.length && !real.totals.priced
-              ? "Spent, self-reported. Never mixed with practice"
-              : "Self-reported, never mixed with practice"}
-          </p>
-          {brokerSymbol ? (
-            <TakeLive symbol={brokerSymbol} label="Open in broker" />
-          ) : null}
-          <a href="#real-holdings" className="practice-real-link">
-            {real?.holdings.length
-              ? `${real.holdings.length} real ${real.holdings.length === 1 ? "purchase" : "purchases"} logged`
-              : "Log a real purchase"}
-          </a>
-        </div>
-      </section>
+          <div className="glance-tile glance-tile--green">
+            <span className="glance-tile__label">Cash to play with</span>
+            <strong className="glance-tile__value">{usd(p.cash)}</strong>
+            <span className="glance-tile__sub">
+              Locked in {usd(p.realized)}
+            </span>
+          </div>
+          <div className="glance-tile glance-tile--warm">
+            <span className="glance-tile__label">Real money</span>
+            <strong className="glance-tile__value">
+              {real === null
+                ? "…"
+                : !real.holdings.length
+                  ? "—"
+                  : real.totals.priced
+                    ? usd(real.totals.value)
+                    : usd(real.totals.spent)}
+            </strong>
+            <span className="glance-tile__links">
+              {brokerSymbol && (
+                <TakeLive symbol={brokerSymbol} label="Open in broker" compact />
+              )}
+              <a href="#real-holdings" className="practice-real-link">
+                {real?.holdings.length
+                  ? `${real.holdings.length} logged`
+                  : "Log a purchase"}
+              </a>
+            </span>
+          </div>
+        </section>
+      </HeadingAside>
+
+      <div className="practice-insights practice-hero">
+        <PriceChart
+          request={request}
+          symbols={p.positions.map((x) => x.symbol)}
+        />
+        <Leaderboard
+          request={request}
+          onCopy={(e) =>
+            e.mix &&
+            e.copyId &&
+            copy.open({
+              label: `${e.sample ? e.name.replace("Sample · ", "") : e.name}'s mix`,
+              mix: e.mix,
+              player: e.copyId,
+            })
+          }
+          share={{
+            on: !!p.shareMix,
+            busy,
+            onChange: (on) =>
+              void run(
+                async () => {
+                  await request("/api/practice", "PATCH", { shareMix: on });
+                },
+                on
+                  ? "Your mix is copyable now. Percentages only."
+                  : "Your mix is private again.",
+              ),
+          }}
+        />
+      </div>
 
       <div className="practice-trade-row">
         <section
@@ -707,7 +747,8 @@ function Portfolio({
                   <Term label="Stop" tip={TERMS.stop} />: sell if the price
                   drops to this (bail out early).{" "}
                   <Term label="Target" tip={TERMS.target} />: sell when it hits
-                  this (take the W).
+                  this (take the W). These are rules you set: Brix only sells at
+                  the exact price you type, and leaves blank ones alone.
                 </p>
               </>
             ) : (
@@ -859,37 +900,6 @@ function Portfolio({
         </p>
       </section>
 
-      <div className="practice-insights">
-        <PriceChart
-          request={request}
-          symbols={p.positions.map((x) => x.symbol)}
-        />
-        <Leaderboard
-          request={request}
-          onCopy={(e) =>
-            e.mix &&
-            e.copyId &&
-            copy.open({
-              label: `${e.sample ? e.name.replace("Sample · ", "") : e.name}'s mix`,
-              mix: e.mix,
-              player: e.copyId,
-            })
-          }
-          share={{
-            on: !!p.shareMix,
-            busy,
-            onChange: (on) =>
-              void run(
-                async () => {
-                  await request("/api/practice", "PATCH", { shareMix: on });
-                },
-                on
-                  ? "Your mix is copyable now. Percentages only."
-                  : "Your mix is private again.",
-              ),
-          }}
-        />
-      </div>
       <CopyVibes request={request} onPick={copy.open} />
       {copy.modal}
 
@@ -1008,6 +1018,223 @@ function TakeLive({
 }
 
 /**
+ * "Buy this stock for real": pick a broker, see exactly what to type, then
+ * open the broker in a new tab. Brix never places the trade or moves money.
+ */
+function RealBuy({
+  symbol,
+  name,
+  side,
+  amount,
+}: {
+  symbol: string;
+  name: string;
+  side: "buy" | "sell";
+  amount: number;
+}) {
+  const [stage, setStage] = useState<"closed" | "choose" | BrokerHandoff["broker"]>(
+    "closed",
+  );
+  const [open, setOpen] = useState<"idle" | "opening" | "opened" | "failed">(
+    "idle",
+  );
+  const [copied, setCopied] = useState<"" | "yes" | "no">("");
+  const detailsId = useId();
+  const hasAmount = Number.isFinite(amount) && amount > 0;
+  const verb = side === "buy" ? "Buy" : "Sell";
+  const label = `${verb} this stock for real`;
+  const handoff = brokerHandoffs(symbol).find((b) => b.broker === stage);
+  const dollars = usd(amount);
+  const details = handoff
+    ? `${verb} ${dollars} of ${symbol} (${name}) on ${handoff.broker}. Brix did not place this order.`
+    : "";
+
+  // Opening never takes long; after a moment, say where it went and offer help.
+  useEffect(() => {
+    if (open !== "opening") return;
+    const t = setTimeout(() => setOpen("opened"), 1200);
+    return () => clearTimeout(t);
+  }, [open]);
+
+  function reset(next: typeof stage) {
+    setStage(next);
+    setOpen("idle");
+    setCopied("");
+  }
+
+  function openBroker(url: string) {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setOpen("failed");
+      return;
+    }
+    const tab = window.open(url, "_blank");
+    if (!tab) {
+      setOpen("failed");
+      return;
+    }
+    tab.opener = null;
+    setOpen("opening");
+  }
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(details);
+      setCopied("yes");
+    } catch {
+      setCopied("no");
+    }
+  }
+
+  if (stage === "closed")
+    return (
+      <div className="real-buy">
+        <button
+          type="button"
+          className="btn btn--lg btn--block"
+          disabled={!hasAmount}
+          onClick={() => reset("choose")}
+        >
+          <ExternalLink size={16} aria-hidden /> {label}
+        </button>
+        <small className="muted">
+          {hasAmount
+            ? `Takes ${symbol} and ${dollars} to your broker. Real money, your account.`
+            : "Enter an amount first."}
+        </small>
+      </div>
+    );
+
+  if (!handoff)
+    return (
+      <div className="real-buy real-buy--open" role="group" aria-label={label}>
+        <h3>
+          {verb} {symbol} for real: where do you have an account?
+        </h3>
+        <div className="real-buy__brokers">
+          {brokerHandoffs(symbol).map((b) => (
+            <button
+              type="button"
+              key={b.broker}
+              className="btn"
+              onClick={() => reset(b.broker)}
+            >
+              {b.broker}
+            </button>
+          ))}
+        </div>
+        <button type="button" className="btn btn--sm" onClick={() => reset("closed")}>
+          Cancel
+        </button>
+      </div>
+    );
+
+  const steps = handoff.steps(dollars, side);
+  return (
+    <div
+      className="real-buy real-buy--open"
+      role="group"
+      aria-label={`Before you open ${handoff.broker}`}
+    >
+      <h3>Before you open {handoff.broker}</h3>
+      <dl className="real-buy__details" id={detailsId}>
+        <div>
+          <dt>Stock</dt>
+          <dd>
+            {symbol} <small>{name}</small>
+          </dd>
+        </div>
+        <div>
+          <dt>Amount</dt>
+          <dd>{dollars}</dd>
+        </div>
+        <div>
+          <dt>Order</dt>
+          <dd>{verb}, in dollars</dd>
+        </div>
+      </dl>
+      <p className="muted">
+        {handoff.carriesSymbol
+          ? `${handoff.broker} opens on the ${symbol} page.`
+          : `${handoff.broker} can't open a page for ${symbol}, so search for it there.`}{" "}
+        The {dollars} does not carry over. Type it in yourself.
+      </p>
+      {open === "failed" ? (
+        <div className="alert alert--error" role="alert">
+          <p>
+            <strong>{handoff.broker} didn&apos;t open.</strong> Your browser
+            may have blocked the new tab, or you&apos;re offline. You can still
+            do it by hand: open{" "}
+            <a href={handoff.homeUrl} target="_blank" rel="noopener noreferrer">
+              {handoff.homeUrl}
+            </a>{" "}
+            and follow the steps below.
+          </p>
+        </div>
+      ) : open === "opening" ? (
+        <p className="muted" role="status">
+          Opening {handoff.broker} in a new tab…
+        </p>
+      ) : open === "opened" ? (
+        <p className="muted" role="status">
+          {handoff.broker} opened in a new tab. Finish there; this page stays
+          here.{" "}
+          <button
+            type="button"
+            className="text-link"
+            onClick={() => setOpen("failed")}
+          >
+            Page didn&apos;t load?
+          </button>
+        </p>
+      ) : null}
+      <ol className="real-buy__steps">
+        {steps.map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ol>
+      <div className="button-row">
+        <button
+          type="button"
+          className="btn btn--primary"
+          disabled={open === "opening"}
+          onClick={() =>
+            openBroker(open === "failed" ? handoff.homeUrl : handoff.url)
+          }
+        >
+          <ExternalLink size={16} aria-hidden />{" "}
+          {open === "failed" ? `Try ${handoff.broker} again` : `Open ${handoff.broker}`}
+        </button>
+        <button
+          type="button"
+          className="btn"
+          aria-describedby={detailsId}
+          onClick={() => void copy()}
+        >
+          <Copy size={16} aria-hidden /> Copy trade details
+        </button>
+        <button type="button" className="btn btn--sm" onClick={() => reset("choose")}>
+          Back
+        </button>
+      </div>
+      {copied === "yes" && (
+        <p className="muted" role="status">
+          Copied: {details}
+        </p>
+      )}
+      {copied === "no" && (
+        <p className="muted" role="status">
+          Couldn&apos;t copy. Select this instead: {details}
+        </p>
+      )}
+      <p className="practice-disclaimer" role="note">
+        This is your real money at {handoff.broker}. Brix never places real
+        trades and can&apos;t see or undo what you do there.
+      </p>
+    </div>
+  );
+}
+
+/**
  * Plain facts about the pending trade before Confirm. The numbers are worked
  * out here from the portfolio already on screen, so review never waits on
  * the network; the written explainer loads below and never blocks the order.
@@ -1099,9 +1326,13 @@ function CoachCard({
           <p className="muted" role="status">
             Loading the explainer… You can confirm without it.
           </p>
-          {!check.available && <p className="muted">Coach check unavailable</p>}
-          <details className="coach__more">
-            <summary>Why this matters</summary>
+        ) : !check ? (
+          <p className="muted">Coach check unavailable</p>
+        ) : (
+          <>
+            {!check.available && (
+              <p className="muted">Coach check unavailable</p>
+            )}
             {check.bet && (
               <p>
                 <strong>What you&apos;re betting on</strong>
@@ -1389,11 +1620,6 @@ function RealHoldings({
             type="number"
             min="0.01"
             step="0.01"
-          Broker
-          <input
-            name="broker"
-            type="text"
-            maxLength={40}
             placeholder="Optional"
           />
         </label>

@@ -996,3 +996,74 @@
 .practice-holdings-stack > * {
   min-width: 0;
 }
+
+/* Portfolio numbers sit beside the Invest title as four small tiles. */
+.practice-glance {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 860px);
+}
+.practice-glance .glance-tile {
+  padding: 10px 12px;
+}
+.practice-glance .glance-tile__value {
+  font-size: 19px;
+}
+.practice-glance .glance-tile__sub.is-up {
+  color: var(--color-green);
+}
+.practice-glance .glance-tile__sub.is-down {
+  color: var(--color-danger);
+}
+.practice-glance .term {
+  font-size: inherit;
+}
+.glance-tile__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 11px;
+}
+.glance-tile__links .take-live--compact {
+  width: auto;
+  margin: 0;
+}
+.glance-tile__links .take-live__trigger {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+.glance-tile__links .practice-real-link {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+}
+@media (max-width: 1100px) {
+  .practice-glance {
+    width: 100%;
+  }
+}
+@media (max-width: 600px) {
+  .practice-glance {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* The price line is the page's hero: first thing under the title. */
+.practice-hero .practice-line {
+  background:
+    radial-gradient(70% 90% at 0% 0%, var(--color-accent-soft), transparent 60%),
+    var(--color-surface);
+}
+/* The fake-money note stays, but as one quiet line. */
+.practice > .practice-disclaimer {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+@media (min-width: 1101px) {
+  .practice-hero .practice-line__plot svg,
+  .practice-hero .practice-line__empty {
+    height: 300px;
+  }
+}

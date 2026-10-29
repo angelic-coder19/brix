@@ -2320,47 +2320,6 @@
     padding-inline: var(--space-4);
   }
 }
-/* Investing and refunds lead; wallet tools share one secondary home. */
-.overview-moves {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-.overview-moves > a {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  padding: 24px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  color: var(--color-ink);
-  text-decoration: none;
-  transition: border-color 0.2s;
-}
-.overview-moves > a:hover {
-  border-color: var(--color-accent);
-}
-.overview-moves > a > svg:first-child {
-  color: var(--color-accent-ink);
-  flex-shrink: 0;
-}
-.overview-moves > a > svg:last-child {
-  margin-left: auto;
-  flex-shrink: 0;
-}
-.overview-moves strong {
-  display: block;
-  font-size: 20px;
-  letter-spacing: -0.03em;
-}
-.overview-moves small {
-  display: block;
-  color: var(--color-ink-soft);
-  margin-top: 5px;
-  font-size: 13px;
-}
 .wallet-tabs {
   display: flex;
   gap: 6px;
@@ -2399,16 +2358,6 @@
   margin-bottom: 24px;
 }
 @media (max-width: 760px) {
-  .overview-moves {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-  }
-  .overview-moves > a {
-    padding: 18px;
-  }
-  .overview-moves strong {
-    font-size: 18px;
-  }
   .wallet-tabs a {
     padding: 10px 12px;
   }
@@ -2510,4 +2459,248 @@
 }
 .charge-more .brix-menu__chevron {
   display: none;
+}
+
+/* A view can place compact content beside its title (see HeadingAside). */
+.page-heading__aside {
+  display: flex;
+  justify-content: flex-end;
+  flex: 1 1 460px;
+  min-width: 0;
+}
+.page-heading__aside:empty {
+  display: none;
+}
+.page-heading__aside > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Small stat tiles with a tinted corner glow and a faint brick texture. */
+.glance-tile {
+  --tile-tint: var(--color-surface-2);
+  --tile-line: #29292010;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(120% 110% at 100% 0%, var(--tile-tint), transparent 62%),
+    var(--color-surface);
+}
+.glance-tile::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 auto;
+  border-bottom-right-radius: inherit;
+  z-index: -1;
+  width: 110px;
+  height: 64px;
+  background-image:
+    linear-gradient(var(--tile-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tile-line) 1px, transparent 1px);
+  background-size: 22px 11px;
+  mask-image: radial-gradient(circle at 100% 100%, #000, transparent 72%);
+}
+.glance-tile--lead {
+  --tile-tint: var(--color-accent-soft);
+  --tile-line: #c8462a1f;
+}
+.glance-tile--green {
+  --tile-tint: var(--color-green-soft);
+  --tile-line: #43705a1f;
+}
+.glance-tile--warm {
+  --tile-tint: var(--color-warn-soft);
+  --tile-line: #80662e1c;
+}
+.glance-tile__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+.glance-tile__value {
+  font-size: 21px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+.glance-tile__sub {
+  font-size: 11px;
+  color: var(--color-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Overview stat rows as separate tinted tiles instead of one flat strip. */
+.summary-row--tiles {
+  gap: 10px;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.summary-row--tiles .summary-stat {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 14px 16px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background:
+    radial-gradient(120% 110% at 100% 0%, var(--tile-tint, var(--color-surface-2)), transparent 62%),
+    var(--color-surface);
+}
+.summary-row--tiles .summary-stat + .summary-stat {
+  border-left: 1px solid var(--color-line);
+}
+.summary-row--tiles .summary-stat::after {
+  content: "";
+  position: absolute;
+  inset: auto -1px -1px auto;
+  z-index: -1;
+  width: 120px;
+  height: 70px;
+  background-image:
+    linear-gradient(var(--tile-line, #29292010) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tile-line, #29292010) 1px, transparent 1px);
+  background-size: 22px 11px;
+  mask-image: radial-gradient(circle at 100% 100%, #000, transparent 72%);
+}
+.summary-row--tiles .summary-stat:nth-child(4n + 2) {
+  --tile-tint: var(--color-green-soft);
+  --tile-line: #43705a1f;
+}
+.summary-row--tiles .summary-stat:nth-child(4n + 3) {
+  --tile-tint: var(--color-warn-soft);
+  --tile-line: #80662e1c;
+}
+.summary-row--tiles .summary-stat:nth-child(4n + 4) {
+  --tile-tint: #e8eef3;
+  --tile-line: #3e5a7018;
+}
+.summary-row--tiles .summary-stat__value {
+  font-size: 21px;
+}
+.summary-row--tiles .summary-stat--lead {
+  --tile-tint: var(--color-accent-soft);
+  --tile-line: #c8462a1f;
+}
+/* This month's "left" is the dark one, with a warm glow. */
+.money-picture__row.summary-row--tiles .summary-stat--lead {
+  --tile-line: #f7f5ef14;
+  border-color: var(--color-night);
+  background:
+    radial-gradient(120% 120% at 100% 0%, #c8462a66, transparent 60%),
+    var(--color-night);
+  color: var(--color-night-text);
+}
+.money-picture__row .summary-stat--lead .summary-stat__value {
+  font-size: 25px;
+  color: var(--color-night-text);
+}
+.money-picture__row .summary-stat--lead .summary-stat__label,
+.money-picture__row .summary-stat--lead .summary-stat__value small {
+  color: var(--color-night-muted);
+}
+.money-picture__row .summary-stat--lead .summary-stat__sub {
+  color: #e4e2d6;
+}
+.money-picture__row .summary-stat--lead a {
+  color: #f6b79c;
+}
+@media (max-width: 1100px) {
+  .summary-row--tiles .summary-stat:nth-child(n + 3) {
+    border-top: 1px solid var(--color-line);
+  }
+  .summary-row--tiles .summary-stat:nth-child(3) {
+    border-left: 1px solid var(--color-line);
+  }
+}
+
+/* Intro cards that sit beside the page title instead of under it. */
+.heading-card.card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(100%, 640px);
+  margin: 0;
+  padding: 12px 16px;
+  background:
+    radial-gradient(90% 140% at 100% 0%, var(--color-accent-soft), transparent 65%),
+    var(--color-surface);
+}
+.heading-card > svg {
+  flex: none;
+  color: var(--color-accent-ink);
+}
+.heading-card > div {
+  flex: 1;
+  min-width: 0;
+}
+.heading-card h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.heading-card p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--color-ink-soft);
+}
+.heading-card .btn {
+  flex: none;
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .heading-card.card {
+    flex-wrap: wrap;
+  }
+}
+.page-heading__moves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+/* Gmail shares the first connections row with the phone card. */
+.connect-grid > .email-connect {
+  margin-bottom: 0;
+}
+/* This month: header, then four compact tiles inside the card. */
+.money-picture__row.summary-row--tiles {
+  padding: 0 16px 16px;
+  border-top: 0;
+}
+.money-picture .card-head {
+  padding-bottom: 12px;
+}
+@media (max-width: 760px) {
+  .money-picture__row.summary-row--tiles {
+    padding: 0 12px 12px;
+  }
+}
+/* Setup pill, Make a move and Plan my refund share the title row. */
+@media (max-width: 1500px) {
+  .setup-strip--compact .setup-strip__text span {
+    display: none;
+  }
+}
+/* The heading stacks on phones, where a flex-basis would become a height. */
+@media (max-width: 760px) {
+  .page-heading__aside {
+    flex: 0 0 auto;
+    width: 100%;
+  }
 }

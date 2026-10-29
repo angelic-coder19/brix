@@ -1,5 +1,11 @@
 .investing-news {
   min-width: 0;
+  padding: 20px 22px;
+}
+@media (max-width: 760px) {
+  .investing-news {
+    padding: 16px;
+  }
 }
 .investing-news__heading {
   display: flex;
@@ -139,8 +145,8 @@
   mask-image: linear-gradient(
     90deg,
     transparent,
-    #000 24px,
-    #000 calc(100% - 24px),
+    #000 56px,
+    #000 calc(100% - 56px),
     transparent
   );
 }
