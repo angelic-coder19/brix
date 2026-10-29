@@ -1,13 +1,15 @@
 import { test, expect } from "@playwright/test";
 
-test("header CTA reads Try now and peeks on hover", async ({
+test("header CTA matches the demo entry point and peeks on hover", async ({
   page,
   isMobile,
 }) => {
   test.skip(isMobile, "Header CTA is hidden on phones; the menu has its own");
   await page.goto("/");
-  const cta = page.getByRole("link", { name: "Try now, the Brix demo" });
-  await expect(cta).toHaveText("Try now");
+  const cta = page
+    .locator(".lp-nav__cta")
+    .getByRole("link", { name: "Try the demo" });
+  await expect(cta).toHaveText("Try the demo");
   const brix = page.locator(".lp-nav__cta .peek__brix");
   await expect(brix).toHaveCSS("opacity", "0");
   await cta.hover();

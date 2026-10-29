@@ -30,7 +30,7 @@ type Msg = {
   text: string;
   reaction?: string;
 };
-type Pending = { kind: "cancel" | "remind"; merchant: string } | null;
+type Pending = { kind: "remind"; merchant: string } | null;
 
 const SAMPLE = [
   { merchant: "Spotify", amount: 11.99, days: 2 },
@@ -44,14 +44,12 @@ const inDays = (d: number) =>
 function respond(
   input: string,
   pending: Pending,
-  saved: number,
 ): {
   reply: string;
   outcome: AgentOutcome;
   action?: string;
   mood: BuddyMood;
   pending: Pending;
-  saved: number;
 } {
   const lower = input.toLowerCase();
   const match = SAMPLE.find((c) => lower.includes(c.merchant.toLowerCase()));
@@ -62,25 +60,14 @@ function respond(
         outcome: "answered",
         mood: "idle",
         pending,
-        saved,
       };
     const charge = SAMPLE.find((c) => c.merchant === pending.merchant)!;
-    if (pending.kind === "cancel")
-      return {
-        reply: `${charge.merchant} is marked to cancel. Finish on their site and you'll skip ${"$" + charge.amount.toFixed(2)} this month.`,
-        outcome: "confirmed",
-        action: "mark_to_cancel",
-        mood: "celebrate",
-        pending: null,
-        saved: saved + charge.amount,
-      };
     return {
       reply: `Reminder set for ${charge.merchant}. I'll ping you 2 days before it renews.`,
       outcome: "confirmed",
       action: "set_reminder",
       mood: "happy",
       pending: null,
-      saved,
     };
   }
   if (/^(no|nope|never mind|nevermind|stop)[.!]?$/i.test(input.trim()))
@@ -89,25 +76,31 @@ function respond(
       outcome: "cleared",
       mood: "idle",
       pending: null,
-      saved,
     };
-  if (/cancel/.test(lower)) {
-    if (!match)
-      return {
-        reply: "Which one? Try Spotify, Netflix, Adobe, or Notion AI.",
-        outcome: "answered",
-        mood: "listening",
-        pending,
-        saved,
-      };
+  if (/cancel/.test(lower))
     return {
-      reply: `Mark ${match.merchant} ($${match.amount.toFixed(2)}) to cancel? You'll still finish on the merchant's site. Reply yes to confirm.`,
-      outcome: "proposed",
-      mood: "listening",
-      pending: { kind: "cancel", merchant: match.merchant },
-      saved,
+      reply:
+        "Manage or cancel a subscription directly with its merchant. Brix can help you remember the renewal date, but doesn’t cancel it for you.",
+      outcome: "answered",
+      mood: "idle",
+      pending,
     };
-  }
+  if (/invest|stock|practice/.test(lower))
+    return {
+      reply:
+        "Practice uses virtual money. Open Investing practice to explore stocks and funds with the coach. Real trades stay with your broker.",
+      outcome: "answered",
+      mood: "happy",
+      pending,
+    };
+  if (/refund|school/.test(lower))
+    return {
+      reply:
+        "Start with essentials like rent and books. The refund planner helps separate borrowed money from other aid before you plan what’s left.",
+      outcome: "answered",
+      mood: "happy",
+      pending,
+    };
   if (/remind/.test(lower)) {
     const target = match ?? SAMPLE[0];
     return {
@@ -115,26 +108,14 @@ function respond(
       outcome: "proposed",
       mood: "listening",
       pending: { kind: "remind", merchant: target.merchant },
-      saved,
     };
   }
-  if (/sav|avoid/.test(lower))
-    return {
-      reply: saved
-        ? `You've marked $${saved.toFixed(2)} to avoid in this preview (estimated). Brick by brick!`
-        : "Nothing marked yet. Try “Mark Netflix to cancel”.",
-      outcome: "answered",
-      mood: saved ? "happy" : "idle",
-      pending,
-      saved,
-    };
   if (/thank|thx|love|awesome|great|lol|haha/.test(lower))
     return {
       reply: "Anytime! I'll keep watching the little charges.",
       outcome: "answered",
       mood: "happy",
       pending,
-      saved,
     };
   return {
     reply: `Coming up: ${SAMPLE.slice(0, 3)
@@ -143,7 +124,6 @@ function respond(
     outcome: "answered",
     mood: "concerned",
     pending,
-    saved,
   };
 }
 
@@ -164,7 +144,6 @@ export default function BotDemo({
   const [mood, setMood] = useState<BuddyMood>("idle");
   const [after, setAfter] = useState<BuddyMood>("idle");
   const [pending, setPending] = useState<Pending>(null);
-  const [saved, setSaved] = useState(0);
   const [burst, setBurst] = useState(0);
   const id = useRef(0);
   const list = useRef<HTMLDivElement>(null);
@@ -191,7 +170,7 @@ export default function BotDemo({
     setInput("");
     setBusy(true);
     setMood("thinking");
-    const result = respond(trimmed, pending, saved);
+    const result = respond(trimmed, pending);
     later(() => {
       const reaction = reactionFor(trimmed, result.outcome, result.action);
       const botId = ++id.current;
@@ -200,7 +179,6 @@ export default function BotDemo({
         { id: botId, role: "assistant", text: result.reply },
       ]);
       setPending(result.pending);
-      setSaved(result.saved);
       setBusy(false);
       setStreaming(botId);
       setMood("talking");
@@ -234,9 +212,9 @@ export default function BotDemo({
     ? ["Yes", "No"]
     : [
         "What's coming up?",
-        "Mark Netflix to cancel",
+        "How does investing practice work?",
         "Remind me about Spotify",
-        "How much have I saved?",
+        "Help me plan a school refund",
       ];
 
   return (
@@ -258,7 +236,7 @@ export default function BotDemo({
             <strong>Brix</strong>
             <small>Preview · sample data, runs in your browser</small>
           </div>
-          <span className="badge badge--green">Live</span>
+          <span className="badge">Preview</span>
         </header>
         <div
           className="chat__messages"
@@ -268,8 +246,8 @@ export default function BotDemo({
         >
           <div className="msg msg--assistant">
             <div className="msg__bubble">
-              Hi, I’m Brix! Tap a suggestion or ask me anything. I’ll always
-              check with you before I act.
+              Hey, I’m Brix. This is a sample chat: try a practice question, a
+              refund plan, or a reminder. Nothing here changes your account.
             </div>
           </div>
           {messages.map((m) => (
@@ -335,7 +313,7 @@ export default function BotDemo({
           <input
             className="input"
             aria-label="Message the Brix preview"
-            placeholder="Try “Mark Netflix to cancel”"
+            placeholder="Try “Remind me about Spotify”"
             value={input}
             maxLength={500}
             onChange={(e) => {

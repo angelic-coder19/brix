@@ -25,12 +25,6 @@ export const toolSchemas: Anthropic.Beta.BetaTool[] = [
   tool("get_saved_summary", "Read estimated charges avoided"),
   tool("get_money_news", "Read relevant subscription news"),
   tool(
-    "mark_to_cancel",
-    "Propose marking a charge to cancel; never actually cancels at merchant",
-    { merchant: { type: "string" } },
-    ["merchant"],
-  ),
-  tool(
     "set_reminder",
     "Propose a reminder; when must be an ISO date or N days before",
     { merchant: { type: "string" }, when: { type: "string" } },

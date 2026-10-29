@@ -21,11 +21,15 @@ export async function GET(request: Request) {
             )
             .map(([s]) => s)
         : [];
-      if (!symbols.length) symbols = ["VOO"];
+      // No holdings yet: a starter watchlist, so the strip is never empty.
+      symbols = [...symbols, "VOO", "QQQ", "AAPL", "NVDA", "TSLA"];
     }
-    return Response.json(await getTickerNews(symbols), {
-      headers: { "Cache-Control": "no-store" },
-    });
+    return Response.json(
+      await getTickerNews(symbols, fetch, { images: true }),
+      {
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
   } catch (error) {
     return errorResponse(error);
   }

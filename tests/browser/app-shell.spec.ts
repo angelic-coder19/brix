@@ -18,11 +18,11 @@ test.describe("desktop shell", () => {
     const groups = sidebar.getByRole("group");
     await expect(
       groups.filter({ has: page.getByRole("link", { name: "Overview" }) }),
-    ).toHaveAttribute("aria-label", "Money");
+    ).toHaveAttribute("aria-label", "Your money");
     // Badges only show real counts: the demo has no free trials yet, and one
     // school refund waiting for a plan.
     await expect(
-      sidebar.getByRole("link", { name: "Charges", exact: true }),
+      sidebar.getByRole("link", { name: "Wallet", exact: true }),
     ).toBeVisible();
     await expect(sidebar.locator(".nav-badge")).toHaveCount(1);
     await expect(
@@ -86,6 +86,7 @@ test.describe("desktop shell", () => {
     await expect(shell).toHaveAttribute("data-sidebar", "expanded");
 
     // `[` typed into a field doesn't toggle.
+    await page.goto("/subscriptions");
     await page
       .getByRole("button", { name: "Add a free trial", exact: true })
       .click();
@@ -97,7 +98,7 @@ test.describe("desktop shell", () => {
     await page.getByLabel("Price after trial (USD)").fill("9");
     await page.getByRole("button", { name: "Add to my charges" }).click();
     await expect(
-      sidebar.getByRole("link", { name: /Charges\s*,\s*1 free trial/ }),
+      sidebar.getByRole("link", { name: /Wallet\s*,\s*1 free trial/ }),
     ).toBeVisible();
   });
 
@@ -200,8 +201,8 @@ test.describe("mobile shell", () => {
     await page.keyboard.press("Escape");
     await expect(sidebar).toBeHidden();
     await page.getByRole("button", { name: "Open menu" }).click();
-    await sidebar.getByRole("link", { name: /^Cards/ }).click();
-    await expect(page).toHaveURL(/\/cards$/);
+    await sidebar.getByRole("link", { name: /^Wallet/ }).click();
+    await expect(page).toHaveURL(/\/subscriptions$/);
     await expect(sidebar).toBeHidden();
   });
 });
@@ -224,7 +225,8 @@ test("sidebar navigation keeps the app shell mounted", async ({ page }) => {
       .click();
     await expect(page).toHaveURL(new RegExp(`${path}$`));
   };
-  await go("Cards", "/cards");
+  await go("Wallet", "/subscriptions");
+  await page.getByRole("link", { name: "Cards & gift cards" }).click();
   await expect(
     page.getByRole("heading", { name: "New one-time card" }),
   ).toBeVisible();

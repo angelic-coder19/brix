@@ -48,7 +48,12 @@ test("a real purchase must use a listed ticker, positive numbers and a past date
     boughtOn: "2026-10-01",
     broker: "Fidelity",
   });
-  const base = { symbol: "VOO", shares: 1, pricePaid: 1, boughtOn: "2026-10-01" };
+  const base = {
+    symbol: "VOO",
+    shares: 1,
+    pricePaid: 1,
+    boughtOn: "2026-10-01",
+  };
   for (const bad of [
     { symbol: "GME" },
     { shares: 0 },
@@ -74,12 +79,23 @@ test("coach math: allocation before and after, and a 20% drop from real numbers"
   assert.equal(f.totalAfterDrop, 920);
   assert.equal(f.portfolioDropPct, 8);
   assert.match(allocationLine(f), /VOO goes from 30% to 40%/);
-  assert.match(whatIfLine(f), /drops about \$80\.00.*\$1,000\.00 to about \$920\.00/);
+  assert.match(
+    whatIfLine(f),
+    /drops about \$80\.00.*\$1,000\.00 to about \$920\.00/,
+  );
   // A buy larger than the cash is capped at the cash, never invented.
-  const big = coachFacts(view, { symbol: "VOO", side: "buy", amount: 5000 }, 600);
+  const big = coachFacts(
+    view,
+    { symbol: "VOO", side: "buy", amount: 5000 },
+    600,
+  );
   assert.equal(big.amount, 700);
   // Selling everything leaves nothing to drop.
-  const out = coachFacts(view, { symbol: "VOO", side: "sell", amount: 300 }, 600);
+  const out = coachFacts(
+    view,
+    { symbol: "VOO", side: "sell", amount: 300 },
+    600,
+  );
   assert.equal(out.symbolAfter, 0);
   assert.match(whatIfLine(out), /own no VOO/);
 });
@@ -133,7 +149,10 @@ test("news lines use the holding and the quote, and drop invented numbers", () =
     "1: Apple is down 3% today, about $6 off your $194 position.",
     [f],
   );
-  assert.equal(kept.get(1), "Apple is down 3% today, about $6 off your $194 position.");
+  assert.equal(
+    kept.get(1),
+    "Apple is down 3% today, about $6 off your $194 position.",
+  );
   assert.equal(parseLines("1: You could lose $50 on this.", [f]).size, 0);
   assert.equal(parseLines("1: You should sell it now.", [f]).size, 0);
 });

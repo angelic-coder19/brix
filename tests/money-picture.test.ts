@@ -24,10 +24,28 @@ const charge = (over: Partial<Charge>): Charge => ({
 test("money picture: in minus subscriptions out minus set aside equals left", () => {
   const s = emptyState("u");
   s.income = [
-    { id: "a", kind: "paycheck", amount: 300, frequency: "biweekly", receivedOn: "2026-10-01" },
-    { id: "b", kind: "scholarship", amount: 500, frequency: "once", receivedOn: "2026-10-10" },
+    {
+      id: "a",
+      kind: "paycheck",
+      amount: 300,
+      frequency: "biweekly",
+      receivedOn: "2026-10-01",
+    },
+    {
+      id: "b",
+      kind: "scholarship",
+      amount: 500,
+      frequency: "once",
+      receivedOn: "2026-10-10",
+    },
     // A one-time amount from another month doesn't count this month.
-    { id: "c", kind: "other", amount: 999, frequency: "once", receivedOn: "2026-09-10" },
+    {
+      id: "c",
+      kind: "other",
+      amount: 999,
+      frequency: "once",
+      receivedOn: "2026-09-10",
+    },
   ];
   s.refunds = [
     {
@@ -40,7 +58,12 @@ test("money picture: in minus subscriptions out minus set aside equals left", ()
       status: "planned",
       plan: {
         createdAt: "2026-10-18",
-        inputs: { monthsUntilNext: 2, monthlyLiving: 100, currentSavings: 0, yearsUntilRepayment: 4 },
+        inputs: {
+          monthsUntilNext: 2,
+          monthlyLiving: 100,
+          currentSavings: 0,
+          yearsUntilRepayment: 4,
+        },
         steps: [
           { key: "essentials", label: "", amount: 200, reason: "" },
           { key: "return_loan", label: "", amount: 1200, reason: "" },
@@ -55,7 +78,12 @@ test("money picture: in minus subscriptions out minus set aside equals left", ()
     charge({ id: "1", amount: 12 }),
     charge({ id: "2", amount: 120, frequency: "annual" }),
     // Rows the student hid as "not a subscription" never count.
-    charge({ id: "3", amount: 400, status: "cancelled", notSubscription: true }),
+    charge({
+      id: "3",
+      amount: 400,
+      status: "cancelled",
+      notSubscription: true,
+    }),
   ];
   const m = moneyPicture(s, NOW);
   assert.equal(m.month, "2026-10");

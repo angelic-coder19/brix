@@ -1,4 +1,5 @@
 "use client";
+import { Dropdown } from "@/components/ui/Dropdown";
 import Link from "next/link";
 import { ArrowDownLeft, ArrowUpRight, PiggyBank, Trash2, Wallet } from "lucide-react";
 import {
@@ -151,13 +152,7 @@ export function MoneyPicture({
         >
           <label className="field">
             Source
-            <select name="kind" defaultValue="paycheck">
-              {Object.entries(INCOME_KINDS).map(([v, l]) => (
-                <option key={v} value={v}>
-                  {l}
-                </option>
-              ))}
-            </select>
+            <Dropdown label="Income type" name="kind" defaultValue="paycheck" options={Object.entries(INCOME_KINDS).map(([value,label])=>({value,label}))} />
           </label>
           <label className="field">
             Amount
@@ -171,13 +166,7 @@ export function MoneyPicture({
           </label>
           <label className="field">
             How often
-            <select name="frequency" defaultValue="monthly">
-              {Object.entries(INCOME_FREQUENCIES).map(([v, l]) => (
-                <option key={v} value={v}>
-                  {l}
-                </option>
-              ))}
-            </select>
+            <Dropdown label="How often" name="frequency" defaultValue="monthly" options={Object.entries(INCOME_FREQUENCIES).map(([value,label])=>({value,label}))} />
           </label>
           <button className="btn" disabled={busy}>
             Add money in

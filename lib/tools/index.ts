@@ -63,6 +63,13 @@ export async function proposeAction(
 ) {
   if (!mutations.has(name)) throw new HttpError(400, "Unknown action.");
   const state = await getState(uid);
+  if (name === "mark_to_cancel") {
+    const charge = matchCharge(state.charges, String(args.merchant || ""));
+    return {
+      reply: merchantManagementReply(charge),
+      confirmationRequired: false,
+    };
+  }
   if (state.pendingActions?.[channel]?.status)
     throw new HttpError(
       409,
@@ -250,16 +257,15 @@ export async function confirmAction(
   });
   return reply;
 }
-/** Marks a charge to cancel inside a state update. Shared by confirmations and the public API. */
-export function markToCancel(s: AppState, channel: Channel, charge: Charge) {
-  if (charge.status === "to_cancel" || charge.status === "cancelled")
-    return `${charge.merchant} is already marked to cancel.`;
-  charge.status = "to_cancel";
-  const saved =
-    charge.nextDate > new Date().toISOString().slice(0, 10) ? charge.amount : 0;
-  const reply = `${charge.merchant} is marked to cancel. Finish cancellation on the merchant's site${charge.cancelUrl ? `: ${charge.cancelUrl}` : "."}`;
-  event(s, channel, "marked_cancel", reply, saved);
-  return reply;
+/** Legacy clients receive a direct handoff; Brix no longer flags subscriptions. */
+export function merchantManagementReply(charge: Charge) {
+  const url = charge.cancelUrl?.startsWith("https://")
+    ? charge.cancelUrl
+    : undefined;
+  return `Manage ${charge.merchant} directly with the merchant${url ? `: ${url}` : " in their app or website"}. Brix doesn’t cancel or flag subscriptions. Your tracking stays unchanged.`;
+}
+export function markToCancel(_s: AppState, _channel: Channel, charge: Charge) {
+  return merchantManagementReply(charge);
 }
 /** Undoes a mark-to-cancel. Trials return to trial status. */
 export function reactivate(s: AppState, channel: Channel, charge: Charge) {

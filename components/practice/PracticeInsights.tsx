@@ -244,7 +244,17 @@ export function PriceChart({
 }
 
 /** Students ranked by Brix coins: habits count more than luck. */
-export function Leaderboard({ request }: { request: RequestFn }) {
+export function Leaderboard({
+  request,
+  onCopy,
+  share,
+}: {
+  request: RequestFn;
+  /** Copy a player's opted-in mix into practice. */
+  onCopy?: (e: LeaderboardEntry) => void;
+  /** Your own opt-in to let others copy your mix. */
+  share?: { on: boolean; onChange: (on: boolean) => void; busy?: boolean };
+}) {
   const [board, setBoard] = useState<{
     entries: LeaderboardEntry[];
     hasSamples: boolean;
@@ -281,7 +291,7 @@ export function Leaderboard({ request }: { request: RequestFn }) {
             {board.entries
               .filter((e) => !e.sample)
               .map((e) => (
-                <BoardRow key={`${e.rank}-${e.name}`} e={e} />
+                <BoardRow key={`${e.rank}-${e.name}`} e={e} onCopy={onCopy} />
               ))}
           </ol>
           {board.hasSamples && (
@@ -296,7 +306,7 @@ export function Leaderboard({ request }: { request: RequestFn }) {
                 {board.entries
                   .filter((e) => e.sample)
                   .map((e) => (
-                    <BoardRow key={e.name} e={e} />
+                    <BoardRow key={e.name} e={e} onCopy={onCopy} />
                   ))}
               </ul>
             </>
@@ -306,6 +316,18 @@ export function Leaderboard({ request }: { request: RequestFn }) {
         <p className="muted" role="status">
           {failed ? "Leaderboard unavailable right now." : "Loading…"}
         </p>
+      )}
+      {share && (
+        <label className="leaderboard__share">
+          <span>Let others copy my mix (percentages only, never dollars)</span>
+          <input
+            className="switch"
+            type="checkbox"
+            checked={share.on}
+            disabled={share.busy}
+            onChange={(e) => share.onChange(e.target.checked)}
+          />
+        </label>
       )}
       <p className="practice-chart__footnote">
         Start: 100 · Trade: +10 · Auto-invest rule: +50 · Each 1% gained: +20 ·
@@ -317,11 +339,15 @@ export function Leaderboard({ request }: { request: RequestFn }) {
   );
 }
 
-function BoardRow({ e }: { e: LeaderboardEntry }) {
+function BoardRow({
+  e,
+  onCopy,
+}: {
+  e: LeaderboardEntry;
+  onCopy?: (e: LeaderboardEntry) => void;
+}) {
   return (
-    <li
-      className={`${e.you ? "is-you" : ""}${e.sample ? " is-sample" : ""}`}
-    >
+    <li className={`${e.you ? "is-you" : ""}${e.sample ? " is-sample" : ""}`}>
       <span className={`leaderboard__rank leaderboard__rank--${e.rank}`}>
         {e.sample ? "–" : e.rank}
       </span>
@@ -344,6 +370,18 @@ function BoardRow({ e }: { e: LeaderboardEntry }) {
         {e.coins.toLocaleString("en-US")}
         <span className="sr-only"> coins</span>
       </span>
+      {onCopy && e.mix?.length && !e.you ? (
+        <button
+          type="button"
+          className="btn btn--sm leaderboard__copy"
+          aria-label={`Copy ${e.sample ? e.name.replace("Sample · ", "") : e.name}'s mix`}
+          onClick={() => onCopy(e)}
+        >
+          Copy
+        </button>
+      ) : (
+        <span aria-hidden />
+      )}
     </li>
   );
 }

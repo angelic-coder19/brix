@@ -1,4 +1,5 @@
 "use client";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -107,13 +108,7 @@ export default function Refunds({
             </label>
             <label className="field">
               Where it came from
-              <select name="funding" defaultValue="unknown">
-                {Object.entries(FUNDING).map(([v, l]) => (
-                  <option key={v} value={v}>
-                    {l}
-                  </option>
-                ))}
-              </select>
+              <Dropdown label="Where it came from" name="funding" defaultValue="unknown" options={Object.entries(FUNDING).map(([value,label])=>({value,label}))} />
             </label>
             <label className="field">
               Borrowed part (optional)
@@ -270,13 +265,7 @@ function RefundDetail({
           <div className="refund-grid">
             <label className="field">
               Where it came from
-              <select name="funding" defaultValue={refund.funding}>
-                {Object.entries(FUNDING).map(([v, l]) => (
-                  <option key={v} value={v}>
-                    {l}
-                  </option>
-                ))}
-              </select>
+              <Dropdown label="Where it came from" name="funding" defaultValue={refund.funding} options={Object.entries(FUNDING).map(([value,label])=>({value,label}))} />
             </label>
             <label className="field">
               How much was a loan? (USD)
@@ -318,13 +307,7 @@ function RefundDetail({
             </label>
             <label className="field">
               Loan type
-              <select name="loanType" defaultValue={refund.loanType ?? ""}>
-                <option value="">Not sure</option>
-                <option value="unsubsidized">Federal unsubsidized</option>
-                <option value="subsidized">Federal subsidized</option>
-                <option value="parent_plus">Parent PLUS</option>
-                <option value="private">Private loan</option>
-              </select>
+              <Dropdown label="Loan type" name="loanType" defaultValue={refund.loanType ?? ""} options={[{value:'',label:'Not sure'},{value:'unsubsidized',label:'Federal unsubsidized'},{value:'subsidized',label:'Federal subsidized'},{value:'parent_plus',label:'Parent PLUS'},{value:'private',label:'Private loan'}]} />
             </label>
             <label className="field">
               Months until next aid

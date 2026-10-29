@@ -138,7 +138,7 @@ export function CallPhone({
             <strong className="device-call__name">Brix</strong>
             <span className="device-call__number">{number}</span>
             <p className="device-call__caption">
-              “Spotify is marked to cancel. Here’s the link to finish.”
+              “Spotify renews soon. Want a reminder before it bills?”
             </p>
             <span className="device-call__keys" aria-hidden="true">
               {["Mute", "Keypad", "Speaker"].map((k) => (

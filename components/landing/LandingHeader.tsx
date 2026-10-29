@@ -5,6 +5,7 @@ import MobileMenu from "./MobileMenu";
 import { BrixMark } from "@/components/brand/BrixMark";
 import { Wordmark } from "@/components/brand/Wordmark";
 import PeekCta from "./PeekCta";
+import LandingAction from "./LandingAction";
 
 type NavLink = { href: string; label: string };
 
@@ -105,18 +106,8 @@ export default function LandingHeader({
           ))}
         </nav>
         <div className="lp-nav__actions">
-          <Link href="/dashboard" className="lp-nav__signin">
-            Sign in
-          </Link>
           <PeekCta size="sm" className="lp-nav__cta">
-            <Link
-              href="/dashboard"
-              className="btn btn--dark"
-              data-buddy-mood="happy"
-              aria-label="Try now, the Brix demo"
-            >
-              Try now
-            </Link>
+            <LandingAction className="btn btn--dark" />
           </PeekCta>
           <MobileMenu links={links} />
         </div>

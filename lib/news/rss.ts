@@ -4,6 +4,7 @@ export interface FeedItem {
   /** ISO timestamp, or "" when the feed gave no usable date. */
   publishedAt: string;
   source: string;
+  imageUrl?: string;
 }
 
 const ENTITIES: Record<string, string> = {
@@ -58,12 +59,29 @@ export function parseRss(xml: string): FeedItem[] {
       }
     }
     const date = Date.parse(tag(item, "pubDate"));
+    const media =
+      item.match(
+        /<(?:media:thumbnail|media:content)\b[^>]*\burl=["']([^"']+)["']/i,
+      )?.[1] ??
+      item.match(
+        /<enclosure\b(?=[^>]*\btype=["']image\/)[^>]*\burl=["']([^"']+)["']/i,
+      )?.[1];
+    let imageUrl: string | undefined;
+    if (media) {
+      try {
+        const url = new URL(decodeEntities(media));
+        if (url.protocol === "https:" && !url.username && !url.password)
+          imageUrl = url.href;
+      } catch {}
+    }
+
     return [
       {
         title,
         link,
         publishedAt: Number.isFinite(date) ? new Date(date).toISOString() : "",
         source,
+        ...(imageUrl ? { imageUrl } : {}),
       },
     ];
   });
