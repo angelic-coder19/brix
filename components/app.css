@@ -2752,3 +2752,7 @@
 .money-picture__row .summary-stat--lead .summary-stat__label svg {
   background: #f7f5ef1a;
 }
+/* This month's tiles sit under the header without a divider line. */
+.money-picture .card-head {
+  border-bottom: 0;
+}

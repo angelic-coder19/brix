@@ -2784,3 +2784,10 @@
     --buddy-scale: 0.34 !important;
   }
 }
+/* Below wide screens the photo reaches the page edge, so the WhatsApp note
+   stays inside it instead of hanging past the viewport. */
+@media (max-width: 1240px) and (min-width: 641px) {
+  .wa-note {
+    right: 12px;
+  }
+}

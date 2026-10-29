@@ -756,12 +756,10 @@
   outline-offset: 2px;
 }
 .term__tip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  z-index: 30;
+  position: fixed;
+  z-index: 200;
   width: max-content;
-  max-width: min(260px, 80vw);
+  max-width: min(260px, calc(100vw - 16px));
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--color-ink);
@@ -770,16 +768,13 @@
   font-size: var(--text-xs);
   font-weight: 500;
   line-height: 1.4;
-  letter-spacing: 0;
   white-space: normal;
   text-align: left;
-  /* display: none, not just hidden, so a closed bubble never widens the page. */
-  display: none;
   pointer-events: none;
+  transform: translateY(-100%);
 }
-.term:hover .term__tip,
-.term:focus-within .term__tip {
-  display: block;
+.term__tip--below {
+  transform: none;
 }
 
 /* Coach check in the review step, real holdings, and news one-liners.
@@ -1169,4 +1164,8 @@
 .glance-tile__links .take-live__trigger svg {
   width: 12px;
   height: 12px;
+}
+/* Hero cards keep their own height instead of stretching to the tallest. */
+.practice-hero {
+  align-items: start;
 }

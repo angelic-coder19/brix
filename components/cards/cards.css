@@ -455,3 +455,34 @@
 .giftface__edit--balance input {
   margin-left: 0;
 }
+
+/* Studios size to their content: smaller previews, no stretched gaps. */
+.cards-studios {
+  align-items: start;
+}
+.studio {
+  gap: 12px;
+}
+.studio__form {
+  gap: 14px;
+}
+.studio__form > .vcard,
+.studio__form > .giftface {
+  max-width: 330px;
+}
+.studio__hint {
+  min-height: 0;
+  text-align: left;
+  font-size: 12px;
+}
+.studio__foot {
+  margin-top: 0;
+}
+.studio-fields {
+  gap: 12px;
+}
+@media (min-width: 601px) {
+  .studio-fields.studio-fields--three {
+    grid-template-columns: 1.2fr 1fr 1.1fr;
+  }
+}

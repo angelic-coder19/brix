@@ -225,3 +225,33 @@
 .sidebar-nav .nav-item:focus:not(:focus-visible) {
   outline: none;
 }
+
+/* Section sub-pages, indented under their parent with a guide line. */
+.nav-sub {
+  display: grid;
+  gap: 2px;
+  margin: 2px 0 4px 21px;
+  padding-left: 10px;
+  border-left: 1px solid var(--color-line-strong);
+}
+.nav-item.nav-item--sub {
+  min-height: 32px;
+  font-size: 13px;
+  font-weight: 550;
+}
+.nav-item.nav-item--sub svg {
+  width: 15px;
+  height: 15px;
+}
+.nav-item.nav-item--sub.is-active {
+  box-shadow: none;
+}
+.sidebar[data-collapsed="true"] .nav-sub {
+  margin-left: 0;
+  padding-left: 0;
+  border-left: 0;
+}
+/* The icon rail keeps one icon per section; sub-pages live in the tabs. */
+.sidebar[data-collapsed="true"] .nav-sub {
+  display: none;
+}
